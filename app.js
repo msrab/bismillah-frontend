@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const Language = require('./models/Language');
+const Country = require('./models/Country');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -23,8 +26,6 @@ sequelize.authenticate()
   .then(() => console.log('✅ Connexion à la base de données réussie !'))
   .catch(err => console.error('❌ Erreur de connexion à la base de données :', err));
 
-  const Language = require('./models/Language');
-
-sequelize.sync({ alter: true }) // mettra automatiquement à jour la table
-  .then(() => console.log("✅ Modèle 'Language' synchronisé."))
+sequelize.sync({ alter: true }) 
+  .then(() => console.log("✅ Modèles synchronisés."))
   .catch(err => console.error("❌ Erreur sync Language :", err));
