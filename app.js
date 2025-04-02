@@ -6,6 +6,7 @@ const Language = require('./models/Language');
 const Country = require('./models/Country');
 const City = require('./models/City');
 const Street = require('./models/Street');
+const RestaurantType = require('./models/RestaurantType');
 
 
 const app = express();
