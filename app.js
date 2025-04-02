@@ -22,3 +22,9 @@ const sequelize = require('./config/database');
 sequelize.authenticate()
   .then(() => console.log('✅ Connexion à la base de données réussie !'))
   .catch(err => console.error('❌ Erreur de connexion à la base de données :', err));
+
+  const Language = require('./models/Language');
+
+sequelize.sync({ alter: true }) // mettra automatiquement à jour la table
+  .then(() => console.log("✅ Modèle 'Language' synchronisé."))
+  .catch(err => console.error("❌ Erreur sync Language :", err));
