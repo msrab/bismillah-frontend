@@ -9,6 +9,7 @@ const Street = require('./models/Street');
 const RestaurantType = require('./models/RestaurantType');
 const CategoryMenu = require('./models/CategoryMenu');
 const OrderStatus = require('./models/OrderStatus');
+const ReportingType = require('./models/ReportingType');
 
 
 const app = express();
