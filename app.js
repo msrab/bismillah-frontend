@@ -7,6 +7,7 @@ const Country = require('./models/Country');
 const City = require('./models/City');
 const Street = require('./models/Street');
 const RestaurantType = require('./models/RestaurantType');
+const CategoryMenu = require('./models/CategoryMenu');
 
 
 const app = express();
