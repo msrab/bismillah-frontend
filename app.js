@@ -4,6 +4,8 @@ const cors = require('cors');
 
 const Language = require('./models/Language');
 const Country = require('./models/Country');
+const City = require('./models/City');
+
 
 const app = express();
 app.use(cors());
