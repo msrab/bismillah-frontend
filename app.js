@@ -10,8 +10,8 @@ const cors    = require('cors');
  * -----------------------------------------------------------------*/
 // Attention aux chemins relatifs : on suppose que ce fichier app.js
 // est placé à la racine du projet (à côté de package.json).
-const { sequelize } = require('./backend/config/database');
-require('./backend/models');  // index.js charge tous les modèles
+const { sequelize } = require('./config/database');
+require('./models');  // index.js charge tous les modèles
 
 /* ------------------------------------------------------------------
  * Express
@@ -21,14 +21,14 @@ app.use(cors());
 app.use(express.json());
 
 /* -------------------------- Routes --------------------------------*/
-const authRoutes       = require('./backend/routes/authRoutes');
+const authRoutes       = require('./routes/authRoutes');
 // Si tu crées d’autres routes protégées, décommente et adapte ces lignes :
-const userRoutes       = require('./backend/routes/userRoutes');
-const restaurantRoutes = require('./backend/routes/restaurantRoutes');
+const userRoutes       = require('./routes/userRoutes');
+const restaurantRoutes = require('./routes/restaurantRoutes');
 
 app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/restaurants', restaurantRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/restaurants', restaurantRoutes);
 
 app.get('/', (_, res) => {
   res.send('Bienvenue sur Bismillah-app API ✨');
