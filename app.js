@@ -22,8 +22,11 @@ app.use(express.json());
 /* ------------------------------------------------------------------
  * 3) Routes (exemple : auth)
  * -----------------------------------------------------------------*/
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
+const authUserRoutes       = require('./routes/authUserRoutes');
+const authRestaurantRoutes = require('./routes/authRestaurantRoutes');
+
+app.use('/api/auth/user',       authUserRoutes);
+app.use('/api/auth/restaurant', authRestaurantRoutes);
 
 /* ------------------------------------------------------------------
  * 4) Route de test
