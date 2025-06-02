@@ -13,15 +13,13 @@ module.exports = {
     logging: false
   },
   test: {
-    username: process.env.DB_USER     || 'root',
+    username: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME     || 'bismillah_test',
-    host:     process.env.DB_HOST     || '127.0.0.1',
-    dialect:  'mysql',
-    dialectOptions: {
-      charset: 'utf8mb4'
-    },
+    database: process.env.DB_NAME_TEST || 'bismillah_app_test',
+    host: process.env.DB_HOST || '127.0.0.1',
+    dialect: 'mysql',
     logging: false
+    // NB : en test, on synchronisera plutôt avec `sequelize.sync({ force: true })`
   },
   production: {
     username: process.env.DB_USER     || 'root',
