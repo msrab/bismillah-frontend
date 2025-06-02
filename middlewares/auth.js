@@ -1,23 +1,33 @@
 const jwt = require('jsonwebtoken');
 
 module.exports = {
-  verifyToken: (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(401).json({ error: 'Token manquant.' });
-
-    // Format attendu : "Bearer <token>"
-    const [scheme, token] = authHeader.split(' ');
-    if (scheme !== 'Bearer' || !token) {
-      return res.status(401).json({ error: 'Format d’autorisation invalide.' });
-    }
-
+  verifyToken(req, res, next) {
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET);
-      req.userId = payload.id;      // id de l’utilisateur ou restaurant
-      req.userType = payload.type;  // "user" ou "restaurant"
-      next();
+      const authHeader = req.headers['authorization'];
+      if (!authHeader) {
+        return res.status(401).json({ error: 'Token manquant.' });
+      }
+
+      // Format attendue : "Bearer <token>"
+      const tokenParts = authHeader.split(' ');
+      if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+        return res.status(401).json({ error: 'Format d’Authorization invalide.' });
+      }
+
+      const token = tokenParts[1];
+      jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+        if (err) {
+          return res.status(401).json({ error: 'Token invalide ou expiré.' });
+        }
+
+        // payload contient { id: <int>, userType: 'user'|'restaurant', iat, exp }
+        req.userId   = payload.id;
+        req.userType = payload.userType;
+        next();
+      });
     } catch (err) {
-      return res.status(401).json({ error: 'Token invalide ou expiré.' });
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur interne (vérification token).' });
     }
   }
 };
