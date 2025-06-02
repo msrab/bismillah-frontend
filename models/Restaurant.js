@@ -18,4 +18,4 @@ module.exports = (sequelize) => {
     { sequelize, modelName: 'Restaurant', tableName: 'restaurants', timestamps: true }
   );
   return Restaurant;
-};
+}; 

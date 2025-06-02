@@ -27,7 +27,7 @@ fs
   })
   .forEach(file => {
     // 5) Pour chaque fichier, on l'importe en passant (sequelize, DataTypes)
-    const model = require(path.join(__dirname, file))(sequelize, DataTypes);
+    const model = require(path.join(__dirname, file))(sequelize);
     db[model.name] = model;
   });
 
