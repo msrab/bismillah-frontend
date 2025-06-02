@@ -1,3 +1,4 @@
+// backend/app.js
 /**
  * Point d’entrée de l’API Bismillah
  */
@@ -6,36 +7,33 @@ const express = require('express');
 const cors    = require('cors');
 
 /* ------------------------------------------------------------------
- * Sequelize : instance + chargement des modèles
+ * 1) Import de l’instance Sequelize et chargement des modèles
  * -----------------------------------------------------------------*/
-// Attention aux chemins relatifs : on suppose que ce fichier app.js
-// est placé à la racine du projet (à côté de package.json).
-const { sequelize } = require('./config/database');
-require('./models');  // index.js charge tous les modèles
+const db = require('./models');        // <-- va exécuter models/index.js
+const sequelize = db.sequelize;
 
 /* ------------------------------------------------------------------
- * Express
+ * 2) Configuration d’Express
  * -----------------------------------------------------------------*/
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* -------------------------- Routes --------------------------------*/
-const authRoutes       = require('./routes/authRoutes');
-// Si tu crées d’autres routes protégées, décommente et adapte ces lignes :
-const userRoutes       = require('./routes/userRoutes');
-const restaurantRoutes = require('./routes/restaurantRoutes');
-
+/* ------------------------------------------------------------------
+ * 3) Routes (exemple : auth)
+ * -----------------------------------------------------------------*/
+const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/restaurants', restaurantRoutes);
 
+/* ------------------------------------------------------------------
+ * 4) Route de test
+ * -----------------------------------------------------------------*/
 app.get('/', (_, res) => {
   res.send('Bienvenue sur Bismillah-app API ✨');
 });
 
 /* ------------------------------------------------------------------
- * Démarrage
+ * 5) Démarrage
  * -----------------------------------------------------------------*/
 const PORT = process.env.PORT || 5000;
 
@@ -44,20 +42,10 @@ const PORT = process.env.PORT || 5000;
     await sequelize.authenticate();
     console.log('✅ Connexion à la base de données réussie !');
 
-    /* --------------------------------------------------------------
-     * 1) Pendant le développement :
-     *    On peut conserver sync({ alter:true }) pour aller vite
-     * --------------------------------------------------------------*/
     if (process.env.NODE_ENV !== 'production') {
       await sequelize.sync({ alter: true });
       console.log('✅ Modèles synchronisés (alter).');
     }
-
-    /* --------------------------------------------------------------
-     * 2) En staging / production :
-     *    -> commenter la ligne ci-dessus
-     *    -> exécuter les migrations : npx sequelize-cli db:migrate
-     * --------------------------------------------------------------*/
 
     app.listen(PORT, () =>
       console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`)
