@@ -1,8 +1,8 @@
 const express = require('express');
 const router  = express.Router();
 
-const { verifyToken } = require('./middlewares/auth');
-const userController = require('./controllers/userController');
+const { verifyToken } = require('../middlewares/authMiddleware');
+const userController = require('../controllers/userController');
 
 // Récupère le profil du user connecté
 // Exige un token JWT dans Authorization: Bearer <token>
