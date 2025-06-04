@@ -1,5 +1,6 @@
+// server.js
 /**
- * Point d’entrée de l’API Bismillah
+ * Point d’entrée de l’API Bismillah (module “core” qui exporte juste `app` et `sequelize`)
  */
 require('dotenv').config();
 const express = require('express');
@@ -21,21 +22,19 @@ app.use(express.json());
 /* -------------------------- Routes --------------------------------*/
 const authUserRoutes       = require('./routes/authUserRoutes');
 const authRestaurantRoutes = require('./routes/authRestaurantRoutes');
-//const profilRoutes         = require('./routes/profilRoutes');
 const userRoutes           = require('./routes/userRoutes');
 const restaurantRoutes     = require('./routes/restaurantRoutes');
 
 // Middleware d’authentification (vérification JWT)
-const authMiddleware = require('./middlewares/authMiddleware');
+const { verifyToken } = require('./middlewares/authMiddleware');
 
-// Routes “publices” (inscription + connexion)
+// Routes “publiques” (inscription + connexion)
 app.use('/api/auth/user', authUserRoutes);
 app.use('/api/auth/restaurant', authRestaurantRoutes);
 
 // Routes protégées par JWT
-//app.use('/api/profil', authMiddleware.verifyToken, profilRoutes);
-app.use('/api/users', authMiddleware.verifyToken, userRoutes);
-app.use('/api/restaurants', authMiddleware.verifyToken, restaurantRoutes);
+app.use('/api/users',       verifyToken, userRoutes);
+app.use('/api/restaurants', verifyToken, restaurantRoutes);
 
 // Route de test basique
 app.get('/', (_, res) => {
@@ -43,32 +42,8 @@ app.get('/', (_, res) => {
 });
 
 /* ------------------------------------------------------------------
- * Démarrage du serveur
+ * Export pour permettre aux tests de récupérer `app` et `sequelize`.
+ * 
+ * NE PAS appeler app.listen() ici : on démarre le serveur dans start.js.
  * -----------------------------------------------------------------*/
-// Exposer app et sequelize pour les tests
 module.exports = { app, sequelize };
-
-// Si on n’est PAS en mode “test”, on démarre vraiment le serveur :
-if (process.env.NODE_ENV !== 'test') {
-  (async () => {
-    try {
-      // 1) Vérifier la connexion à la base de données
-      await sequelize.authenticate();
-      console.log('✅ Connexion à la base de données réussie !');
-
-      // 2) En développement local, synchroniser automatiquement le schéma
-      if (process.env.NODE_ENV !== 'production') {
-        await sequelize.sync({ alter: true });
-        console.log('✅ Modèles synchronisés (alter).');
-      }
-
-      // 3) Démarrer le serveur HTTP
-      app.listen(PORT, () => {
-        console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
-      });
-    } catch (err) {
-      console.error('❌ Erreur de démarrage :', err);
-      process.exit(1);
-    }
-  })();
-}
