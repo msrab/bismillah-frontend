@@ -1,3 +1,5 @@
+// backend/middleware/authMiddleware.js
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 module.exports = {
@@ -8,7 +10,7 @@ module.exports = {
         return res.status(401).json({ error: 'Token manquant.' });
       }
 
-      // Format attendue : "Bearer <token>"
+      // Format attendu : "Bearer <token>"
       const tokenParts = authHeader.split(' ');
       if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
         return res.status(401).json({ error: 'Format d’Authorization invalide.' });
@@ -20,7 +22,7 @@ module.exports = {
           return res.status(401).json({ error: 'Token invalide ou expiré.' });
         }
 
-        // payload contient { id: <int>, userType: 'user'|'restaurant', iat, exp }
+        // payload doit contenir { id: <int>, userType: 'user'|'restaurant', iat, exp }
         req.userId   = payload.id;
         req.userType = payload.userType;
         next();
