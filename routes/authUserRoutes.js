@@ -1,12 +1,26 @@
+// routes/authUserRoutes.js
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const authUserController = require('../controllers/authUserController');
+const {
+  signupUserRules,
+  loginUserRules,
+  validateUser
+} = require('../validators/userValidators');
 
-// POST /api/auth/user/signup - Inscription de l’utilisateur
-router.post('/signup', authUserController.signup);
+router.post(
+  '/signup',
+  signupUserRules,  // d’abord valider le corps
+  validateUser,     // puis, si ok, on passe au controller
+  authUserController.signup
+);
 
-// POST /api/auth/user/login - Connexion de l’utilisateur
-router.post('/login',  authUserController.login);
+router.post(
+  '/login',
+  loginUserRules,
+  validateUser,
+  authUserController.login
+);
 
 module.exports = router;

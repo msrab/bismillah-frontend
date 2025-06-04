@@ -1,12 +1,26 @@
+// routes/authRestaurantRoutes.js
 const express = require('express');
-const router  = express.Router();
+const router = express.Router();
 
 const authRestaurantController = require('../controllers/authRestaurantController');
+const {
+  signupRestaurantRules,
+  loginRestaurantRules,
+  validateRestaurant
+} = require('../validators/restaurantValidators');
 
-// POST /api/auth/restaurant/signup - Inscription du restaurant
-router.post('/signup', authRestaurantController.signup);
+router.post(
+  '/signup',
+  signupRestaurantRules,
+  validateRestaurant,
+  authRestaurantController.signup
+);
 
-// POST /api/auth/restaurant/login - Connexion du restaurant
-router.post('/login',  authRestaurantController.login);
+router.post(
+  '/login',
+  loginRestaurantRules,
+  validateRestaurant,
+  authRestaurantController.login
+);
 
 module.exports = router;
