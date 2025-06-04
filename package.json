@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --forceExit",
-    "start": "node start.js",
-    "dev": "nodemon start.js"
+    "dev": "NODE_ENV=development node start.js",
+    "start": "NODE_ENV=production node start.js",
+    "test": "cross-env NODE_ENV=test jest --detectOpenHandles --forceExit"
   },
   "jest": {
     "testEnvironment": "node",
