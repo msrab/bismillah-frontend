@@ -10,6 +10,10 @@ module.exports = {
     dialectOptions: {
       charset: 'utf8mb4'
     },
+    define: {
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_general_ci'
+    },
     logging: false
   },
   test: {
@@ -18,7 +22,14 @@ module.exports = {
     database: process.env.DB_NAME_TEST || 'bismillah_app_test',
     host: process.env.DB_HOST || '127.0.0.1',
     dialect: 'mysql',
-    logging: false
+    logging: false,
+    dialectOptions: {
+      charset: 'utf8mb4', 
+    },
+    define: {
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_general_ci'
+    },
     // NB : en test, on synchronisera plutôt avec `sequelize.sync({ force: true })`
   },
   production: {
@@ -29,6 +40,10 @@ module.exports = {
     dialect:  'mysql',
     dialectOptions: {
       charset: 'utf8mb4'
+    },
+    define: {
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_general_ci'
     },
     logging: false
   }
