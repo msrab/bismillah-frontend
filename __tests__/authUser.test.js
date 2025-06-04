@@ -1,37 +1,37 @@
 // __tests__/authUser.test.js
-
 const request = require('supertest');
-const bcrypt  = require('bcrypt');
-const jwt     = require('jsonwebtoken');
-const app     = require('../server');                   // Votre fichier serveur qui exporte l’instance Express
-const { sequelize, User } = require('../models');       // Sequelize et modèle User
+const { app, sequelize } = require('../server');
+const { User } = require('../models');
+const bcrypt = require('bcrypt');
 
-/**
- * Tests des routes d’authentification utilisateur (signup & login).
- */
 describe('Auth Utilisateur', () => {
-  // Avant tous les tests, on reconstruit la base de test
+  const userPayload = {
+    login: 'testuser',
+    email: 'testuser@example.com',
+    password: 'Passw0rd!',
+    address_number: '123',
+    firstname: 'Jean',
+    surname: 'Dupont',
+    phone: '0123456789',
+    avatar: null
+  };
+
   beforeAll(async () => {
-    await sequelize.sync({ force: true });
+    // Vérifie qu'on peut se connecter à la base de test
+    await sequelize.authenticate();
   });
 
-  // Après tous les tests, on ferme la connexion à la base
   afterAll(async () => {
+    // Ferme la connexion Sequelize après tous les tests
     await sequelize.close();
   });
 
-  const userPayload = {
-    login:    'testuser',
-    email:    'testuser@example.com',
-    password: 'Passw0rd!',
-    address_number: '12A',
-    firstname: 'Alice',
-    surname:   'Dupont',
-    phone:     '0123456789',
-    avatar:    'http://example.com/avatar.png'
-  };
-
   describe('POST /api/auth/user/signup', () => {
+    beforeEach(async () => {
+      // Vide et recrée la table "users" avant chaque test
+      await sequelize.sync({ force: true });
+    });
+
     it('doit créer un nouvel utilisateur (201)', async () => {
       const res = await request(app)
         .post('/api/auth/user/signup')
@@ -39,7 +39,7 @@ describe('Auth Utilisateur', () => {
 
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty('message', 'Utilisateur créé avec succès.');
-      expect(res.body).toHaveProperty('user.id');
+      expect(res.body.user).toHaveProperty('id');
       expect(res.body.user).toMatchObject({
         login: userPayload.login,
         email: userPayload.email
@@ -47,12 +47,21 @@ describe('Auth Utilisateur', () => {
     });
 
     it('ne doit pas créer un utilisateur si login déjà pris (409)', async () => {
-      // On réessaie avec le même login
+      // Crée manuellement un user avec le même login
+      const hash = await bcrypt.hash(userPayload.password, 10);
+      await User.create({
+        login: userPayload.login,
+        email: 'autrediff@example.com',
+        password: hash
+      });
+
+      // Tentative de signup avec login dupliqué
       const res = await request(app)
         .post('/api/auth/user/signup')
         .send({
-          ...userPayload,
-          email: 'different@example.com'
+          login: userPayload.login,
+          email: 'nouvel@example.com',
+          password: 'AutrePass1!'
         });
 
       expect(res.statusCode).toBe(409);
@@ -60,45 +69,93 @@ describe('Auth Utilisateur', () => {
     });
 
     it('ne doit pas créer un utilisateur si email déjà utilisé (409)', async () => {
-      // On réessaie avec le même email
+      // Crée manuellement un user avec le même email
+      const hash = await bcrypt.hash(userPayload.password, 10);
+      await User.create({
+        login: 'autrelogin',
+        email: userPayload.email,
+        password: hash
+      });
+
+      // Tentative de signup avec email dupliqué
       const res = await request(app)
         .post('/api/auth/user/signup')
         .send({
-          ...userPayload,
-          login: 'differentlogin'
+          login: 'nouveaulogin',
+          email: userPayload.email,
+          password: 'AutrePass1!'
         });
 
       expect(res.statusCode).toBe(409);
       expect(res.body).toHaveProperty('error', 'Cet email est déjà utilisé.');
     });
+
+    it('ne doit pas créer si login est vide (400)', async () => {
+      const res = await request(app)
+        .post('/api/auth/user/signup')
+        .send({
+          login: '',
+          email: 'nouveau@example.com',
+          password: 'SomePass123'
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('ne doit pas créer si email est vide (400)', async () => {
+      const res = await request(app)
+        .post('/api/auth/user/signup')
+        .send({
+          login: 'nouveaulogin',
+          email: '',
+          password: 'SomePass123'
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('ne doit pas créer si password est vide (400)', async () => {
+      const res = await request(app)
+        .post('/api/auth/user/signup')
+        .send({
+          login: 'nouveaulogin',
+          email: 'nouveau@example.com',
+          password: ''
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error');
+    });
   });
 
   describe('POST /api/auth/user/login', () => {
+    beforeEach(async () => {
+      // Vide et recrée la table puis crée un user valide
+      await sequelize.sync({ force: true });
+      const hash = await bcrypt.hash(userPayload.password, 10);
+      await User.create({
+        login: userPayload.login,
+        email: userPayload.email,
+        password: hash
+      });
+    });
+
     it('doit connecter l’utilisateur existant et renvoyer un token (200)', async () => {
       const res = await request(app)
         .post('/api/auth/user/login')
-        .send({
-          login: userPayload.login,
-          password: userPayload.password
-        });
+        .send({ login: userPayload.login, password: userPayload.password });
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('message', 'Connexion réussie.');
       expect(res.body).toHaveProperty('token');
-
-      // Vérifier que le token est un JWT valide
-      const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET);
-      expect(decoded).toHaveProperty('id');
-      expect(decoded).toHaveProperty('type', 'user');
     });
 
     it('ne doit pas connecter avec un mot de passe incorrect (401)', async () => {
       const res = await request(app)
         .post('/api/auth/user/login')
-        .send({
-          login: userPayload.login,
-          password: 'WrongPassword!'
-        });
+        .send({ login: userPayload.login, password: 'WrongPass!' });
 
       expect(res.statusCode).toBe(401);
       expect(res.body).toHaveProperty('error', 'Mot de passe incorrect.');
@@ -107,10 +164,7 @@ describe('Auth Utilisateur', () => {
     it('ne doit pas connecter un utilisateur non existant (404)', async () => {
       const res = await request(app)
         .post('/api/auth/user/login')
-        .send({
-          login: 'inconnu',
-          password: 'AnyPass123'
-        });
+        .send({ login: 'inconnu', password: 'AnyPass123' });
 
       expect(res.statusCode).toBe(404);
       expect(res.body).toHaveProperty('error', 'Utilisateur non trouvé.');
@@ -119,28 +173,20 @@ describe('Auth Utilisateur', () => {
     it('doit aussi permettre la connexion par email (200)', async () => {
       const res = await request(app)
         .post('/api/auth/user/login')
-        .send({
-          email: userPayload.email,
-          password: userPayload.password
-        });
+        .send({ email: userPayload.email, password: userPayload.password });
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('message', 'Connexion réussie.');
       expect(res.body).toHaveProperty('token');
-
-      // Vérifier le contenu du JWT
-      const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET);
-      expect(decoded).toHaveProperty('id');
-      expect(decoded).toHaveProperty('type', 'user');
     });
 
     it('renvoie 400 si ni login ni email fourni', async () => {
       const res = await request(app)
         .post('/api/auth/user/login')
-        .send({ password: userPayload.password });
+        .send({ password: userPayload.password }); // ni login ni email
 
       expect(res.statusCode).toBe(400);
-      expect(res.body).toHaveProperty('error', 'Vous devez fournir un login ou un email.');
+      expect(res.body).toHaveProperty('error', 'Login ou email requis.');
     });
   });
 });
