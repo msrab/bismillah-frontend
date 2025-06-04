@@ -1,46 +1,44 @@
+// controllers/authUserController.js
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { User } = require('../models'); // Charge le modèle User depuis l’index des modèles
+const { User } = require('../models');
 
 module.exports = {
   /**
-   * Crée un nouvel utilisateur.
-   *
-   * @param {Object} req - Objet requête Express.
-   *   @property {string} body.login           - Le login choisi (unique, pas au format email).
-   *   @property {string} body.email           - L’email de l’utilisateur (unique).
-   *   @property {string} body.password        - Le mot de passe en clair.
-   *   @property {string} [body.address_number] - Numéro de rue (facultatif).
-   *   @property {string} [body.firstname]     - Prénom de l’utilisateur (facultatif).
-   *   @property {string} [body.surname]       - Nom de famille (facultatif).
-   *   @property {string} [body.phone]         - Téléphone (facultatif).
-   *   @property {string} [body.avatar]        - URL de l’avatar (facultatif).
-   *
-   * @param {Object} res - Objet réponse Express.
-   *   @returns {201, JSON} - Si création OK : message + id, login et email du nouvel utilisateur.
-   *   @returns {409, JSON} - Si login ou email déjà existant.
-   *   @returns {500, JSON} - En cas d’erreur interne.
+   * POST /api/auth/user/signup
+   * Crée un nouvel utilisateur si login, email et password sont fournis et uniques.
+   * Entrées (req.body) : { login, email, password, address_number?, firstname?, surname?, phone?, avatar? }
+   * Sortie : status 201 + { message, user:{ id, login, email } } ou status 400/409/500 + { error }.
    */
   async signup(req, res) {
     try {
       const { login, email, password, address_number, firstname, surname, phone, avatar } = req.body;
 
-      // 1) Vérifier qu’aucun utilisateur n’existe déjà avec ce login
+      // 1) Validation des champs obligatoires
+      if (!login || login.trim() === '') {
+        return res.status(400).json({ error: 'Login requis.' });
+      }
+      if (!email || email.trim() === '') {
+        return res.status(400).json({ error: 'Email requis.' });
+      }
+      if (!password || password.trim() === '') {
+        return res.status(400).json({ error: 'Password requis.' });
+      }
+
+      // 2) Vérifier qu’aucun user n’existe déjà avec le même login ou email
       const existLogin = await User.findOne({ where: { login } });
       if (existLogin) {
         return res.status(409).json({ error: 'Ce login est déjà pris.' });
       }
-
-      // 2) Vérifier qu’aucun utilisateur n’existe déjà avec cet email
       const existEmail = await User.findOne({ where: { email } });
       if (existEmail) {
         return res.status(409).json({ error: 'Cet email est déjà utilisé.' });
       }
 
-      // 3) Hasher le mot de passe avant de le stocker
+      // 3) Hasher le mot de passe
       const hash = await bcrypt.hash(password, 10);
 
-      // 4) Créer le nouvel utilisateur en base
+      // 4) Créer l’utilisateur
       const newUser = await User.create({
         login,
         email,
@@ -52,7 +50,6 @@ module.exports = {
         avatar: avatar || null
       });
 
-      // 5) Retourner un 201 + quelques informations publiques sur l’utilisateur créé
       return res.status(201).json({
         message: 'Utilisateur créé avec succès.',
         user: {
@@ -68,47 +65,41 @@ module.exports = {
   },
 
   /**
-   * Authentifie un utilisateur (par login ou par email) et renvoie un JWT.
-   *
-   * @param {Object} req - Objet requête Express.
-   *   @property {string} [body.login]   - Le login (si pas d’email).
-   *   @property {string} [body.email]   - L’email (si pas de login).
-   *   @property {string} body.password  - Le mot de passe en clair.
-   *
-   * @param {Object} res - Objet réponse Express.
-   *   @returns {200, JSON} - Si auth OK : message + token JWT.
-   *   @returns {404, JSON} - Si aucun utilisateur trouvé avec le login/email donné.
-   *   @returns {401, JSON} - Si mot de passe incorrect.
-   *   @returns {500, JSON} - En cas d’erreur interne.
+   * POST /api/auth/user/login
+   * Connecte un utilisateur existant en login *ou* email + password.
+   * Entrées (req.body) : { login?, email?, password }
+   * Sortie : status 200 + { message, token } ou status 400/401/404/500 + { error }.
    */
   async login(req, res) {
     try {
       const { login, email, password } = req.body;
 
-      // Déterminer si l’utilisateur s’authentifie par login ou par email
-      let user;
-      if (email) {
-        user = await User.findOne({ where: { email } });
-      } else if (login) {
-        user = await User.findOne({ where: { login } });
-      } else {
-        return res
-          .status(400)
-          .json({ error: 'Vous devez fournir un login ou un email.' });
+      // 1) Validation des champs obligatoires
+      if ((!login || login.trim() === '') && (!email || email.trim() === '')) {
+        return res.status(400).json({ error: 'Login ou email requis.' });
+      }
+      if (!password || password.trim() === '') {
+        return res.status(400).json({ error: 'Password requis.' });
       }
 
-      // Si l’utilisateur n’existe pas
+      // 2) Chercher l’utilisateur par login OU email
+      let user;
+      if (login && login.trim() !== '') {
+        user = await User.findOne({ where: { login } });
+      } else {
+        user = await User.findOne({ where: { email } });
+      }
       if (!user) {
         return res.status(404).json({ error: 'Utilisateur non trouvé.' });
       }
 
-      // Comparer le mot de passe en clair avec le hash en base
+      // 3) Comparer le mot de passe
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
         return res.status(401).json({ error: 'Mot de passe incorrect.' });
       }
 
-      // Générer un token JWT (payload contient id et rôle 'user')
+      // 4) Générer un token JWT (payload contient id et type)
       const token = jwt.sign(
         { id: user.id, type: 'user' },
         process.env.JWT_SECRET,
