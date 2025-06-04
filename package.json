@@ -4,10 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --detectOpenHandles --forceExit",
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node start.js",
+    "dev": "nodemon start.js"
   },
-   "jest": {
+  "jest": {
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/__tests__"
