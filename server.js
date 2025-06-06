@@ -5,6 +5,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
+const helmet = require('helmet');
 
 /* ------------------------------------------------------------------
  * Sequelize : instance + chargement des modèles
@@ -16,8 +17,13 @@ require('./models');  // cette ligne charge automatiquement tous les modèles pr
  * Express
  * -----------------------------------------------------------------*/
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://monapp.front',
+  methods: ['GET','POST','PUT','DELETE'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
 app.use(express.json());
+app.use(helmet());
 
 /* -------------------------- Routes --------------------------------*/
 const authUserRoutes       = require('./routes/authUserRoutes');
