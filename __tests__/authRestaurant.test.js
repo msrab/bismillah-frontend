@@ -1,6 +1,32 @@
-// __tests__/authRestaurant.test.js
+/**
+ * __tests__/authRestaurant.test.js
+ *
+ * Scénarios testés (selon VALIDATIONS.md) :
+ *
+ * 1. POST /api/auth/restaurant/signup
+ *    - 201 si ok (name, company_number, address_number, email, password valides)
+ *    - 409 si company_number déjà pris            ⇒ “Ce numéro d’entreprise est déjà enregistré.”
+ *    - 409 si email déjà utilisé                   ⇒ “Cet email est déjà utilisé.”
+ *    - 400 si name vide                            ⇒ “Le nom est requis.”
+ *    - 400 si company_number vide                  ⇒ “Le numéro d’entreprise est requis.”
+ *    - 400 si company_number non alphanumérique    ⇒ “Le numéro d’entreprise ne doit contenir que lettres et chiffres.”
+ *    - 400 si address_number vide                  ⇒ “L’adresse est requise.”
+ *    - 400 si email vide ou mal formé               ⇒ “Email invalide.”
+ *    - 400 si password vide                        ⇒ “Le mot de passe est requis.”
+ *    - 400 si password < 8 caractères               ⇒ “Le mot de passe doit contenir au moins 8 caractères.”
+ *
+ * 2. POST /api/auth/restaurant/login
+ *    - 200 si company_number+password corrects     ⇒ { message: 'Connexion réussie.', token: <jwt> }
+ *    - 200 si email+password corrects              ⇒ même réponse
+ *    - 401 si mot de passe incorrect               ⇒ “Mot de passe incorrect.”
+ *    - 404 si restaurant non existant              ⇒ “Restaurant non trouvé.”
+ *    - 400 si ni company_number ni email fourni    ⇒ “Le numéro d’entreprise est requis.”
+ *    - 400 si email mal formé                      ⇒ “Email invalide.”
+ *    - 400 si password vide                        ⇒ “Le mot de passe est requis.”
+ */
+
 const request = require('supertest');
-const bcrypt = require('bcrypt');
+const bcrypt  = require('bcrypt');
 const { app, sequelize } = require('../server');
 const { Restaurant } = require('../models');
 
@@ -16,6 +42,7 @@ describe('Auth Restaurant', () => {
   };
 
   beforeAll(async () => {
+    // Rebuild de la base test
     await sequelize.sync({ force: true });
   });
 
@@ -41,7 +68,7 @@ describe('Auth Restaurant', () => {
     });
 
     it('ne doit pas créer si company_number déjà pris (409)', async () => {
-      // Fournir tous les champs obligatoires
+      // Insérer manuellement un restaurant pour provoquer le conflit
       await Restaurant.create({
         name:           'AutreBrasserie',
         company_number: restaurantPayload.company_number,
@@ -61,12 +88,14 @@ describe('Auth Restaurant', () => {
         });
 
       expect(res.statusCode).toBe(409);
-      // **On modifie ici le message attendu pour coller à celui renvoyé par le contrôleur**
-      expect(res.body).toHaveProperty('error', 'Ce numéro d’entreprise est déjà enregistré.');
+      expect(res.body).toHaveProperty(
+        'error',
+        'Ce numéro d’entreprise est déjà enregistré.'
+      );
     });
 
     it('ne doit pas créer si email déjà utilisé (409)', async () => {
-      // Fournir tous les champs obligatoires
+      // Insérer un restaurant avec le même email
       await Restaurant.create({
         name:           'BrasserieUnique',
         company_number: 'UNIQ123',
@@ -86,76 +115,122 @@ describe('Auth Restaurant', () => {
         });
 
       expect(res.statusCode).toBe(409);
-      // **On conserve le message « Cet email est déjà utilisé. » s’il est identique**
       expect(res.body).toHaveProperty('error', 'Cet email est déjà utilisé.');
     });
 
     it('ne doit pas créer si name manquant (400)', async () => {
-      const payloadMissingName = { ...restaurantPayload };
-      delete payloadMissingName.name;
+      const payload = { ...restaurantPayload };
+      delete payload.name;
 
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
-        .send(payloadMissingName);
+        .send(payload);
 
       expect(res.statusCode).toBe(400);
-      // On suppose que le validateur renvoie ce message exact
       expect(res.body.errors).toContain('Le nom est requis.');
     });
 
     it('ne doit pas créer si company_number manquant (400)', async () => {
-      const payloadMissingComp = { ...restaurantPayload };
-      delete payloadMissingComp.company_number;
+      const payload = { ...restaurantPayload };
+      delete payload.company_number;
 
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
-        .send(payloadMissingComp);
+        .send(payload);
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('Le numéro d’entreprise est requis.');
     });
 
-    it('ne doit pas créer si address_number manquant (400)', async () => {
-      const payloadMissingAddr = { ...restaurantPayload };
-      delete payloadMissingAddr.address_number;
+    it('ne doit pas créer si company_number non alphanumérique (400)', async () => {
+      const payload = {
+        ...restaurantPayload,
+        company_number: 'COMP#123'
+      };
 
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
-        .send(payloadMissingAddr);
+        .send(payload);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toContain(
+        'Le numéro d’entreprise ne doit contenir que lettres et chiffres.'
+      );
+    });
+
+    it('ne doit pas créer si address_number manquant (400)', async () => {
+      const payload = { ...restaurantPayload };
+      delete payload.address_number;
+
+      const res = await request(app)
+        .post('/api/auth/restaurant/signup')
+        .send(payload);
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('L’adresse est requise.');
     });
 
-    it('ne doit pas créer si email manquant (400)', async () => {
-      const payloadMissingEmail = { ...restaurantPayload };
-      delete payloadMissingEmail.email;
+    it('ne doit pas créer si email vide (400)', async () => {
+      const payload = {
+        ...restaurantPayload,
+        email: ''
+      };
 
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
-        .send(payloadMissingEmail);
+        .send(payload);
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('Email invalide.');
     });
 
-    it('ne doit pas créer si password manquant (400)', async () => {
-      const payloadMissingPwd = { ...restaurantPayload };
-      delete payloadMissingPwd.password;
+    it('ne doit pas créer si email mal formé (400)', async () => {
+      const payload = {
+        ...restaurantPayload,
+        email: 'not-an-email'
+      };
 
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
-        .send(payloadMissingPwd);
+        .send(payload);
 
       expect(res.statusCode).toBe(400);
-      // **On adapte ici le message attendu à celui réellement renvoyé**
-      expect(res.body.errors).toContain('Le mot de passe doit contenir au moins 8 caractères.');
+      expect(res.body.errors).toContain('Email invalide.');
+    });
+
+    it('ne doit pas créer si password vide (400)', async () => {
+      const payload = { ...restaurantPayload };
+      delete payload.password;
+
+      const res = await request(app)
+        .post('/api/auth/restaurant/signup')
+        .send(payload);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toContain('Le mot de passe est requis.');
+    });
+
+    it('ne doit pas créer si password < 8 caractères (400)', async () => {
+      const payload = {
+        ...restaurantPayload,
+        password: 'short'
+      };
+
+      const res = await request(app)
+        .post('/api/auth/restaurant/signup')
+        .send(payload);
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toContain(
+        'Le mot de passe doit contenir au moins 8 caractères.'
+      );
     });
   });
 
   describe('POST /api/auth/restaurant/login', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true });
+      // Crée un restaurant existant pour tester la connexion
       await Restaurant.create({
         name:           restaurantPayload.name,
         company_number: 'LOGIN123',
@@ -168,6 +243,20 @@ describe('Auth Restaurant', () => {
     });
 
     it('doit connecter le restaurant existant et renvoyer un token (200)', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/login')
+        // Teste connexion PAR company_number OU PAR email : ici on teste par company_number
+        .send({
+          company_number: 'LOGIN123',
+          password:       restaurantPayload.password
+        });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('message', 'Connexion réussie.');
+      expect(res.body).toHaveProperty('token');
+    });
+
+    it('doit connecter le restaurant existant par email et renvoyer un token (200)', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
@@ -184,8 +273,8 @@ describe('Auth Restaurant', () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
-          email:    restaurantPayload.email,
-          password: 'WrongPassword!'
+          company_number: 'LOGIN123',
+          password:       'WrongPassword!'
         });
 
       expect(res.statusCode).toBe(401);
@@ -196,18 +285,33 @@ describe('Auth Restaurant', () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
-          email:    'inconnu@example.com',
-          password: 'AnyPass123'
+          company_number: 'INEXISTANT',
+          password:       'AnyPass123'
         });
 
       expect(res.statusCode).toBe(404);
       expect(res.body).toHaveProperty('error', 'Restaurant non trouvé.');
     });
 
-    it('renvoie 400 si email manquant (400)', async () => {
+    it('renvoie 400 si ni company_number ni email fourni (400)', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({ password: restaurantPayload.password });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty(
+        'error',
+        'Le numéro d’entreprise est requis.'
+      );
+    });
+
+    it('renvoie 400 si email mal formé (400)', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/login')
+        .send({
+          email:    'not-an-email',
+          password: restaurantPayload.password
+        });
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('Email invalide.');
@@ -216,7 +320,7 @@ describe('Auth Restaurant', () => {
     it('renvoie 400 si password manquant (400)', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
-        .send({ email: restaurantPayload.email });
+        .send({ company_number: 'LOGIN123' });
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('Le mot de passe est requis.');
