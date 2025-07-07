@@ -15,6 +15,9 @@ module.exports = {
    * @param req.body.password
    * @param req.body.phone (optionnel)
    * @param req.body.logo (optionnel)
+   * 
+   * @return {201}    {message, restaurant}
+   * @return {401}    si error
    */
   async signup(req, res) {
     try {
@@ -28,7 +31,6 @@ module.exports = {
         logo
       } = req.body;
 
-      // 1) Vérifier unicité company_number
       const existCIF = await Restaurant.findOne({ where: { company_number } });
       if (existCIF) {
         return res.status(409).json({
@@ -36,7 +38,6 @@ module.exports = {
         });
       }
 
-      // 2) Vérifier unicité email
       const existEmail = await Restaurant.findOne({ where: { email } });
       if (existEmail) {
         return res.status(409).json({
@@ -44,10 +45,8 @@ module.exports = {
         });
       }
 
-      // 3) Hasher le mot de passe
       const hash = await bcrypt.hash(password, 10);
 
-      // 4) Créer le restaurant en base
       const newRestaurant = await Restaurant.create({
         name,
         company_number,
@@ -64,7 +63,6 @@ module.exports = {
           id: newRestaurant.id,
           name: newRestaurant.name,
           email: newRestaurant.email
-          // … on peut renvoyer d’autres champs si besoin
         }
       });
     } catch (err) {
@@ -75,29 +73,39 @@ module.exports = {
 
   /**
    * POST /api/auth/restaurant/login
-   * Connexion par company_number ou par email (pass + bcrypt.compare).
-   * @param req.body.company_number (ou) req.body.email
-   * @param req.body.password
+   * Connexion par email + mot de passe.
+   * @param  {string} req.body.email
+   * @param  {string} req.body.password
+   * @return {200}    { message: 'Connexion réussie.', token }
+   * @return {400}    si email ou password manquant
+   * @return {404}    si pas de restaurant trouvé pour cet email
+   * @return {401}    si mot de passe incorrect
    */
   async login(req, res) {
     try {
-      const { company_number, email, password } = req.body;
+      const { email, password } = req.body;
 
-      // On recherche soit par email soit par company_number
-      const restaurant = email
-        ? await Restaurant.findOne({ where: { email } })
-        : await Restaurant.findOne({ where: { company_number } });
+      // On vérifie que l'email et le password sont présents
+      if (!email) {
+        return res.status(400).json({ error: 'L’email est requis.' });
+      }
+      if (!password) {
+        return res.status(400).json({ error: 'Le mot de passe est requis.' });
+      }
 
+      // Recherche du restaurant uniquement par email
+      const restaurant = await Restaurant.findOne({ where: { email } });
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant non trouvé.' });
       }
 
+      // Vérification du mot de passe
       const match = await bcrypt.compare(password, restaurant.password);
       if (!match) {
         return res.status(401).json({ error: 'Mot de passe incorrect.' });
       }
 
-      // Générer le JWT
+      // Génération du JWT
       const token = jwt.sign(
         { id: restaurant.id, type: 'restaurant' },
         process.env.JWT_SECRET,
@@ -113,4 +121,5 @@ module.exports = {
       return res.status(500).json({ error: 'Erreur lors de la connexion.' });
     }
   }
+
 };
