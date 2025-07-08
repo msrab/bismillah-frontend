@@ -1,28 +1,5 @@
 /**
  * __tests__/authRestaurant.test.js
- *
- * Scénarios testés (selon VALIDATIONS.md) :
- *
- * 1. POST /api/auth/restaurant/signup
- *    - 201 si ok (name, company_number, address_number, email, password valides)
- *    - 409 si company_number déjà pris            ⇒ “Ce numéro d’entreprise est déjà enregistré.”
- *    - 409 si email déjà utilisé                   ⇒ “Cet email est déjà utilisé.”
- *    - 400 si name vide                            ⇒ “Le nom est requis.”
- *    - 400 si company_number vide                  ⇒ “Le numéro d’entreprise est requis.”
- *    - 400 si company_number non alphanumérique    ⇒ “Le numéro d’entreprise ne doit contenir que lettres et chiffres.”
- *    - 400 si address_number vide                  ⇒ “L’adresse est requise.”
- *    - 400 si email vide ou mal formé               ⇒ “Email invalide.”
- *    - 400 si password vide                        ⇒ “Le mot de passe est requis.”
- *    - 400 si password < 8 caractères               ⇒ “Le mot de passe doit contenir au moins 8 caractères.”
- *
- * 2. POST /api/auth/restaurant/login
- *    - 200 si company_number+password corrects     ⇒ { message: 'Connexion réussie.', token: <jwt> }
- *    - 200 si email+password corrects              ⇒ même réponse
- *    - 401 si mot de passe incorrect               ⇒ “Mot de passe incorrect.”
- *    - 404 si restaurant non existant              ⇒ “Restaurant non trouvé.”
- *    - 400 si ni company_number ni email fourni    ⇒ “Le numéro d’entreprise est requis.”
- *    - 400 si email mal formé                      ⇒ “Email invalide.”
- *    - 400 si password vide                        ⇒ “Le mot de passe est requis.”
  */
 
 const request = require('supertest');
@@ -324,6 +301,158 @@ describe('Auth Restaurant', () => {
 
       expect(res.statusCode).toBe(400);
       expect(res.body.errors).toContain('Le mot de passe est requis.');
+    });
+  });
+
+  describe('POST /api/auth/restaurant/logout', () => {
+    let jwtToken;
+    beforeEach(async () => {
+      await sequelize.sync({ force: true });
+      const rest = await Restaurant.create({
+        ...restaurantPayload,
+        password: await bcrypt.hash(restaurantPayload.password, 10)
+      });
+      jwtToken = jwt.sign({ id: rest.id, type: 'restaurant' }, JWT_SECRET);
+    });
+
+    it('200 → logout invalide le token côté client (on renvoie juste 200)', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/logout')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send();
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('Déconnecté avec succès.');
+    });
+
+    it('401 → sans token', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/logout')
+        .send();
+      expect(res.statusCode).toBe(401);
+      expect(res.body.error).toBe('Token manquant ou invalide.');
+    });
+  });
+
+  describe('POST /api/auth/restaurant/forgot-password', () => {
+    beforeEach(() => sequelize.sync({ force: true }));
+
+    it('200 → toujours renvoie "email envoyé" même si restaurant inexistant', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/forgot-password')
+        .send({ email: 'no@no.com' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe(
+        'Si cet email existe chez nous, vous allez recevoir un lien pour réinitialiser votre mot de passe.'
+      );
+    });
+
+    it('400 → email vide ou malformé', async () => {
+      for (const bad of ['', 'bad@']) {
+        const res = await request(app)
+          .post('/api/auth/restaurant/forgot-password')
+          .send({ email: bad });
+        expect(res.statusCode).toBe(400);
+        expect(res.body.errors).toContain(
+          bad === '' ? 'L’email est requis.' : 'Format d’email invalide.'
+        );
+      }
+    });
+  });
+
+  describe('POST /api/auth/restaurant/reset-password', () => {
+    let tokenRecord, rawToken, restaurant;
+    beforeEach(async () => {
+      await sequelize.sync({ force: true });
+      restaurant = await Restaurant.create({
+        ...restaurantPayload,
+        company_number: 'CPF123',
+        password: await bcrypt.hash('OldPass123', 10)
+      });
+      // Simuler la création d’un token de réinitialisation
+      rawToken     = 'random-token';
+      tokenRecord  = await PasswordResetToken.create({
+        restaurantId: restaurant.id,
+        token:         rawToken,
+        expiresAt:     new Date(Date.now() + 3600_000)
+      });
+    });
+
+    it('200 → réinitialisation OK', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/reset-password')
+        .send({ token: rawToken, newPassword: 'NewPass123' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('Mot de passe réinitialisé.');
+    });
+
+    it('400 → token ou newPassword manquant / invalide', async () => {
+      const cases = [
+        [{ newPassword: 'x'.repeat(8) }, 'Token requis.'],
+        [{ token: rawToken },              'Le mot de passe doit contenir au moins 8 caractères.'],
+        [{ token: rawToken, newPassword: 'short' }, 'Le mot de passe doit contenir au moins 8 caractères.'],
+      ];
+      for (const [payload, msg] of cases) {
+        const res = await request(app)
+          .post('/api/auth/restaurant/reset-password')
+          .send(payload);
+        expect(res.statusCode).toBe(400);
+        expect(res.body.errors).toContain(msg);
+      }
+    });
+
+    it('404 → token expiré ou inexistant', async () => {
+      // on pousse la date d’expiration dans le passé
+      tokenRecord.expiresAt = new Date(Date.now() - 1000);
+      await tokenRecord.save();
+      const res = await request(app)
+        .post('/api/auth/restaurant/reset-password')
+        .send({ token: rawToken, newPassword: 'NewPass123' });
+      expect(res.statusCode).toBe(404);
+      expect(res.body.error).toBe('Token invalide ou expiré.');
+    });
+  });
+
+  describe('POST /api/auth/restaurant/change-password', () => {
+    let jwtToken, rest;
+    beforeEach(async () => {
+      await sequelize.sync({ force: true });
+      rest = await Restaurant.create({
+        ...restaurantPayload,
+        password: await bcrypt.hash('OldSecret123', 10)
+      });
+      jwtToken = jwt.sign({ id: rest.id, type: 'restaurant' }, JWT_SECRET);
+    });
+
+    it('200 → changement de mot de passe OK', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ oldPassword: 'OldSecret123', newPassword: 'NewSecret123' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe('Mot de passe changé avec succès.');
+    });
+
+    it('401 → ancien mot de passe incorrect', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ oldPassword: 'Wrong', newPassword: 'NewSecret123' });
+      expect(res.statusCode).toBe(401);
+      expect(res.body.error).toBe('Ancien mot de passe incorrect.');
+    });
+
+    it('400 → validations manquantes', async () => {
+      const res = await request(app)
+        .post('/api/auth/restaurant/change-password')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .send({ oldPassword: '', newPassword: 'short' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toEqual(
+        expect.arrayContaining([
+          'L’ancien mot de passe est requis.',
+          'Le nouveau mot de passe doit contenir au moins 8 caractères.'
+        ])
+      );
     });
   });
 });
