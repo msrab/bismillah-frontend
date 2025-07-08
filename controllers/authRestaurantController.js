@@ -85,7 +85,6 @@ module.exports = {
     try {
       const { email, password } = req.body;
 
-      // On vérifie que l'email et le password sont présents
       if (!email) {
         return res.status(400).json({ error: 'L’email est requis.' });
       }
@@ -93,19 +92,16 @@ module.exports = {
         return res.status(400).json({ error: 'Le mot de passe est requis.' });
       }
 
-      // Recherche du restaurant uniquement par email
       const restaurant = await Restaurant.findOne({ where: { email } });
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant non trouvé.' });
       }
 
-      // Vérification du mot de passe
       const match = await bcrypt.compare(password, restaurant.password);
       if (!match) {
         return res.status(401).json({ error: 'Mot de passe incorrect.' });
       }
 
-      // Génération du JWT
       const token = jwt.sign(
         { id: restaurant.id, type: 'restaurant' },
         process.env.JWT_SECRET,
@@ -119,6 +115,130 @@ module.exports = {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'Erreur lors de la connexion.' });
+    }
+  },
+
+  /**
+   * POST /api/auth/restaurant/forgot-password
+   * Génère un token temporaire et l’envoie par mail.
+   * @param req.body.email
+   */
+  async forgotPassword(req, res) {
+    try {
+      const { email } = req.body;
+      const rest = await Restaurant.findOne({ where: { email } });
+      if (!rest) {
+        return res.status(200).json({
+          message: 'Si cet email est enregistré, vous allez recevoir un lien de réinitialisation.'
+        });
+      }
+
+      const token = jwt.sign(
+        { id: rest.id, type: 'restaurant' },
+        process.env.JWT_RESET_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      await PasswordResetToken.create({
+        token,
+        restaurantId: rest.id,
+        expiresAt: Date.now() + 3600 * 1000
+      });
+
+      // TODO : Envoyer le mail avec lien
+      // e.g. sendMail(rest.email, `https://votresite.com/reset-password?token=${token}`)
+
+      return res.status(200).json({
+        message: 'Si cet email est enregistré, vous allez recevoir un lien de réinitialisation.'
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur lors de la génération du lien de réinitialisation.' });
+    }
+  },
+
+  /**
+   * POST /api/auth/restaurant/reset-password
+   * Réinitialise le mot de passe via le token.
+   * @param req.body.token
+   * @param req.body.newPassword
+   */
+  async resetPassword(req, res) {
+    try {
+      const { token, newPassword } = req.body;
+
+      const record = await PasswordResetToken.findOne({ where: { token } });
+      if (!record || record.expiresAt < Date.now()) {
+        return res.status(400).json({ error: 'Token invalide ou expiré.' });
+      }
+
+      let payload;
+      try {
+        payload = jwt.verify(token, process.env.JWT_RESET_SECRET);
+      } catch {
+        return res.status(400).json({ error: 'Token invalide ou expiré.' });
+      }
+
+      const rest = await Restaurant.findByPk(payload.id);
+      if (!rest) {
+        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+      }
+
+      const hash = await bcrypt.hash(newPassword, 10);
+      rest.password = hash;
+      await rest.save();
+
+      await record.destroy();
+
+      return res.status(200).json({ message: 'Mot de passe réinitialisé avec succès.' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur lors de la réinitialisation du mot de passe.' });
+    }
+  },
+
+  /**
+   * POST /api/auth/restaurant/logout
+   * Invalide le token côté client (et/ou côté serveur via blacklist).
+   */
+  async logout(req, res) {
+    // Optionnel : stocker req.token en blacklist pour interdire son usage jusqu’à expiration
+    return res.status(200).json({ message: 'Déconnexion réussie.' });
+  },
+
+  /**
+   * POST /api/auth/restaurant/change-password
+   * Permet à un restaurant connecté de changer son mot de passe.
+   * @param req.userId      — injecté par verifyToken
+   * @param req.userType    — injecté par verifyToken (doit être 'restaurant')
+   * @param req.body.oldPassword
+   * @param req.body.newPassword
+   */
+  async changePassword(req, res) {
+    try {
+      if (req.userType !== 'restaurant') {
+        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
+      }
+
+      const { oldPassword, newPassword } = req.body;
+
+      const rest = await Restaurant.findByPk(req.userId);
+      if (!rest) {
+        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+      }
+
+      const match = await bcrypt.compare(oldPassword, rest.password);
+      if (!match) {
+        return res.status(401).json({ error: 'Ancien mot de passe incorrect.' });
+      }
+
+      rest.password = await bcrypt.hash(newPassword, 10);
+      await rest.save();
+
+      return res.status(200).json({ message: 'Mot de passe changé avec succès.' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur lors du changement de mot de passe.' });
     }
   }
 

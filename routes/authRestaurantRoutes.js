@@ -2,11 +2,10 @@ const express = require('express');
 const router  = express.Router();
 const { body, validationResult } = require('express-validator');
 const authRestaurantController = require('../controllers/authRestaurantController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
-/**
- * POST /api/auth/restaurant/signup
- * Création d’un nouveau restaurant
- */
+
+
 const signupRestaurantValidation = [
   body('name')
     .trim()
@@ -39,11 +38,6 @@ const signupRestaurantValidation = [
   }
 ];
 
-
-/**
- * POST /api/auth/restaurant/login
- * Connexion par email + password
- */
 const loginRestaurantValidation = [
   body('email')
     .trim()
@@ -62,7 +56,56 @@ const loginRestaurantValidation = [
   }
 ];
 
+const forgotPasswordValidation = [
+  body('email')
+    .trim()
+    .notEmpty().withMessage('L’email est requis.')
+    .isEmail().withMessage('Format d’email invalide.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+const resetPasswordValidation = [
+  body('token')
+    .notEmpty().withMessage('Le token est requis.'),
+  body('newPassword')
+    .notEmpty().withMessage('Le nouveau mot de passe est requis.')
+    .isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+const changePasswordValidation = [
+  body('oldPassword')
+    .notEmpty().withMessage('L’ancien mot de passe est requis.'),
+  body('newPassword')
+    .notEmpty().withMessage('Le nouveau mot de passe est requis.')
+    .isLength({ min: 8 }).withMessage('Le nouveau mot de passe doit contenir au moins 8 caractères.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+
 router.post('/signup', signupRestaurantValidation, authRestaurantController.signup);
 router.post('/login', loginRestaurantValidation, authRestaurantController.login);
+router.post('/logout', verifyToken, authRestaurantController.logout);
+router.post('/reset-password', resetPasswordValidation, authRestaurantController.resetPassword);
+router.post('/forgot-password', forgotPasswordValidation, authRestaurantController.forgotPassword);
+router.post('/change-password', verifyToken, changePasswordValidation, authRestaurantController.changePassword);
 
 module.exports = router;
