@@ -2,8 +2,8 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-module.exports = {
-  verifyToken(req, res, next) {
+module.exports.verifyToken(req, res, next) => 
+   {
     try {
       const authHeader = req.headers['authorization'];
       if (!authHeader) {
@@ -31,5 +31,5 @@ module.exports = {
       console.error(err);
       return res.status(500).json({ error: 'Erreur interne (vérification token).' });
     }
-  }
+  
 };
