@@ -131,6 +131,51 @@ module.exports = {
   },
 
   /**
+   * PATCH /api/restaurants/disable
+   * Désactive le restaurant connecté
+   */
+  async disable(req, res) {
+    try {
+      if (req.userType !== 'restaurant') {
+        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
+      }
+      const restaurant = await Restaurant.findByPk(req.userId);
+      if (!restaurant) {
+        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+      }
+      restaurant.is_active = false; 
+      await rest.save();
+      return res.status(200).json({ message: 'Restaurant désactivé.' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur lors de la désactivation.' });
+    }
+  },
+
+  /**
+   * PATCH /api/restaurants/enable
+   * Réactive le restaurant connecté
+   */
+  async disable(req, res) {
+    try {
+      if (req.userType !== 'restaurant') {
+        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
+      }
+      const restaurant = await Restaurant.findByPk(req.userId);
+      if (!restaurant) {
+        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+      }
+      restaurant.is_active = true; 
+      await rest.save();
+      return res.status(200).json({ message: 'Restaurant réactivé.' });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erreur lors de la réactivation.' });
+    }
+  },
+
+
+  /**
    * GET /api/restaurants
    * Liste paginée de restaurants sans mot de passe
    */

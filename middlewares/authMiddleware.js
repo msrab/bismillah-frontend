@@ -2,7 +2,7 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-module.exports.verifyToken(req, res, next) => 
+module.exports.verifyToken = (req, res, next) => 
    {
     try {
       const authHeader = req.headers['authorization'];
@@ -32,4 +32,11 @@ module.exports.verifyToken(req, res, next) =>
       return res.status(500).json({ error: 'Erreur interne (vérification token).' });
     }
   
+};
+
+module.exports.verifyAdmin = (req, res, next) => {
+  if (req.userType !== 'admin') {
+    return res.status(403).json({ error: 'Accès interdit : admin only.' });
+  }
+  next();
 };

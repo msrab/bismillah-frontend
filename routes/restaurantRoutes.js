@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
 const restaurantController = require('../controllers/restaurantController');
 
 // Récupère le profil du restaurant connecté
@@ -9,6 +9,12 @@ router.get('/profil', verifyToken, restaurantController.getProfile);
 
 // Met à jour le profil du restaurant connecté
 router.put('/profil', verifyToken, restaurantController.updateProfile);
+
+// Désactive le profil du restaurant connecté
+router.put('/profil/disable', verifyToken, restaurantController.disable);
+
+// Réactive le profil du restaurant connecté
+router.put('/profil/enable', verifyToken, restaurantController.enable);
 
 // Supprime le compte du restaurant connecté
 router.delete('/profil', verifyToken, restaurantController.deleteProfile);
