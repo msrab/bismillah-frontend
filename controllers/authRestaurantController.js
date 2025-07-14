@@ -61,7 +61,7 @@ module.exports = {
           email: newRestaurant.email
         }
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -107,7 +107,7 @@ module.exports = {
         message: 'Connexion réussie.',
         token
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -145,7 +145,7 @@ module.exports = {
       return res.status(200).json({
         message: 'Si cet email est enregistré, vous allez recevoir un lien de réinitialisation.'
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -184,7 +184,7 @@ module.exports = {
       await record.destroy();
 
       return res.status(200).json({ message: 'Mot de passe réinitialisé avec succès.' });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -228,7 +228,7 @@ module.exports = {
       await rest.save();
 
       return res.status(200).json({ message: 'Mot de passe changé avec succès.' });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   }

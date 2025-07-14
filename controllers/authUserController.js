@@ -58,7 +58,7 @@ module.exports = {
           email: newUser.email
         }
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -109,7 +109,7 @@ module.exports = {
         message: 'Connexion réussie.',
         token
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   }

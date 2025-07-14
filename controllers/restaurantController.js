@@ -18,7 +18,7 @@ module.exports = {
         return next(createError('Restaurant non trouvé.', 404));
       }
       return res.status(200).json({ restaurant: rest });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -84,7 +84,7 @@ module.exports = {
           updatedAt:      rest.updatedAt
         }
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -102,7 +102,7 @@ module.exports = {
 
       await rest.destroy();
       return res.status(200).json({ message: 'Compte restaurant supprimé.' });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -121,7 +121,7 @@ module.exports = {
       restaurant.is_active = false; 
       await rest.save();
       return res.status(200).json({ message: 'Restaurant désactivé.' });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -139,7 +139,7 @@ module.exports = {
       restaurant.is_active = true; 
       await rest.save();
       return res.status(200).json({ message: 'Restaurant réactivé.' });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -171,7 +171,7 @@ module.exports = {
         pageSize: restaurants.length,
         restaurants
       });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   },
@@ -199,7 +199,7 @@ module.exports = {
       }
 
       return res.status(200).json({ restaurant: rest });
-    } catch (err) {
+    } catch (error) {
       next(error);
     }
   }
