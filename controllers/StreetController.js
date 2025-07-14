@@ -1,6 +1,6 @@
 const { Street } = require('../models');
 
-exports.createStreet = async (req, res) => {
+exports.createStreet = async (req, res, next) => {
   try {
     const { name, cityId } = req.body;
     
@@ -14,7 +14,7 @@ exports.createStreet = async (req, res) => {
   }
 };
 
-exports.getAllStreets = async (req, res) => {
+exports.getAllStreets = async (req, res, next) => {
   try {
     const streets = await Street.findAll();
     return res.status(200).json(streets);
@@ -23,7 +23,7 @@ exports.getAllStreets = async (req, res) => {
   }
 };
 
-exports.getStreetById = async (req, res) => {
+exports.getStreetById = async (req, res, next) => {
   try {
     const street = await Street.findByPk(req.params.id);
     if (!street) 

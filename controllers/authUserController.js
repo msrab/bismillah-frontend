@@ -10,7 +10,7 @@ module.exports = {
    * Entrées (req.body) : { login, email, password, address_number?, firstname?, surname?, phone?, avatar? }
    * Sortie : status 201 + { message, user:{ id, login, email } } ou status 400/409/500 + { error }.
    */
-  async signup(req, res) {
+  async signup(req, res, next) {
     try {
       const { login, email, password, address_number, firstname, surname, phone, avatar } = req.body;
 
@@ -69,7 +69,7 @@ module.exports = {
    * Entrées (req.body) : { login?, email?, password }
    * Sortie : status 200 + { message, token } ou status 400/401/404/500 + { error }.
    */
-  async login(req, res) {
+  async login(req, res, next) {
     try {
       const { login, email, password } = req.body;
 

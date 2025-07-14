@@ -19,7 +19,7 @@ module.exports = {
    * @return {201}    {message, restaurant}
    * @return {401}    si error
    */
-  async signup(req, res) {
+  async signup(req, res, next) {
     try {
       const {
         name,
@@ -76,7 +76,7 @@ module.exports = {
    * @return {404}    si pas de restaurant trouvé pour cet email
    * @return {401}    si mot de passe incorrect
    */
-  async login(req, res) {
+  async login(req, res, next) {
     try {
       const { email, password } = req.body;
 
@@ -117,7 +117,7 @@ module.exports = {
    * Génère un token temporaire et l’envoie par mail.
    * @param req.body.email
    */
-  async forgotPassword(req, res) {
+  async forgotPassword(req, res, next) {
     try {
       const { email } = req.body;
       const rest = await Restaurant.findOne({ where: { email } });
@@ -156,7 +156,7 @@ module.exports = {
    * @param req.body.token
    * @param req.body.newPassword
    */
-  async resetPassword(req, res) {
+  async resetPassword(req, res, next) {
     try {
       const { token, newPassword } = req.body;
 
@@ -193,7 +193,7 @@ module.exports = {
    * POST /api/auth/restaurant/logout
    * Invalide le token côté client (et/ou côté serveur via blacklist).
    */
-  async logout(req, res) {
+  async logout(req, res, next) {
     // Optionnel : stocker req.token en blacklist pour interdire son usage jusqu’à expiration
     return res.status(200).json({ message: 'Déconnexion réussie.' });
   },
@@ -206,7 +206,7 @@ module.exports = {
    * @param req.body.oldPassword
    * @param req.body.newPassword
    */
-  async changePassword(req, res) {
+  async changePassword(req, res, next) {
     try {
       if (req.userType !== 'restaurant') {
         return next(createError('Accès interdit : pas un restaurant.', 403));

@@ -1,6 +1,6 @@
 const { City } = require('../models');
 
-exports.createCity = async (req, res) => {
+exports.createCity = async (req, res, next) => {
   try {
     const { name, countryId } = req.body;
     // La validation des champs est déjà faite par le middleware
@@ -14,7 +14,7 @@ exports.createCity = async (req, res) => {
   }
 };
 
-exports.getAllCities = async (req, res) => {
+exports.getAllCities = async (req, res, next) => {
   try {
     const cities = await City.findAll();
     return res.status(200).json(cities);
@@ -23,7 +23,7 @@ exports.getAllCities = async (req, res) => {
   }
 };
 
-exports.getCityById = async (req, res) => {
+exports.getCityById = async (req, res, next) => {
   try {
     const city = await City.findByPk(req.params.id);
     if (!city) 

@@ -6,7 +6,7 @@ module.exports = {
   /**
    * GET /api/restaurants/profil
    */
-  async getProfile(req, res) {
+  async getProfile(req, res, next) {
     try {
 
       const rest = await Restaurant.findByPk(req.userId, {
@@ -26,7 +26,7 @@ module.exports = {
   /**
    * PUT /api/restaurants/profil
    */
-  async updateProfile(req, res) {
+  async updateProfile(req, res, next) {
     try {
 
       const rest = await Restaurant.findByPk(req.userId);
@@ -92,7 +92,7 @@ module.exports = {
   /**
    * DELETE /api/restaurants/profil
    */
-  async deleteProfile(req, res) {
+  async deleteProfile(req, res, next) {
     try {
 
       const rest = await Restaurant.findByPk(req.userId);
@@ -111,7 +111,7 @@ module.exports = {
    * PATCH /api/restaurants/disable
    * Désactive le restaurant connecté
    */
-  async disable(req, res) {
+  async disable(req, res, next) {
     try {
       const restaurant = await Restaurant.findByPk(req.userId);
 
@@ -130,7 +130,7 @@ module.exports = {
    * PATCH /api/restaurants/enable
    * Réactive le restaurant connecté
    */
-  async enable(req, res) {
+  async enable(req, res, next) {
     try {
       const restaurant = await Restaurant.findByPk(req.userId);
       if (!restaurant) {
@@ -149,7 +149,7 @@ module.exports = {
    * GET /api/restaurants
    * Liste paginée de restaurants
    */
-  async listRestaurants(req, res) {
+  async listRestaurants(req, res, next) {
     try {
       const page  = Math.max(1, parseInt(req.query.page)  || 1);
       const limit = Math.max(1, parseInt(req.query.limit) || 10);
@@ -180,7 +180,7 @@ module.exports = {
    * GET /api/restaurants/:id
    * Récupère un restaurant par son ID
    */
-  async getRestaurantById(req, res) {
+  async getRestaurantById(req, res, next) {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id) || id < 1) {

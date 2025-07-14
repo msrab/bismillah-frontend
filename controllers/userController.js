@@ -8,7 +8,7 @@ module.exports = {
    * GET /api/users/me
    * Récupère les informations du user connecté (depuis req.userId, req.userType)
    */
-  async getProfile(req, res) {
+  async getProfile(req, res, next) {
     try {
       // S’assurer que c’est un user qui appelle
       if (req.userType !== 'user') {
@@ -32,7 +32,7 @@ module.exports = {
    * PUT /api/users/me
    * Met à jour le profil du user connecté (login,email,address_number,firstname,surname,phone,avatar)
    */
-  async updateProfile(req, res) {
+  async updateProfile(req, res, next) {
     try {
       if (req.userType !== 'user') {
         return next(createerror('Accès interdit : pas un utilisateur.', 403));
@@ -96,7 +96,7 @@ module.exports = {
    * DELETE /api/users/me
    * Supprime le compte du user connecté
    */
-  async deleteProfile(req, res) {
+  async deleteProfile(req, res, next) {
     try {
       if (req.userType !== 'user') {
         return next(createerror('Accès interdit : pas un utilisateur.', 403));
