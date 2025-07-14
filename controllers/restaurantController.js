@@ -1,6 +1,7 @@
 'use strict';
 
 const { Restaurant } = require('../models');
+const createError = require('../utils/createError');
 
 module.exports = {
   /**

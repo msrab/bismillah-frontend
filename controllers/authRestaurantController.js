@@ -3,6 +3,7 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const { Restaurant } = require('../models');
+const createError = require('../utils/createError');
 
 module.exports = {
   /**
