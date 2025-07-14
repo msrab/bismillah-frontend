@@ -160,10 +160,11 @@ module.exports = {
       const limit = Math.max(1, parseInt(req.query.limit) || 10);
       const offset = (page - 1) * limit;
 
-      const total = await Restaurant.count();
+      const total = await Restaurant.count({ where: { is_active: true }});
       const restaurants = await Restaurant.findAll({
         offset,
         limit,
+        where: { is_active: true },
         attributes: [
           'id','name','company_number','address_number','phone','email','logo','nb_followers'
         ]
@@ -192,11 +193,13 @@ module.exports = {
         return res.status(400).json({ error: 'ID invalide.' });
       }
 
-      const rest = await Restaurant.findByPk(id, {
+      const rest = await Restaurant.findOne({
+        where: { id, is_active: true },
         attributes: [
           'id','name','company_number','address_number','phone','email','logo','nb_followers'
         ]
       });
+      
       if (!rest) {
         return res.status(404).json({ error: 'Restaurant non trouvé.' });
       }
