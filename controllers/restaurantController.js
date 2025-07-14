@@ -130,7 +130,7 @@ module.exports = {
    * PATCH /api/restaurants/enable
    * Réactive le restaurant connecté
    */
-  async disable(req, res) {
+  async enable(req, res) {
     try {
       const restaurant = await Restaurant.findByPk(req.userId);
       if (!restaurant) {
