@@ -12,20 +12,19 @@ module.exports = {
     try {
       // S’assurer que c’est un user qui appelle
       if (req.userType !== 'user') {
-        return res.status(403).json({ error: 'Accès interdit : pas un utilisateur.' });
+        return next(createError('Accès interdit : pas un utilisateur.', 403));
       }
 
       const user = await User.findByPk(req.userId, {
         attributes: ['id','login','email','address_number','firstname','surname','phone','avatar','createdAt','updatedAt']
       });
       if (!user) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        return next(createError('Utilisateur non trouvé.', 404));
       }
 
       return res.status(200).json({ user });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la récupération du profil.' });
+    } catch (error) {
+      return next(error);
     }
   },
 
@@ -36,12 +35,12 @@ module.exports = {
   async updateProfile(req, res) {
     try {
       if (req.userType !== 'user') {
-        return res.status(403).json({ error: 'Accès interdit : pas un utilisateur.' });
+        return next(createerror('Accès interdit : pas un utilisateur.', 403));
       }
 
       const user = await User.findByPk(req.userId);
       if (!user) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        return next(createerror('Utilisateur non trouvé.', 404));
       }
 
       const { login, email, address_number, firstname, surname, phone, avatar } = req.body;
@@ -50,7 +49,7 @@ module.exports = {
       if (login && login !== user.login) {
         const exists = await User.findOne({ where: { login } });
         if (exists) {
-          return res.status(409).json({ error: 'Ce login est déjà pris.' });
+          return next(createerror('Ce login est déjà pris.', 409));
         }
         user.login = login;
       }
@@ -58,7 +57,7 @@ module.exports = {
       if (email && email !== user.email) {
         const existsEmail = await User.findOne({ where: { email } });
         if (existsEmail) {
-          return res.status(409).json({ error: 'Cet email est déjà utilisé.' });
+          return next(createerror('Cet email est déjà utilisé.', 409));
         }
         user.email = email;
       }
@@ -88,9 +87,8 @@ module.exports = {
           updatedAt:      user.updatedAt
         }
       });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la mise à jour du profil.' });
+    } catch (error) {
+      return next(error);
     }
   },
 
@@ -101,19 +99,18 @@ module.exports = {
   async deleteProfile(req, res) {
     try {
       if (req.userType !== 'user') {
-        return res.status(403).json({ error: 'Accès interdit : pas un utilisateur.' });
+        return next(createerror('Accès interdit : pas un utilisateur.', 403));
       }
 
       const user = await User.findByPk(req.userId);
       if (!user) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        return next(createerror('Utilisateur non trouvé.', 404));
       }
 
       await user.destroy();
       return res.status(200).json({ message: 'Compte utilisateur supprimé.' });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la suppression du compte.' });
+    } catch (error) {
+      return next(error);
     }
   }
 };

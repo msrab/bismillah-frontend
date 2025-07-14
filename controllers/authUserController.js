@@ -16,23 +16,23 @@ module.exports = {
 
       // 1) Validation des champs obligatoires
       if (!login || login.trim() === '') {
-        return res.status(400).json({ error: 'Login requis.' });
+        return next(createError('Login requis.', 400));
       }
       if (!email || email.trim() === '') {
-        return res.status(400).json({ error: 'Email requis.' });
+        return next(createError('Email requis.', 400));
       }
       if (!password || password.trim() === '') {
-        return res.status(400).json({ error: 'Password requis.' });
+        return next(createError('Password requis.', 400));
       }
 
       // 2) Vérifier qu’aucun user n’existe déjà avec le même login ou email
       const existLogin = await User.findOne({ where: { login } });
       if (existLogin) {
-        return res.status(409).json({ error: 'Ce login est déjà pris.' });
+        return next(createError('Ce login est déjà pris.', 409));
       }
       const existEmail = await User.findOne({ where: { email } });
       if (existEmail) {
-        return res.status(409).json({ error: 'Cet email est déjà utilisé.' });
+        return next(createError('Cet email est déjà utilisé.', 409));
       }
 
       // 3) Hasher le mot de passe
@@ -59,8 +59,7 @@ module.exports = {
         }
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la création de l’utilisateur.' });
+      next(error);
     }
   },
 
@@ -76,10 +75,10 @@ module.exports = {
 
       // 1) Validation des champs obligatoires
       if ((!login || login.trim() === '') && (!email || email.trim() === '')) {
-        return res.status(400).json({ error: 'Login ou email requis.' });
+        return next(createError('Login ou email requis.', 400));
       }
       if (!password || password.trim() === '') {
-        return res.status(400).json({ error: 'Password requis.' });
+        return next(createError('Password requis.', 400));
       }
 
       // 2) Chercher l’utilisateur par login OU email
@@ -90,13 +89,13 @@ module.exports = {
         user = await User.findOne({ where: { email } });
       }
       if (!user) {
-        return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        return next(createError('Utilisateur non trouvé.', 404));
       }
 
       // 3) Comparer le mot de passe
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
-        return res.status(401).json({ error: 'Mot de passe incorrect.' });
+        return next(createError('Mot de passe incorrect.', 401));
       }
 
       // 4) Générer un token JWT (payload contient id et type)
@@ -111,8 +110,7 @@ module.exports = {
         token
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la connexion.' });
+      next(error);
     }
   }
 };

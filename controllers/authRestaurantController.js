@@ -33,16 +33,12 @@ module.exports = {
 
       const existCIF = await Restaurant.findOne({ where: { company_number } });
       if (existCIF) {
-        return res.status(409).json({
-          error: 'Ce numéro d’entreprise est déjà enregistré.'
-        });
+        return next(createError('Ce numéro d’entreprise est déjà enregistré.', 409));
       }
 
       const existEmail = await Restaurant.findOne({ where: { email } });
       if (existEmail) {
-        return res.status(409).json({
-          error: 'Cet email est déjà utilisé.'
-        });
+        return next(createError('Cet email est déjà utilisé.', 409));
       }
 
       const hash = await bcrypt.hash(password, 10);
@@ -66,8 +62,7 @@ module.exports = {
         }
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la création du restaurant.' });
+      next(error);
     }
   },
 
@@ -86,20 +81,20 @@ module.exports = {
       const { email, password } = req.body;
 
       if (!email) {
-        return res.status(400).json({ error: 'L’email est requis.' });
+        return next(createError('L’email est requis.', 400));
       }
       if (!password) {
-        return res.status(400).json({ error: 'Le mot de passe est requis.' });
+        return next(createError('Le mot de passe est requis.', 400));
       }
 
       const restaurant = await Restaurant.findOne({ where: { email } });
       if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       const match = await bcrypt.compare(password, restaurant.password);
       if (!match) {
-        return res.status(401).json({ error: 'Mot de passe incorrect.' });
+        return next(createError('Mot de passe incorrect.', 401));
       }
 
       const token = jwt.sign(
@@ -113,8 +108,7 @@ module.exports = {
         token
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la connexion.' });
+      next(error);
     }
   },
 
@@ -152,8 +146,7 @@ module.exports = {
         message: 'Si cet email est enregistré, vous allez recevoir un lien de réinitialisation.'
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la génération du lien de réinitialisation.' });
+      next(error);
     }
   },
 
@@ -169,19 +162,19 @@ module.exports = {
 
       const record = await PasswordResetToken.findOne({ where: { token } });
       if (!record || record.expiresAt < Date.now()) {
-        return res.status(400).json({ error: 'Token invalide ou expiré.' });
+        return next(createError('Token invalide ou expiré.', 400));
       }
 
       let payload;
       try {
         payload = jwt.verify(token, process.env.JWT_RESET_SECRET);
       } catch {
-        return res.status(400).json({ error: 'Token invalide ou expiré.' });
+        return next(createError('Token invalide ou expiré.', 400));
       }
 
       const rest = await Restaurant.findByPk(payload.id);
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       const hash = await bcrypt.hash(newPassword, 10);
@@ -192,8 +185,7 @@ module.exports = {
 
       return res.status(200).json({ message: 'Mot de passe réinitialisé avec succès.' });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la réinitialisation du mot de passe.' });
+      next(error);
     }
   },
 
@@ -209,27 +201,27 @@ module.exports = {
   /**
    * POST /api/auth/restaurant/change-password
    * Permet à un restaurant connecté de changer son mot de passe.
-   * @param req.userId      — injecté par verifyToken
-   * @param req.userType    — injecté par verifyToken (doit être 'restaurant')
+   * @param req.userId     
+   * @param req.userType    
    * @param req.body.oldPassword
    * @param req.body.newPassword
    */
   async changePassword(req, res) {
     try {
       if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
+        return next(createError('Accès interdit : pas un restaurant.', 403));
       }
 
       const { oldPassword, newPassword } = req.body;
 
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       const match = await bcrypt.compare(oldPassword, rest.password);
       if (!match) {
-        return res.status(401).json({ error: 'Ancien mot de passe incorrect.' });
+        return next(createError('Ancien mot de passe incorrect.', 401));
       }
 
       rest.password = await bcrypt.hash(newPassword, 10);
@@ -237,8 +229,7 @@ module.exports = {
 
       return res.status(200).json({ message: 'Mot de passe changé avec succès.' });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors du changement de mot de passe.' });
+      next(error);
     }
   }
 

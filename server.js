@@ -30,6 +30,7 @@ const authUserRoutes       = require('./routes/authUserRoutes');
 const authRestaurantRoutes = require('./routes/authRestaurantRoutes');
 const userRoutes           = require('./routes/userRoutes');
 const restaurantRoutes     = require('./routes/restaurantRoutes');
+const errorHandler = require('./middlewares/errorHandler');
 
 // Middleware d’authentification (vérification JWT)
 const { verifyToken } = require('./middlewares/authMiddleware');
@@ -46,6 +47,8 @@ app.use('/api/restaurants', verifyToken, restaurantRoutes);
 app.get('/', (_, res) => {
   res.send('Bienvenue sur Bismillah-app API ✨');
 });
+
+app.use(errorHandler);
 
 /* ------------------------------------------------------------------
  * Export pour permettre aux tests de récupérer `app` et `sequelize`.

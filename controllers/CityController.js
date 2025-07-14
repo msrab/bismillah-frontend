@@ -10,7 +10,7 @@ exports.createCity = async (req, res) => {
     city = await City.create({ name, countryId });
     return res.status(201).json(city);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };
 
@@ -19,16 +19,17 @@ exports.getAllCities = async (req, res) => {
     const cities = await City.findAll();
     return res.status(200).json(cities);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };
 
 exports.getCityById = async (req, res) => {
   try {
     const city = await City.findByPk(req.params.id);
-    if (!city) return res.status(404).json({ message: 'Ville non trouvée.' });
+    if (!city) 
+      return next(createError('Ville non trouvée.', 404));
     return res.status(200).json(city);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };

@@ -10,7 +10,7 @@ exports.createStreet = async (req, res) => {
     street = await Street.create({ name, cityId });
     return res.status(201).json(street);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };
 
@@ -19,16 +19,17 @@ exports.getAllStreets = async (req, res) => {
     const streets = await Street.findAll();
     return res.status(200).json(streets);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };
 
 exports.getStreetById = async (req, res) => {
   try {
     const street = await Street.findByPk(req.params.id);
-    if (!street) return res.status(404).json({ message: 'Rue non trouvée.' });
+    if (!street) 
+      return next(createError('Rue non trouvée.', 404));
     return res.status(200).json(street);
   } catch (error) {
-    return res.status(500).json({ message: 'Erreur serveur.', error: error.message });
+    next(error);
   }
 };

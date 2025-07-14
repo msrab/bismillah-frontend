@@ -15,12 +15,11 @@ module.exports = {
         ]
       });
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
       return res.status(200).json({ restaurant: rest });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la récupération du profil.' });
+      next(error);
     }
   },
 
@@ -32,7 +31,7 @@ module.exports = {
 
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       const {
@@ -48,7 +47,7 @@ module.exports = {
       if (company_number && company_number !== rest.company_number) {
         const existsCompany = await Restaurant.findOne({ where: { company_number } });
         if (existsCompany) {
-          return res.status(409).json({ error: 'Ce numéro d’entreprise est déjà utilisé.' });
+          return next(createError('Ce numéro d’entreprise est déjà utilisé.', 409));
         }
         rest.company_number = company_number;
       }
@@ -57,7 +56,7 @@ module.exports = {
       if (email && email !== rest.email) {
         const existsEmail = await Restaurant.findOne({ where: { email } });
         if (existsEmail) {
-          return res.status(409).json({ error: 'Cet email est déjà utilisé.' });
+          return next(createError('Cet email est déjà utilisé.', 409));
         }
         rest.email = email;
       }
@@ -86,8 +85,7 @@ module.exports = {
         }
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la mise à jour du profil.' });
+      next(error);
     }
   },
 
@@ -99,14 +97,13 @@ module.exports = {
 
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       await rest.destroy();
       return res.status(200).json({ message: 'Compte restaurant supprimé.' });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la suppression du compte.' });
+      next(error);
     }
   },
 
@@ -119,14 +116,13 @@ module.exports = {
       const restaurant = await Restaurant.findByPk(req.userId);
 
       if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
       restaurant.is_active = false; 
       await rest.save();
       return res.status(200).json({ message: 'Restaurant désactivé.' });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la désactivation.' });
+      next(error);
     }
   },
 
@@ -138,14 +134,13 @@ module.exports = {
     try {
       const restaurant = await Restaurant.findByPk(req.userId);
       if (!restaurant) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
       restaurant.is_active = true; 
       await rest.save();
       return res.status(200).json({ message: 'Restaurant réactivé.' });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la réactivation.' });
+      next(error);
     }
   },
 
@@ -177,8 +172,7 @@ module.exports = {
         restaurants
       });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la récupération des restaurants.' });
+      next(error);
     }
   },
 
@@ -190,7 +184,7 @@ module.exports = {
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id) || id < 1) {
-        return res.status(400).json({ error: 'ID invalide.' });
+        return next(createError('ID invalide.', 400));
       }
 
       const rest = await Restaurant.findOne({
@@ -201,13 +195,12 @@ module.exports = {
       });
       
       if (!rest) {
-        return res.status(404).json({ error: 'Restaurant non trouvé.' });
+        return next(createError('Restaurant non trouvé.', 404));
       }
 
       return res.status(200).json({ restaurant: rest });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Erreur lors de la récupération du restaurant.' });
+      next(error);
     }
   }
   
