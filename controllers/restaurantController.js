@@ -8,9 +8,6 @@ module.exports = {
    */
   async getProfile(req, res) {
     try {
-      if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
-      }
 
       const rest = await Restaurant.findByPk(req.userId, {
         attributes: [
@@ -32,9 +29,6 @@ module.exports = {
    */
   async updateProfile(req, res) {
     try {
-      if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
-      }
 
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
@@ -42,7 +36,6 @@ module.exports = {
       }
 
       const {
-        login,
         name,
         company_number,
         address_number,
@@ -50,15 +43,6 @@ module.exports = {
         email,
         logo
       } = req.body;
-
-      // Vérifier unicité du login
-      if (login && login !== rest.login) {
-        const exists = await Restaurant.findOne({ where: { login } });
-        if (exists) {
-          return res.status(409).json({ error: 'Ce login est déjà pris.' });
-        }
-        rest.login = login;
-      }
 
       // Vérifier unicité du company_number
       if (company_number && company_number !== rest.company_number) {
@@ -90,7 +74,6 @@ module.exports = {
         message: 'Profil restaurateur mis à jour avec succès.',
         restaurant: {
           id:             rest.id,
-          login:          rest.login,
           name:           rest.name,
           company_number: rest.company_number,
           address_number: rest.address_number,
@@ -113,9 +96,6 @@ module.exports = {
    */
   async deleteProfile(req, res) {
     try {
-      if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
-      }
 
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
@@ -136,10 +116,8 @@ module.exports = {
    */
   async disable(req, res) {
     try {
-      if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
-      }
       const restaurant = await Restaurant.findByPk(req.userId);
+
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant non trouvé.' });
       }
@@ -158,9 +136,6 @@ module.exports = {
    */
   async disable(req, res) {
     try {
-      if (req.userType !== 'restaurant') {
-        return res.status(403).json({ error: 'Accès interdit : pas un restaurant.' });
-      }
       const restaurant = await Restaurant.findByPk(req.userId);
       if (!restaurant) {
         return res.status(404).json({ error: 'Restaurant non trouvé.' });
@@ -177,7 +152,7 @@ module.exports = {
 
   /**
    * GET /api/restaurants
-   * Liste paginée de restaurants sans mot de passe
+   * Liste paginée de restaurants
    */
   async listRestaurants(req, res) {
     try {
@@ -190,7 +165,7 @@ module.exports = {
         offset,
         limit,
         attributes: [
-          'id','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
+          'id','name','company_number','address_number','phone','email','logo','nb_followers'
         ]
       });
 
@@ -219,7 +194,7 @@ module.exports = {
 
       const rest = await Restaurant.findByPk(id, {
         attributes: [
-          'id','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
+          'id','name','company_number','address_number','phone','email','logo','nb_followers'
         ]
       });
       if (!rest) {

@@ -1,29 +1,30 @@
 const express = require('express');
 const router  = express.Router();
 
-const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
+const { verifyToken } = require('../middlewares/authMiddleware');
 const restaurantController = require('../controllers/restaurantController');
+const { requireRole }  = require('../middlewares/roleMiddleware');
 
 // Récupère le profil du restaurant connecté
-router.get('/profil', verifyToken, restaurantController.getProfile);
+router.get('/profil', verifyToken, requireRole('restaurant'), restaurantController.getProfile);
 
 // Met à jour le profil du restaurant connecté
-router.put('/profil', verifyToken, restaurantController.updateProfile);
+router.put('/profil', verifyToken, requireRole('restaurant'), restaurantController.updateProfile);
 
 // Désactive le profil du restaurant connecté
-router.put('/profil/disable', verifyToken, restaurantController.disable);
+router.put('/profil/disable', verifyToken, requireRole('restaurant'), restaurantController.disable);
 
 // Réactive le profil du restaurant connecté
-router.put('/profil/enable', verifyToken, restaurantController.enable);
+router.put('/profil/enable', verifyToken, requireRole('restaurant'), restaurantController.enable);
 
 // Supprime le compte du restaurant connecté
-router.delete('/profil', verifyToken, restaurantController.deleteProfile);
+router.delete('/profil', verifyToken, requireRole('restaurant'), restaurantController.deleteProfile);
 
 // Liste paginée de tous les restaurants (sans mot de passe)
-router.get('/', verifyToken, restaurantController.listRestaurants);
+router.get('/', verifyToken, requireRole('user'), restaurantController.listRestaurants);
 
 // Récupère un restaurant par son ID
-router.get('/:id', verifyToken, restaurantController.getRestaurantById);
+router.get('/:id', verifyToken, requireRole('user'), restaurantController.getRestaurantById);
 
 
 module.exports = router;
