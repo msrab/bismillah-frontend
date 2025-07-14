@@ -8,7 +8,7 @@ const {
   forgotPasswordValidation,
   resetPasswordValidation,
   changePasswordValidation
-} = require('../middlewares/validateAuthRestaurant');
+} = require('../middlewares/validateRestaurant');
 
 
 router.post('/signup', signupRestaurantValidation, authRestaurantController.signup);

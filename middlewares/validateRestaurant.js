@@ -3,19 +3,23 @@ const { body, validationResult } = require('express-validator');
 const signupRestaurantValidation = [
   body('name')
     .trim()
+    .escape()
     .notEmpty().withMessage('Le nom est requis.'),
 
   body('company_number')
     .trim()
+    .escape()
     .notEmpty().withMessage('Le numéro d’entreprise est requis.')
     .isAlphanumeric().withMessage('Le numéro d’entreprise ne doit contenir que lettres et chiffres.'),
 
   body('address_number')
     .trim()
+    .escape()
     .notEmpty().withMessage('L’adresse est requise.'),
 
   body('email')
     .trim()
+    .escape()
     .notEmpty().withMessage('L’email est requis.')
     .isEmail().withMessage('Email invalide.'),
 
@@ -35,6 +39,7 @@ const signupRestaurantValidation = [
 const loginRestaurantValidation = [
   body('email')
     .trim()
+    .escape()
     .notEmpty().withMessage('L’email est requis.')
     .isEmail().withMessage('Format d’email invalide.'),
 
@@ -53,6 +58,7 @@ const loginRestaurantValidation = [
 const forgotPasswordValidation = [
   body('email')
     .trim()
+    .escape()
     .notEmpty().withMessage('L’email est requis.')
     .isEmail().withMessage('Format d’email invalide.'),
   (req, res, next) => {
@@ -93,3 +99,11 @@ const changePasswordValidation = [
     next();
   }
 ];
+
+module.exports = {
+  signupRestaurantValidation,
+  loginRestaurantValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
+  changePasswordValidation
+};
