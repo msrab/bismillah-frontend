@@ -3,8 +3,7 @@ const { Street } = require('../models');
 exports.createStreet = async (req, res) => {
   try {
     const { name, cityId } = req.body;
-    if (!name || !cityId) return res.status(400).json({ message: 'Nom et cityId requis.' });
-
+    
     let street = await Street.findOne({ where: { name, cityId } });
     if (street) return res.status(200).json(street);
 

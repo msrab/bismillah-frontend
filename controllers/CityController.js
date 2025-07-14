@@ -3,8 +3,7 @@ const { City } = require('../models');
 exports.createCity = async (req, res) => {
   try {
     const { name, countryId } = req.body;
-    if (!name || !countryId) return res.status(400).json({ message: 'Nom et countryId requis.' });
-
+    // La validation des champs est déjà faite par le middleware
     let city = await City.findOne({ where: { name, countryId } });
     if (city) return res.status(200).json(city);
 
