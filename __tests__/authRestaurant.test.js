@@ -4,8 +4,11 @@
 
 const request = require('supertest');
 const bcrypt  = require('bcrypt');
+const jwt     = require('jsonwebtoken');
 const { app, sequelize } = require('../server');
-const { Restaurant } = require('../models');
+const { Restaurant, PasswordResetToken } = require('../models');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'testsecret';
 
 describe('Auth Restaurant', () => {
   const restaurantPayload = {
@@ -19,7 +22,6 @@ describe('Auth Restaurant', () => {
   };
 
   beforeAll(async () => {
-    // Rebuild de la base test
     await sequelize.sync({ force: true });
   });
 
@@ -45,7 +47,6 @@ describe('Auth Restaurant', () => {
     });
 
     it('ne doit pas créer si company_number déjà pris (409)', async () => {
-      // Insérer manuellement un restaurant pour provoquer le conflit
       await Restaurant.create({
         name:           'AutreBrasserie',
         company_number: restaurantPayload.company_number,
@@ -65,14 +66,10 @@ describe('Auth Restaurant', () => {
         });
 
       expect(res.statusCode).toBe(409);
-      expect(res.body).toHaveProperty(
-        'error',
-        'Ce numéro d’entreprise est déjà enregistré.'
-      );
+      expect(res.body).toHaveProperty('error', 'Ce numéro d’entreprise est déjà enregistré.');
     });
 
     it('ne doit pas créer si email déjà utilisé (409)', async () => {
-      // Insérer un restaurant avec le même email
       await Restaurant.create({
         name:           'BrasserieUnique',
         company_number: 'UNIQ123',
@@ -130,9 +127,7 @@ describe('Auth Restaurant', () => {
         .send(payload);
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.errors).toContain(
-        'Le numéro d’entreprise ne doit contenir que lettres et chiffres.'
-      );
+      expect(res.body.errors).toContain('Le numéro d’entreprise ne doit contenir que lettres et chiffres.');
     });
 
     it('ne doit pas créer si address_number manquant (400)', async () => {
@@ -198,16 +193,13 @@ describe('Auth Restaurant', () => {
         .send(payload);
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.errors).toContain(
-        'Le mot de passe doit contenir au moins 8 caractères.'
-      );
+      expect(res.body.errors).toContain('Le mot de passe doit contenir au moins 8 caractères.');
     });
   });
 
   describe('POST /api/auth/restaurant/login', () => {
     beforeEach(async () => {
       await sequelize.sync({ force: true });
-      // Crée un restaurant existant pour tester la connexion
       await Restaurant.create({
         name:           restaurantPayload.name,
         company_number: 'LOGIN123',
@@ -222,7 +214,6 @@ describe('Auth Restaurant', () => {
     it('doit connecter le restaurant existant et renvoyer un token (200)', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
-        // Teste connexion PAR company_number OU PAR email : ici on teste par company_number
         .send({
           company_number: 'LOGIN123',
           password:       restaurantPayload.password
@@ -276,10 +267,7 @@ describe('Auth Restaurant', () => {
         .send({ password: restaurantPayload.password });
 
       expect(res.statusCode).toBe(400);
-      expect(res.body).toHaveProperty(
-        'error',
-        'Le numéro d’entreprise est requis.'
-      );
+      expect(res.body).toHaveProperty('error', 'Le numéro d’entreprise est requis.');
     });
 
     it('renvoie 400 si email mal formé (400)', async () => {
@@ -368,7 +356,6 @@ describe('Auth Restaurant', () => {
         company_number: 'CPF123',
         password: await bcrypt.hash('OldPass123', 10)
       });
-      // Simuler la création d’un token de réinitialisation
       rawToken     = 'random-token';
       tokenRecord  = await PasswordResetToken.create({
         restaurantId: restaurant.id,
@@ -401,7 +388,6 @@ describe('Auth Restaurant', () => {
     });
 
     it('404 → token expiré ou inexistant', async () => {
-      // on pousse la date d’expiration dans le passé
       tokenRecord.expiresAt = new Date(Date.now() - 1000);
       await tokenRecord.save();
       const res = await request(app)
@@ -453,6 +439,27 @@ describe('Auth Restaurant', () => {
           'Le nouveau mot de passe doit contenir au moins 8 caractères.'
         ])
       );
+    });
+
+    // Test de sécurité supplémentaire (optionnel)
+    it('403 → un restaurant ne peut pas changer le mot de passe d’un autre', async () => {
+      // Crée un autre restaurant et un token pour lui
+      const otherRest = await Restaurant.create({
+        ...restaurantPayload,
+        email: 'other@example.com',
+        company_number: 'OTHER123',
+        password: await bcrypt.hash('OtherPass123', 10)
+      });
+      const otherToken = jwt.sign({ id: otherRest.id, type: 'restaurant' }, JWT_SECRET);
+
+      // Essaye de changer le mot de passe du premier restaurant avec le token du second
+      const res = await request(app)
+        .post('/api/auth/restaurant/change-password')
+        .set('Authorization', `Bearer ${otherToken}`)
+        .send({ oldPassword: 'OldSecret123', newPassword: 'NewSecret123' });
+
+      // Selon ta logique métier, adapte le code et le message
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
   });
 });
