@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-  development: {
+  dev: {
     username: process.env.DB_USER     || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME     || 'bismillah_app',
