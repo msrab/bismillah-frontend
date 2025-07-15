@@ -2,7 +2,7 @@ const express = require('express');
 const router  = express.Router();
 
 const { verifyToken } = require('../middlewares/authMiddleware');
-const restaurantController = require('../controllers/RestaurantController');
+const restaurantController = require('../controllers/restaurantController');
 const { requireRole }  = require('../middlewares/roleMiddleware');
 
 // Récupère le profil du restaurant connecté
