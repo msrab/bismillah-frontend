@@ -9,13 +9,10 @@ module.exports = {
         autoIncrement: true,
         allowNull: false
       },
-      firstname: {
+      login: {
         type: Sequelize.STRING,
-        allowNull: false
-      },
-      lastname: {
-        type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
       },
       email: {
         type: Sequelize.STRING,
@@ -26,13 +23,20 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
+      address_number: {
+        type: Sequelize.STRING
+      },
+      firstname: {
+        type: Sequelize.STRING
+      },
+      surname: {
+        type: Sequelize.STRING
+      },
       phone: {
         type: Sequelize.STRING
       },
-      is_active: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true
+      avatar: {
+        type: Sequelize.STRING
       },
       createdAt: {
         type: Sequelize.DATE,

@@ -15,8 +15,6 @@ module.exports = {
         nb_followers: 0,
         is_active: true,
         streetId: 1,
-        cityId: 1,
-        countryId: 1,
         createdAt: new Date(),
         updatedAt: new Date()
       }
