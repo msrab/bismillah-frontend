@@ -1,5 +1,5 @@
 const { Street } = require('../models');
-const createError = require('../utils/createError');
+const { createError } = require('../utils/createError');
 
 exports.createStreet = async (req, res, next) => {
   try {

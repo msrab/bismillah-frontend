@@ -1,7 +1,7 @@
 'use strict';
 
 const { User } = require('../models'); 
-const createError = require('../utils/createError');
+const { createError } = require('../utils/createError');
 
 module.exports = {
   /**

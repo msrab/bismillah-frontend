@@ -1,5 +1,5 @@
 const { Country } = require('../models');
-const createError = require('../utils/createError');
+const { createError } = require('../utils/createError');
 
 exports.createCountry = async (req, res, next) => {
   try {

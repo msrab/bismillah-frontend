@@ -1,7 +1,7 @@
 'use strict';
 
 const { Restaurant } = require('../models');
-const createError = require('../utils/createError');
+const { createError } = require('../utils/createError');
 
 module.exports = {
   /**
@@ -12,7 +12,7 @@ module.exports = {
 
       const rest = await Restaurant.findByPk(req.userId, {
         attributes: [
-          'id','login','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
+          'id','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
         ]
       });
       if (!rest) {
