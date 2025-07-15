@@ -1,25 +1,10 @@
-// backend/controllers/authRestaurantController.js
-
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const { Restaurant } = require('../models');
-const createError = require('../utils/createError');
+const { createError } = require('../utils/createError');
 
 module.exports = {
-  /**
-   * POST /api/auth/restaurant/signup
-   * Crée un nouveau restaurant.
-   * @param req.body.name
-   * @param req.body.company_number
-   * @param req.body.address_number
-   * @param req.body.email
-   * @param req.body.password
-   * @param req.body.phone (optionnel)
-   * @param req.body.logo (optionnel)
-   * 
-   * @return {201}    {message, restaurant}
-   * @return {401}    si error
-   */
+
   async signup(req, res, next) {
     try {
       const {
@@ -34,7 +19,7 @@ module.exports = {
 
       const existCIF = await Restaurant.findOne({ where: { company_number } });
       if (existCIF) {
-        return next(createError('Ce numéro d’entreprise est déjà enregistré.', 409));
+        return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
       }
 
       const existEmail = await Restaurant.findOne({ where: { email } });
@@ -59,24 +44,27 @@ module.exports = {
         restaurant: {
           id: newRestaurant.id,
           name: newRestaurant.name,
-          email: newRestaurant.email
+          email: newRestaurant.email,
+          company_number: newRestaurant.company_number,
+          address_number: newRestaurant.address_number,
+          phone: newRestaurant.phone,
+          logo: newRestaurant.logo
         }
       });
     } catch (error) {
+      // Gestion des erreurs de contrainte unique Sequelize
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        if (error.errors.some(e => e.path === 'email')) {
+          return next(createError('Cet email est déjà utilisé.', 409));
+        }
+        if (error.errors.some(e => e.path === 'company_number')) {
+          return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
+        }
+      }
       next(error);
     }
   },
 
-  /**
-   * POST /api/auth/restaurant/login
-   * Connexion par email + mot de passe.
-   * @param  {string} req.body.email
-   * @param  {string} req.body.password
-   * @return {200}    { message: 'Connexion réussie.', token }
-   * @return {400}    si email ou password manquant
-   * @return {404}    si pas de restaurant trouvé pour cet email
-   * @return {401}    si mot de passe incorrect
-   */
   async login(req, res, next) {
     try {
       const { email, password } = req.body;
@@ -106,18 +94,22 @@ module.exports = {
 
       return res.status(200).json({
         message: 'Connexion réussie.',
-        token
+        token,
+        restaurant: {
+          id: restaurant.id,
+          name: restaurant.name,
+          email: restaurant.email,
+          company_number: restaurant.company_number,
+          address_number: restaurant.address_number,
+          phone: restaurant.phone,
+          logo: restaurant.logo
+        }
       });
     } catch (error) {
       next(error);
     }
   },
 
-  /**
-   * POST /api/auth/restaurant/forgot-password
-   * Génère un token temporaire et l’envoie par mail.
-   * @param req.body.email
-   */
   async forgotPassword(req, res, next) {
     try {
       const { email } = req.body;
@@ -151,12 +143,6 @@ module.exports = {
     }
   },
 
-  /**
-   * POST /api/auth/restaurant/reset-password
-   * Réinitialise le mot de passe via le token.
-   * @param req.body.token
-   * @param req.body.newPassword
-   */
   async resetPassword(req, res, next) {
     try {
       const { token, newPassword } = req.body;
@@ -190,23 +176,11 @@ module.exports = {
     }
   },
 
-  /**
-   * POST /api/auth/restaurant/logout
-   * Invalide le token côté client (et/ou côté serveur via blacklist).
-   */
   async logout(req, res, next) {
     // Optionnel : stocker req.token en blacklist pour interdire son usage jusqu’à expiration
     return res.status(200).json({ message: 'Déconnexion réussie.' });
   },
 
-  /**
-   * POST /api/auth/restaurant/change-password
-   * Permet à un restaurant connecté de changer son mot de passe.
-   * @param req.userId     
-   * @param req.userType    
-   * @param req.body.oldPassword
-   * @param req.body.newPassword
-   */
   async changePassword(req, res, next) {
     try {
       if (req.userType !== 'restaurant') {
