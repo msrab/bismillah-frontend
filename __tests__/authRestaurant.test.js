@@ -1,7 +1,9 @@
 const request = require('supertest');
-const app = require('../server');
+const { app } = require('../server');
 const { Restaurant, Country, City, Street } = require('../models');
 const jwt = require('jsonwebtoken');
+const { createError } = require('../utils/createError');
+const bcrypt = require('bcrypt');
 
 let country, city, street, restaurant, token;
 
@@ -15,10 +17,10 @@ beforeAll(async () => {
   city = await City.create({ name: 'Paris', countryId: country.id, postal_code: '75001' });
   street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
 
+  const hash = await bcrypt.hash('Password123!', 10);
   restaurant = await Restaurant.create({
-    login: 'restotest',
     email: 'restotest@example.com',
-    password: 'Password123!',
+    password: hash,
     address_number: '10',
     name: 'Le Testeur',
     company_number: 'BE123456789',
@@ -40,7 +42,6 @@ describe('Auth Restaurant', () => {
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
         .send({
-          login: 'newresto',
           email: 'newresto@example.com',
           password: 'Password123!',
           address_number: '12',
@@ -52,33 +53,32 @@ describe('Auth Restaurant', () => {
         });
       expect(res.statusCode).toBe(201);
       expect(res.body.restaurant).toHaveProperty('id');
-      expect(res.body.restaurant).toHaveProperty('login', 'newresto');
+      expect(res.body.restaurant).toHaveProperty('email', 'newresto@example.com');
+      expect(res.body.restaurant).toHaveProperty('name', 'Nouveau Resto');
     });
 
-    it('renvoie 409 si login déjà pris', async () => {
+    it('renvoie 409 si company_number déjà pris', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
         .send({
-          login: 'restotest',
           email: 'unique@example.com',
           password: 'Password123!',
           address_number: '15',
-          name: 'Doublon Login',
-          company_number: 'BE111111111',
+          name: 'Doublon Company',
+          company_number: 'BE123456789', // déjà utilisé
           cityId: city.id,
           streetId: street.id,
           countryId: country.id
         });
       expect(res.statusCode).toBe(409);
-      expect(res.body.error).toBe('Ce login est déjà pris.');
+      expect(res.body.error).toBe('Ce numéro d’entreprise est déjà pris.');
     });
 
     it('renvoie 409 si email déjà utilisé', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/signup')
         .send({
-          login: 'uniqueLogin',
-          email: 'restotest@example.com',
+          email: 'restotest@example.com', // déjà utilisé
           password: 'Password123!',
           address_number: '16',
           name: 'Doublon Email',
@@ -93,23 +93,23 @@ describe('Auth Restaurant', () => {
   });
 
   describe('POST /api/auth/restaurant/login', () => {
-    it('connecte avec login et bon mot de passe', async () => {
+    it('connecte avec email et bon mot de passe', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
-          login: 'restotest',
+          email: 'restotest@example.com',
           password: 'Password123!'
         });
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('token');
-      expect(res.body.restaurant).toHaveProperty('login', 'restotest');
+      expect(res.body.restaurant).toHaveProperty('email', 'restotest@example.com');
     });
 
     it('ne connecte pas avec mauvais mot de passe', async () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
-          login: 'restotest',
+          email: 'restotest@example.com',
           password: 'WrongPassword!'
         });
       expect(res.statusCode).toBe(401);
@@ -120,7 +120,7 @@ describe('Auth Restaurant', () => {
       const res = await request(app)
         .post('/api/auth/restaurant/login')
         .send({
-          login: 'inconnu',
+          email: 'inconnu@example.com',
           password: 'Password123!'
         });
       expect(res.statusCode).toBe(404);
@@ -129,25 +129,27 @@ describe('Auth Restaurant', () => {
   });
 
   describe('Routes protégées', () => {
-    it('accède à /api/restaurants/me avec token', async () => {
+    it('accède à /api/restaurants/profil avec token', async () => {
       const res = await request(app)
-        .get('/api/restaurants/me')
+        .get('/api/restaurants/profil')
         .set('Authorization', `Bearer ${token}`);
       expect(res.statusCode).toBe(200);
       expect(res.body.restaurant).toHaveProperty('id', restaurant.id);
     });
 
-    it('refuse accès à /api/restaurants/me sans token', async () => {
+    it('refuse accès à /api/restaurants/profil sans token', async () => {
       const res = await request(app)
-        .get('/api/restaurants/me');
+        .get('/api/restaurants/profil');
       expect(res.statusCode).toBe(401);
       expect(res.body).toHaveProperty('error');
     });
 
-    it('refuse accès à /api/restaurants/me avec token invalide', async () => {
+    it('refuse accès à /api/restaurants/profil avec token invalide', async () => {
       const res = await request(app)
-        .get('/api/restaurants/me')
+        .get('/api/restaurants/profil')
         .set('Authorization', 'Bearer faketoken');
       expect(res.statusCode).toBe(401);
       expect(res.body).toHaveProperty('error');
     });
+  });
+});
