@@ -21,10 +21,8 @@ module.exports.verifyToken = (req, res, next) =>
         if (err) {
           return res.status(401).json({ error: 'Token invalide ou expiré.' });
         }
-
-        // payload doit contenir { id: <int>, userType: 'user'|'restaurant', iat, exp }
         req.userId   = payload.id;
-        req.userType = payload.userType;
+        req.userType = payload.userType || payload.type; // <-- accepte les deux
         next();
       });
     } catch (err) {
