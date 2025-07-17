@@ -1,51 +1,41 @@
 'use strict';
 
-const { User } = require('../models'); 
+const { User, Street } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
-  /**
-   * GET /api/users/me
-   * Récupère les informations du user connecté (depuis req.userId, req.userType)
-   */
+  // GET /api/users/me
   async getProfile(req, res, next) {
     try {
-      // S’assurer que c’est un user qui appelle
       if (req.userType !== 'user') {
         return next(createError('Accès interdit : pas un utilisateur.', 403));
       }
-
       const user = await User.findByPk(req.userId, {
-        attributes: ['id','login','email','address_number','firstname','surname','phone','avatar','createdAt','updatedAt']
+        attributes: ['id','login','email','address_number','firstname','surname','phone','avatar','streetId','createdAt','updatedAt'],
+        include: [{ model: Street, as: 'street' }]
       });
       if (!user) {
         return next(createError('Utilisateur non trouvé.', 404));
       }
-
       return res.status(200).json({ user });
     } catch (error) {
       return next(error);
     }
   },
 
-  /**
-   * PUT /api/users/me
-   * Met à jour le profil du user connecté (login,email,address_number,firstname,surname,phone,avatar)
-   */
+  // PUT /api/users/me
   async updateProfile(req, res, next) {
     try {
       if (req.userType !== 'user') {
         return next(createError('Accès interdit : pas un utilisateur.', 403));
       }
-
       const user = await User.findByPk(req.userId);
       if (!user) {
         return next(createError('Utilisateur non trouvé.', 404));
       }
+      const { login, email, address_number, firstname, surname, phone, avatar, streetId } = req.body;
 
-      const { login, email, address_number, firstname, surname, phone, avatar } = req.body;
-
-      // Si login/email modifiés, vérifier unicité
+      // Vérifie unicité login/email si modifiés
       if (login && login !== user.login) {
         const exists = await User.findOne({ where: { login } });
         if (exists) {
@@ -53,7 +43,6 @@ module.exports = {
         }
         user.login = login;
       }
-
       if (email && email !== user.email) {
         const existsEmail = await User.findOne({ where: { email } });
         if (existsEmail) {
@@ -62,51 +51,35 @@ module.exports = {
         user.email = email;
       }
 
-      // Mettre à jour les autres champs sans validation d’unicité
+      // Met à jour les autres champs
       if (address_number !== undefined) user.address_number = address_number;
       if (firstname       !== undefined) user.firstname       = firstname;
       if (surname         !== undefined) user.surname         = surname;
       if (phone           !== undefined) user.phone           = phone;
       if (avatar          !== undefined) user.avatar          = avatar;
+      if (streetId        !== undefined) user.streetId        = streetId;
 
       await user.save();
 
-      // Ne pas renvoyer le mot de passe
       return res.status(200).json({
         message: 'Profil mis à jour avec succès.',
-        user: {
-          id:             user.id,
-          login:          user.login,
-          email:          user.email,
-          address_number: user.address_number,
-          firstname:      user.firstname,
-          surname:        user.surname,
-          phone:          user.phone,
-          avatar:         user.avatar,
-          createdAt:      user.createdAt,
-          updatedAt:      user.updatedAt
-        }
+        user
       });
     } catch (error) {
       return next(error);
     }
   },
 
-  /**
-   * DELETE /api/users/me
-   * Supprime le compte du user connecté
-   */
+  // DELETE /api/users/me
   async deleteProfile(req, res, next) {
     try {
       if (req.userType !== 'user') {
         return next(createError('Accès interdit : pas un utilisateur.', 403));
       }
-
       const user = await User.findByPk(req.userId);
       if (!user) {
         return next(createError('Utilisateur non trouvé.', 404));
       }
-
       await user.destroy();
       return res.status(200).json({ message: 'Compte utilisateur supprimé.' });
     } catch (error) {
