@@ -1,32 +1,15 @@
-// controllers/authUserController.js
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const { User } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
-  /**
-   * POST /api/auth/user/signup
-   * Crée un nouvel utilisateur si login, email et password sont fournis et uniques.
-   * Entrées (req.body) : { login, email, password, address_number?, firstname?, surname?, phone?, avatar? }
-   * Sortie : status 201 + { message, user:{ id, login, email } } ou status 400/409/500 + { error }.
-   */
+  // POST /api/auth/user/signup
   async signup(req, res, next) {
     try {
-      const { login, email, password, address_number, firstname, surname, phone, avatar } = req.body;
+      const { login, email, password, address_number, firstname, surname, phone, avatar, streetId } = req.body;
 
-      // 1) Validation des champs obligatoires
-      if (!login || login.trim() === '') {
-        return next(createError('Login requis.', 400));
-      }
-      if (!email || email.trim() === '') {
-        return next(createError('Email requis.', 400));
-      }
-      if (!password || password.trim() === '') {
-        return next(createError('Password requis.', 400));
-      }
-
-      // 2) Vérifier qu’aucun user n’existe déjà avec le même login ou email
+      // Vérifie unicité login/email
       const existLogin = await User.findOne({ where: { login } });
       if (existLogin) {
         return next(createError('Ce login est déjà pris.', 409));
@@ -36,19 +19,18 @@ module.exports = {
         return next(createError('Cet email est déjà utilisé.', 409));
       }
 
-      // 3) Hasher le mot de passe
       const hash = await bcrypt.hash(password, 10);
 
-      // 4) Créer l’utilisateur
       const newUser = await User.create({
         login,
         email,
         password: hash,
-        address_number: address_number || null,
+        address_number,
         firstname: firstname || null,
         surname: surname || null,
         phone: phone || null,
-        avatar: avatar || null
+        avatar: avatar || null,
+        streetId: streetId || null
       });
 
       return res.status(201).json({
@@ -56,7 +38,13 @@ module.exports = {
         user: {
           id: newUser.id,
           login: newUser.login,
-          email: newUser.email
+          email: newUser.email,
+          address_number: newUser.address_number,
+          firstname: newUser.firstname,
+          surname: newUser.surname,
+          phone: newUser.phone,
+          avatar: newUser.avatar,
+          streetId: newUser.streetId
         }
       });
     } catch (error) {
@@ -64,12 +52,7 @@ module.exports = {
     }
   },
 
-  /**
-   * POST /api/auth/user/login
-   * Connecte un utilisateur existant en login *ou* email + password.
-   * Entrées (req.body) : { login?, email?, password }
-   * Sortie : status 200 + { message, token } ou status 400/401/404/500 + { error }.
-   */
+  // POST /api/auth/user/login
   async login(req, res, next) {
     try {
       const { login, email, password } = req.body;
@@ -108,7 +91,18 @@ module.exports = {
 
       return res.status(200).json({
         message: 'Connexion réussie.',
-        token
+        token,
+        user: {
+          id: user.id,
+          login: user.login,
+          email: user.email,
+          address_number: user.address_number,
+          firstname: user.firstname,
+          surname: user.surname,
+          phone: user.phone,
+          avatar: user.avatar,
+          streetId: user.streetId
+        }
       });
     } catch (error) {
       next(error);
