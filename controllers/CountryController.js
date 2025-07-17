@@ -3,13 +3,13 @@ const { createError } = require('../utils/createError');
 
 exports.createCountry = async (req, res, next) => {
   try {
-    const { name } = req.body;
-    // La validation du champ 'name' est déjà faite par le middleware
-    let country = await Country.findOne({ where: { name } });
-    if (country) return res.status(200).json(country);
-
-    country = await Country.create({ name });
-    return res.status(201).json(country);
+    const { name, iso_code } = req.body;
+    const exist = await Country.findOne({ where: { iso_code } });
+    if (exist) {
+      return res.status(400).json({ errors: ['Le code ISO est déjà utilisé.'] });
+    }
+    const country = await Country.create({ name, iso_code });
+    res.status(201).json(country);
   } catch (error) {
     next(error);
   }

@@ -5,6 +5,10 @@ const CountryValidation = [
     .trim()
     .escape()
     .notEmpty().withMessage('Le nom du pays est requis.'),
+  body('iso_code')
+    .trim()
+    .escape()
+    .notEmpty().withMessage('Le code ISO du pays est requis.'),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

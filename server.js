@@ -30,6 +30,8 @@ const authUserRoutes       = require('./routes/authUserRoutes');
 const authRestaurantRoutes = require('./routes/authRestaurantRoutes');
 const userRoutes           = require('./routes/userRoutes');
 const restaurantRoutes     = require('./routes/restaurantRoutes');
+const countryRoutes        = require('./routes/CountryRoutes');
+
 const errorHandler = require('./middlewares/errorHandler');
 
 // Middleware d’authentification (vérification JWT)
@@ -42,6 +44,7 @@ app.use('/api/auth/restaurant', authRestaurantRoutes);
 // Routes protégées par JWT
 app.use('/api/users',       verifyToken, userRoutes);
 app.use('/api/restaurants', verifyToken, restaurantRoutes);
+app.use('/api/countries', countryRoutes);
 
 // Route de test basique
 app.get('/', (_, res) => {
