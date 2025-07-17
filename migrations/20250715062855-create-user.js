@@ -38,6 +38,15 @@ module.exports = {
       avatar: {
         type: Sequelize.STRING
       },
+      streetId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'streets',
+          key: 'id'
+        },
+        onDelete: 'SET NULL'
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false
