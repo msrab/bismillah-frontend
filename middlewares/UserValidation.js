@@ -1,0 +1,60 @@
+const { body, validationResult } = require('express-validator');
+
+const signupUserValidation = [
+  body('login')
+    .trim().escape()
+    .notEmpty().withMessage('Le login est requis.')
+    .isAlphanumeric().withMessage('Le login ne doit contenir que lettres et chiffres.'),
+  body('email')
+    .trim().escape()
+    .notEmpty().withMessage("L’email est requis.")
+    .isEmail().withMessage('Format d’email invalide.'),
+  body('password')
+    .notEmpty().withMessage('Le mot de passe est requis.')
+    .isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères.'),
+  body('address_number')
+    .trim().escape()
+    .notEmpty().withMessage('L’adresse (address_number) est requise.'),
+  body('streetId')
+    .optional()
+    .isInt().withMessage('streetId doit être un entier.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+const loginUserValidation = [
+  (req, res, next) => {
+    if (!req.body.login && !req.body.email) {
+      return res.status(400).json({ error: 'Login ou email requis.' });
+    }
+    next();
+  },
+  body('email')
+    .if(body('email').exists())
+    .trim().escape()
+    .notEmpty().withMessage("L’email est requis.")
+    .isEmail().withMessage('Format d’email invalide.'),
+  body('login')
+    .if(body('login').exists())
+    .trim().escape()
+    .notEmpty().withMessage('Login ou email requis.'),
+  body('password')
+    .notEmpty().withMessage('Le mot de passe est requis.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+module.exports = {
+  signupUserValidation,
+  loginUserValidation
+};
