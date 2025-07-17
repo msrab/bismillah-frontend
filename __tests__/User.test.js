@@ -7,9 +7,9 @@ const bcrypt = require('bcrypt');
 let user, token, street;
 
 beforeAll(async () => {
-  await User.destroy({ where: {} });
-  await Street.destroy({ where: {} });
-  street = await Street.create({ name: 'Rue Test', cityId: 1 });
+  await User.destroy({ where: {} }); // On garde les rues seedées
+  // On récupère une rue existante (ex: Rue de Rivoli à Paris)
+  street = await Street.findOne({ where: { name: 'Rue de Rivoli' } });
 
   const hash = await bcrypt.hash('Password123!', 10);
   user = await User.create({

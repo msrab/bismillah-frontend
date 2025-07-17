@@ -7,8 +7,7 @@ let street;
 
 beforeAll(async () => {
   await User.destroy({ where: {} });
-  await Street.destroy({ where: {} });
-  street = await Street.create({ name: 'Rue Test', cityId: 1 });
+  street = await Street.findOne({ where: { name: 'Rue de Rivoli' } });
 });
 
 describe('Auth User', () => {

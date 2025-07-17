@@ -6,10 +6,7 @@ const jwt = require('jsonwebtoken');
 let token, country;
 
 beforeAll(async () => {
-  await City.destroy({ where: {} });
-  await Country.destroy({ where: {} });
-
-  country = await Country.create({ name: 'France', iso_code: 'FR' });
+  country = await Country.findOne({ where: { name: 'France' } });
 
   // Génère un token restaurant pour les tests POST
   token = jwt.sign(

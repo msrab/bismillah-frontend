@@ -13,13 +13,10 @@ beforeAll(() => {
 
 beforeAll(async () => {
   await Restaurant.destroy({ where: {} });
-  await Street.destroy({ where: {} });
-  await City.destroy({ where: {} });
-  await Country.destroy({ where: {} });
 
-  country = await Country.create({ name: 'France', iso_code: 'FR' });
-  city = await City.create({ name: 'Paris', countryId: country.id, postal_code: '75001' });
-  street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
+  country = await Country.findOne({ where: { name: 'France' } });
+  city = await City.findOne({ where: { name: 'Paris' } });
+  street = await Street.findOne({ where: { name: 'Rue de Rivoli' } });
 
   const hash = await bcrypt.hash('Password123!', 10);
   restaurant = await Restaurant.create({

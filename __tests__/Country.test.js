@@ -6,9 +6,6 @@ const jwt = require('jsonwebtoken');
 let token;
 
 beforeAll(async () => {
-  await Country.destroy({ where: {} });
-
-  // Génère un token restaurant pour les tests POST
   token = jwt.sign(
     { id: 1, type: 'restaurant' },
     process.env.JWT_SECRET,
