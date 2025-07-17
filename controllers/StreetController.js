@@ -15,9 +15,10 @@ exports.createStreet = async (req, res, next) => {
   }
 };
 
-exports.getAllStreets = async (req, res, next) => {
+exports.getStreetsByCity = async (req, res, next) => {
   try {
-    const streets = await Street.findAll();
+    const { cityId } = req.params;
+    const streets = await Street.findAll({ where: { cityId } });
     return res.status(200).json(streets);
   } catch (error) {
     next(error);

@@ -6,7 +6,7 @@ const { requireRole } = require('../middlewares/roleMiddleware');
 const { StreetValidation } = require('../middlewares/StreetValidation');
 
 router.post('/', verifyToken, requireRole('restaurant'), StreetValidation, StreetController.createStreet);
-router.get('/', StreetController.getAllStreets);
+router.get('/city/:cityId', StreetController.getStreetsByCity);
 router.get('/:id', StreetController.getStreetById);
 
 module.exports = router;
