@@ -120,7 +120,7 @@ module.exports = {
         return next(createError('Restaurant non trouvé.', 404));
       }
       restaurant.is_active = false; 
-      await rest.save();
+      await restaurant.save();
       return res.status(200).json({ message: 'Restaurant désactivé.' });
     } catch (error) {
       next(error);
@@ -138,7 +138,7 @@ module.exports = {
         return next(createError('Restaurant non trouvé.', 404));
       }
       restaurant.is_active = true; 
-      await rest.save();
+      await restaurant.save();
       return res.status(200).json({ message: 'Restaurant réactivé.' });
     } catch (error) {
       next(error);
