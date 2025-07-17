@@ -5,7 +5,7 @@ exports.createCity = async (req, res, next) => {
   try {
     const { name, postal_code, countryId } = req.body;
     let city = await City.findOne({ where: { name, countryId } });
-    if (city) return res.status(200).json(city);
+    if (city) return res.status(201).json(city);
 
     city = await City.create({ name, postal_code, countryId });
     return res.status(201).json(city);

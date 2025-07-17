@@ -6,7 +6,7 @@ exports.createStreet = async (req, res, next) => {
     const { name, cityId } = req.body;
     
     let street = await Street.findOne({ where: { name, cityId } });
-    if (street) return res.status(200).json(street);
+    if (street) return res.status(201).json(street);
 
     street = await Street.create({ name, cityId });
     return res.status(201).json(street);

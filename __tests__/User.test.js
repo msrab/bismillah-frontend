@@ -55,6 +55,9 @@ describe('User API', () => {
         .put('/api/users/me')
         .set('Authorization', `Bearer ${token}`)
         .send({ firstname: 'Marie-Jeanne', phone: '0712345678' });
+
+      console.log(res.body);
+
       expect(res.statusCode).toBe(200);
       expect(res.body.user).toHaveProperty('firstname', 'Marie-Jeanne');
       expect(res.body.user).toHaveProperty('phone', '0712345678');

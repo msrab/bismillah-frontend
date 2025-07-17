@@ -1,5 +1,6 @@
 const { body, validationResult } = require('express-validator');
 
+// Validation pour l'inscription (signup)
 const signupUserValidation = [
   body('login')
     .trim().escape()
@@ -18,6 +19,46 @@ const signupUserValidation = [
   body('streetId')
     .optional()
     .isInt().withMessage('streetId doit être un entier.'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(e => e.msg) });
+    }
+    next();
+  }
+];
+
+// Validation pour la mise à jour du profil utilisateur (update)
+const updateUserValidation = [
+  body('login')
+    .optional()
+    .trim().escape()
+    .isAlphanumeric().withMessage('Le login ne doit contenir que lettres et chiffres.'),
+  body('email')
+    .optional()
+    .trim().escape()
+    .isEmail().withMessage('Format d’email invalide.'),
+  body('password')
+    .optional()
+    .isLength({ min: 8 }).withMessage('Le mot de passe doit contenir au moins 8 caractères.'),
+  body('address_number')
+    .optional()
+    .trim().escape(),
+  body('streetId')
+    .optional()
+    .isInt().withMessage('streetId doit être un entier.'),
+  body('firstname')
+    .optional()
+    .trim().escape(),
+  body('surname')
+    .optional()
+    .trim().escape(),
+  body('phone')
+    .optional()
+    .trim().escape(),
+  body('avatar')
+    .optional()
+    .trim().escape(),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -56,5 +97,6 @@ const loginUserValidation = [
 
 module.exports = {
   signupUserValidation,
+  updateUserValidation,
   loginUserValidation
 };
