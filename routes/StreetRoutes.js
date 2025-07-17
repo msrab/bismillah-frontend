@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const StreetController = require('../controllers/StreetController');
-const verifyToken = require('../middlewares/verifyToken');
-const getRole = require('../middlewares/getRole');
+const { verifyToken } = require('../middlewares/authMiddleware');
+const { requireRole } = require('../middlewares/roleMiddleware');
 const { StreetValidation } = require('../middlewares/StreetValidation');
 
-router.post('/', verifyToken, getRole(['restaurant']), StreetValidation, StreetController.createStreet);
+router.post('/', verifyToken, requireRole('restaurant'), StreetValidation, StreetController.createStreet);
 router.get('/', StreetController.getAllStreets);
 router.get('/:id', StreetController.getStreetById);
 

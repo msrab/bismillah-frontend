@@ -3,21 +3,21 @@ const { createError } = require('../utils/createError');
 
 exports.createCity = async (req, res, next) => {
   try {
-    const { name, countryId } = req.body;
-    // La validation des champs est déjà faite par le middleware
+    const { name, postal_code, countryId } = req.body;
     let city = await City.findOne({ where: { name, countryId } });
     if (city) return res.status(200).json(city);
 
-    city = await City.create({ name, countryId });
+    city = await City.create({ name, postal_code, countryId });
     return res.status(201).json(city);
   } catch (error) {
     next(error);
   }
 };
 
-exports.getAllCities = async (req, res, next) => {
+exports.getCitiesByCountry = async (req, res, next) => {
   try {
-    const cities = await City.findAll();
+    const { countryId } = req.params;
+    const cities = await City.findAll({ where: { countryId } });
     return res.status(200).json(cities);
   } catch (error) {
     next(error);
