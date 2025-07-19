@@ -1,15 +1,16 @@
 const request = require('supertest');
 const { app } = require('../server');
-const { User, Street } = require('../models');
+const { User, Street, Language } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-let user, token, street;
+let user, token, street, language, newLanguage;
 
 beforeAll(async () => {
-  await User.destroy({ where: {} }); // On garde les rues seedées
-  // On récupère une rue existante (ex: Rue de Rivoli à Paris)
+  await User.destroy({ where: {} }); // On garde les rues et langues seedées
   street = await Street.findOne({ where: { name: 'Rue de Rivoli' } });
+  language = await Language.findOne({ where: { name: 'Français' } });
+  newLanguage = await Language.findOne({ where: { name: 'English' } });
 
   const hash = await bcrypt.hash('Password123!', 10);
   user = await User.create({
@@ -20,7 +21,8 @@ beforeAll(async () => {
     firstname: 'Marie',
     surname: 'Curie',
     phone: '0700000000',
-    streetId: street.id
+    streetId: street.id,
+    languageId: language.id
   });
 
   token = jwt.sign(
@@ -40,6 +42,9 @@ describe('User API', () => {
       expect(res.body.user).toHaveProperty('id', user.id);
       expect(res.body.user).toHaveProperty('login', 'userprofil');
       expect(res.body.user).toHaveProperty('streetId', street.id);
+      expect(res.body.user).toHaveProperty('languageId', language.id);
+      expect(res.body.user.street).toHaveProperty('id', street.id);
+      expect(res.body.user.language).toHaveProperty('id', language.id);
     });
 
     it('refuse l\'accès sans token', async () => {
@@ -56,11 +61,11 @@ describe('User API', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ firstname: 'Marie-Jeanne', phone: '0712345678' });
 
-      console.log(res.body);
-
       expect(res.statusCode).toBe(200);
       expect(res.body.user).toHaveProperty('firstname', 'Marie-Jeanne');
       expect(res.body.user).toHaveProperty('phone', '0712345678');
+      // languageId ne doit pas changer
+      expect(res.body.user.language).toHaveProperty('id', language.id);
     });
 
     it('refuse la mise à jour sans token', async () => {
@@ -68,6 +73,42 @@ describe('User API', () => {
         .put('/api/users/me')
         .send({ firstname: 'Hacker' });
       expect(res.statusCode).toBe(401);
+    });
+
+    it('refuse la modification de la langue via updateProfile', async () => {
+      const res = await request(app)
+        .put('/api/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ languageId: newLanguage.id });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.errors).toContain('La langue ne peut pas être modifiée ici.');
+    });
+  });
+
+  describe('PATCH /api/users/me/language', () => {
+    it('change la langue du user', async () => {
+      const res = await request(app)
+        .patch('/api/users/me/language')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ languageId: newLanguage.id });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.user.language).toHaveProperty('id', newLanguage.id);
+    });
+
+    it('refuse sans token', async () => {
+      const res = await request(app)
+        .patch('/api/users/me/language')
+        .send({ languageId: newLanguage.id });
+      expect(res.statusCode).toBe(401);
+    });
+
+    it('refuse si languageId manquant', async () => {
+      const res = await request(app)
+        .patch('/api/users/me/language')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error || res.body.errors).toContain('La langue (languageId) est requise.');
     });
   });
 
@@ -79,7 +120,9 @@ describe('User API', () => {
         login: 'deleteuser',
         email: 'deleteuser@example.com',
         password: hash,
-        address_number: '99'
+        address_number: '99',
+        streetId: street.id,
+        languageId: language.id
       });
       const deleteToken = jwt.sign(
         { id: userToDelete.id, type: 'user' },
@@ -94,5 +137,5 @@ describe('User API', () => {
       const check = await User.findByPk(userToDelete.id);
       expect(check).toBeNull();
     });
-});
+  });
 });

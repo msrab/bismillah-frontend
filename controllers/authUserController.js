@@ -1,13 +1,21 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, Language, Street } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
   // POST /api/auth/user/signup
   async signup(req, res, next) {
     try {
-      const { login, email, password, address_number, firstname, surname, phone, avatar, streetId } = req.body;
+      const { login, email, password, address_number, firstname, surname, phone, avatar, streetId, languageId } = req.body;
+
+      // Vérifie champs obligatoires
+      if (!streetId) {
+        return next(createError('La rue (streetId) est requise.', 400));
+      }
+      if (!languageId) {
+        return next(createError('La langue (languageId) est requise.', 400));
+      }
 
       // Vérifie unicité login/email
       const existLogin = await User.findOne({ where: { login } });
@@ -17,6 +25,18 @@ module.exports = {
       const existEmail = await User.findOne({ where: { email } });
       if (existEmail) {
         return next(createError('Cet email est déjà utilisé.', 409));
+      }
+
+      // Vérifie que la langue existe
+      const language = await Language.findByPk(languageId);
+      if (!language) {
+        return next(createError('Langue non trouvée.', 404));
+      }
+
+      // Vérifie que la rue existe
+      const street = await Street.findByPk(streetId);
+      if (!street) {
+        return next(createError('Rue non trouvée.', 404));
       }
 
       const hash = await bcrypt.hash(password, 10);
@@ -30,7 +50,8 @@ module.exports = {
         surname: surname || null,
         phone: phone || null,
         avatar: avatar || null,
-        streetId: streetId || null
+        streetId,
+        languageId
       });
 
       return res.status(201).json({
@@ -44,7 +65,8 @@ module.exports = {
           surname: newUser.surname,
           phone: newUser.phone,
           avatar: newUser.avatar,
-          streetId: newUser.streetId
+          street: { id: street.id, name: street.name, ...street.toJSON() },
+          language: { id: language.id, name: language.name, icon: language.icon }
         }
       });
     } catch (error) {
@@ -82,7 +104,11 @@ module.exports = {
         return next(createError('Mot de passe incorrect.', 401));
       }
 
-      // 4) Générer un token JWT (payload contient id et type)
+      // 4) Récupère la langue et la rue associées
+      const language = user.languageId ? await Language.findByPk(user.languageId) : null;
+      const street = user.streetId ? await Street.findByPk(user.streetId) : null;
+
+      // 5) Générer un token JWT (payload contient id et type)
       const token = jwt.sign(
         { id: user.id, type: 'user' },
         process.env.JWT_SECRET,
@@ -101,7 +127,8 @@ module.exports = {
           surname: user.surname,
           phone: user.phone,
           avatar: user.avatar,
-          streetId: user.streetId
+          street: street ? { id: street.id, name: street.name, ...street.toJSON() } : null,
+          language: language ? { id: language.id, name: language.name, icon: language.icon } : null
         }
       });
     } catch (error) {

@@ -47,6 +47,15 @@ module.exports = {
         },
         onDelete: 'SET NULL'
       },
+      languageId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'languages',
+          key: 'id'
+        },
+        onDelete: 'SET NULL'
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false

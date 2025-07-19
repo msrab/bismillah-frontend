@@ -1,13 +1,15 @@
 const request = require('supertest');
 const { app } = require('../server');
-const { User, Street } = require('../models');
+const { User, Street, Language } = require('../models');
 const bcrypt = require('bcrypt');
 
 let street;
+let language;
 
 beforeAll(async () => {
   await User.destroy({ where: {} });
   street = await Street.findOne({ where: { name: 'Rue de Rivoli' } });
+  language = await Language.findOne({ where: { name: 'Français' } });
 });
 
 describe('Auth User', () => {
@@ -23,12 +25,14 @@ describe('Auth User', () => {
           firstname: 'Jean',
           surname: 'Dupont',
           phone: '0600000000',
-          streetId: street.id
+          streetId: street.id,
+          languageId: language.id
         });
       expect(res.statusCode).toBe(201);
       expect(res.body.user).toHaveProperty('id');
       expect(res.body.user).toHaveProperty('login', 'user1');
-      expect(res.body.user).toHaveProperty('streetId', street.id);
+      expect(res.body.user.street).toHaveProperty('id', street.id);
+      expect(res.body.user.language).toHaveProperty('id', language.id);
     });
 
     it('refuse un login déjà pris', async () => {
@@ -36,7 +40,9 @@ describe('Auth User', () => {
         login: 'user2',
         email: 'user2@example.com',
         password: await bcrypt.hash('Password123!', 10),
-        address_number: '11'
+        address_number: '11',
+        streetId: street.id,
+        languageId: language.id
       });
       const res = await request(app)
         .post('/api/auth/user/signup')
@@ -44,7 +50,9 @@ describe('Auth User', () => {
           login: 'user2',
           email: 'unique@example.com',
           password: 'Password123!',
-          address_number: '12'
+          address_number: '12',
+          streetId: street.id,
+          languageId: language.id
         });
       expect(res.statusCode).toBe(409);
       expect(res.body.errors || res.body.error).toContain('Ce login est déjà pris.');
@@ -57,7 +65,9 @@ describe('Auth User', () => {
           login: 'uniqueuser',
           email: 'user2@example.com',
           password: 'Password123!',
-          address_number: '13'
+          address_number: '13',
+          streetId: street.id,
+          languageId: language.id
         });
       expect(res.statusCode).toBe(409);
       expect(res.body.errors || res.body.error).toContain('Cet email est déjà utilisé.');
@@ -83,6 +93,8 @@ describe('Auth User', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('token');
       expect(res.body.user).toHaveProperty('login', 'user1');
+      expect(res.body.user.street).toHaveProperty('id', street.id);
+      expect(res.body.user.language).toHaveProperty('id', language.id);
     });
 
     it('connecte avec email', async () => {
@@ -95,6 +107,8 @@ describe('Auth User', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('token');
       expect(res.body.user).toHaveProperty('email', 'user1@example.com');
+      expect(res.body.user.street).toHaveProperty('id', street.id);
+      expect(res.body.user.language).toHaveProperty('id', language.id);
     });
 
     it('refuse connexion mauvais mot de passe', async () => {

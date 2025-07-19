@@ -17,8 +17,11 @@ const signupUserValidation = [
     .trim().escape()
     .notEmpty().withMessage('L’adresse (address_number) est requise.'),
   body('streetId')
-    .optional()
+    .notEmpty().withMessage('La rue (streetId) est requise.')
     .isInt().withMessage('streetId doit être un entier.'),
+  body('languageId')
+    .notEmpty().withMessage('La langue (languageId) est requise.')
+    .isInt().withMessage('languageId doit être un entier.'),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -29,6 +32,7 @@ const signupUserValidation = [
 ];
 
 // Validation pour la mise à jour du profil utilisateur (update)
+// languageId NE DOIT PAS être modifiable ici
 const updateUserValidation = [
   body('login')
     .optional()
@@ -59,6 +63,8 @@ const updateUserValidation = [
   body('avatar')
     .optional()
     .trim().escape(),
+  body('languageId')
+    .not().exists().withMessage('La langue ne peut pas être modifiée ici.'),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

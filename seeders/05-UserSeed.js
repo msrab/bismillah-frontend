@@ -16,6 +16,7 @@ module.exports = {
         phone: '0600000001',
         avatar: null,
         streetId: 1, // France, Paris
+        languageId: 1, // Français
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -29,6 +30,7 @@ module.exports = {
         phone: '0200000002',
         avatar: null,
         streetId: 7, // Belgique, Bruxelles
+        languageId: 6, // Nederlands
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -42,6 +44,7 @@ module.exports = {
         phone: '0300000003',
         avatar: null,
         streetId: 13, // Allemagne, Berlin
+        languageId: 4, // Deutsch
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -55,6 +58,7 @@ module.exports = {
         phone: '0400000004',
         avatar: null,
         streetId: 19, // Espagne, Madrid
+        languageId: 5, // Español
         createdAt: new Date(),
         updatedAt: new Date()
       }

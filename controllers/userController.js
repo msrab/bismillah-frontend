@@ -1,6 +1,6 @@
 'use strict';
 
-const { User, Street } = require('../models');
+const { User, Street, Language } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
@@ -11,8 +11,14 @@ module.exports = {
         return next(createError('Accès interdit : pas un utilisateur.', 403));
       }
       const user = await User.findByPk(req.userId, {
-        attributes: ['id','login','email','address_number','firstname','surname','phone','avatar','streetId','createdAt','updatedAt'],
-        include: [{ model: Street, as: 'street' }]
+        attributes: [
+          'id', 'login', 'email', 'address_number', 'firstname', 'surname',
+          'phone', 'avatar', 'streetId', 'languageId', 'createdAt', 'updatedAt'
+        ],
+        include: [
+          { model: Street, as: 'street' },
+          { model: Language, as: 'language' }
+        ]
       });
       if (!user) {
         return next(createError('Utilisateur non trouvé.', 404));
@@ -51,7 +57,7 @@ module.exports = {
         user.email = email;
       }
 
-      // Met à jour les autres champs
+      // Met à jour les autres champs (sauf languageId)
       if (address_number !== undefined) user.address_number = address_number;
       if (firstname       !== undefined) user.firstname       = firstname;
       if (surname         !== undefined) user.surname         = surname;
@@ -61,9 +67,63 @@ module.exports = {
 
       await user.save();
 
+      // Recharge avec les associations pour la réponse
+      const updatedUser = await User.findByPk(user.id, {
+        attributes: [
+          'id', 'login', 'email', 'address_number', 'firstname', 'surname',
+          'phone', 'avatar', 'streetId', 'languageId', 'createdAt', 'updatedAt'
+        ],
+        include: [
+          { model: Street, as: 'street' },
+          { model: Language, as: 'language' }
+        ]
+      });
+
       return res.status(200).json({
         message: 'Profil mis à jour avec succès.',
-        user
+        user: updatedUser
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  // PATCH /api/users/me/language
+  async changeLanguage(req, res, next) {
+    try {
+      if (req.userType !== 'user') {
+        return next(createError('Accès interdit : pas un utilisateur.', 403));
+      }
+      const { languageId } = req.body;
+      if (!languageId) {
+        return next(createError('La langue (languageId) est requise.', 400));
+      }
+      const language = await Language.findByPk(languageId);
+      if (!language) {
+        return next(createError('Langue non trouvée.', 404));
+      }
+      const user = await User.findByPk(req.userId);
+      if (!user) {
+        return next(createError('Utilisateur non trouvé.', 404));
+      }
+      user.languageId = languageId;
+      await user.save();
+
+      // Recharge avec l'association
+      const updatedUser = await User.findByPk(user.id, {
+        attributes: [
+          'id', 'login', 'email', 'address_number', 'firstname', 'surname',
+          'phone', 'avatar', 'streetId', 'languageId', 'createdAt', 'updatedAt'
+        ],
+        include: [
+          { model: Street, as: 'street' },
+          { model: Language, as: 'language' }
+        ]
+      });
+
+      return res.status(200).json({
+        message: 'Langue modifiée avec succès.',
+        user: updatedUser
       });
     } catch (error) {
       return next(error);

@@ -6,6 +6,7 @@ module.exports = (sequelize) => {
     static associate(models) {
       // Un user appartient à une rue
       User.belongsTo(models.Street, { foreignKey: 'streetId', as: 'street' });
+      User.belongsTo(models.Language, { foreignKey: 'languageId', as: 'language' });
     }
   }
   User.init(
@@ -23,6 +24,12 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: { model: 'streets', key: 'id' },
+        onDelete: 'SET NULL'
+      },
+      languageId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'languages', key: 'id' },
         onDelete: 'SET NULL'
       }
     },
