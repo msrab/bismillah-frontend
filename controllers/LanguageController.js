@@ -54,18 +54,4 @@ module.exports = {
       next(err);
     }
   },
-
-  // DELETE /api/languages/:id
-  async remove(req, res, next) {
-    try {
-      const language = await Language.findByPk(req.params.id);
-      if (!language) {
-        return res.status(404).json({ error: 'Langue non trouvée.' });
-      }
-      await language.destroy();
-      res.status(204).end();
-    } catch (err) {
-      next(err);
-    }
-  }
 };

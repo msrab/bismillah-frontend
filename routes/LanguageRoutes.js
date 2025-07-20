@@ -14,7 +14,4 @@ router.post('/', LanguageController.create);
 // Modifie une langue
 router.put('/:id', LanguageController.update);
 
-// Supprime une langue
-router.delete('/:id', LanguageController.remove);
-
 module.exports = router;
