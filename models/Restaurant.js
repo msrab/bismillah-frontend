@@ -6,6 +6,7 @@ module.exports = (sequelize) => {
     static associate(models) {
      // Ajout de l’association à la rue
      Restaurant.belongsTo(models.Street, { foreignKey: 'streetId', as: 'street' });
+     Restaurant.belongsToMany(models.Language, { through: models.RestaurantLanguage, foreignKey: 'restaurantId', otherKey: 'languageId', as: 'languages' });
     }
   }
 

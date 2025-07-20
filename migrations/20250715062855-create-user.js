@@ -45,7 +45,7 @@ module.exports = {
           model: 'streets',
           key: 'id'
         },
-        onDelete: 'RESTRICT'
+        onDelete: 'CASCADE'
       },
       languageId: {
         type: Sequelize.INTEGER,
@@ -54,7 +54,7 @@ module.exports = {
           model: 'languages',
           key: 'id'
         },
-        onDelete: 'RESTRICT'
+        onDelete: 'CASCADE'
       },
       createdAt: {
         type: Sequelize.DATE,

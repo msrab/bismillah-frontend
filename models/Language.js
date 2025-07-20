@@ -2,7 +2,18 @@
 const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  class Language extends Model {}
+  class Language extends Model {
+    static associate(models) {
+      // Association many-to-many avec Restaurant via RestaurantLanguage
+      Language.belongsToMany(models.Restaurant, {
+        through: models.RestaurantLanguage,
+        foreignKey: 'languageId',
+        otherKey: 'restaurantId',
+        as: 'restaurants'
+      });
+    }
+  }
+  
   Language.init({
     id: {
       type: DataTypes.INTEGER,
