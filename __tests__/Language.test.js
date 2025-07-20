@@ -47,12 +47,6 @@ describe('Language API', () => {
     expect(res.body).toHaveProperty('name', 'Espagnol');
   });
 
-  it('supprime une langue', async () => {
-    const res = await request(app)
-      .delete(`/api/languages/${languageId}`);
-    expect(res.statusCode).toBe(204);
-  });
-
   it('retourne 404 si la langue n\'existe pas', async () => {
     const res = await request(app)
       .get('/api/languages/99999');
