@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_ENV=development node start.js",
     "start": "NODE_ENV=production node start.js",
     "test": "jest",
-    "mytest": "npx sequelize-cli db:migrate:undo:all --env test && npx sequelize-cli db:migrate --env test && npx sequelize-cli db:seed:all --env test && cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --runInBand"
+    "mytest": "npx sequelize-cli db:migrate:undo:all --env test && npx sequelize-cli db:migrate --env test && cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
