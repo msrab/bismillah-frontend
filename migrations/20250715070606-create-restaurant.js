@@ -54,7 +54,7 @@ module.exports = {
           model: 'streets',
           key: 'id'
         },
-        onDelete: 'SET NULL'
+        onDelete: 'RESTRICT'
       },
       createdAt: {
         type: Sequelize.DATE,
