@@ -20,6 +20,15 @@ router.put('/profil/enable', verifyToken, requireRole('restaurant'), restaurantC
 // Supprime le compte du restaurant connecté
 router.delete('/profil', verifyToken, requireRole('restaurant'), restaurantController.deleteProfile);
 
+// Ajoute des langues à un restaurant
+router.post('/:id/languages', verifyToken, requireRole('restaurant'), restaurantController.addLanguages);
+
+// Supprime une langue d'un restaurant
+router.delete('/:id/languages/:languageId', verifyToken, requireRole('restaurant'), restaurantController.removeLanguage);
+
+// Modifie la langue principale d'un restaurant
+router.patch('/:id/languages/main', verifyToken, requireRole('restaurant'), restaurantController.setMainLanguage);
+
 // Liste paginée de tous les restaurants (sans mot de passe)
 router.get('/', verifyToken, requireRole('user'), restaurantController.listRestaurants);
 

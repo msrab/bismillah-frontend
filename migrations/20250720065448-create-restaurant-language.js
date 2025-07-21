@@ -26,7 +26,7 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         allowNull: false,
         defaultValue: false
-      },
+      }/*,
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false
@@ -34,14 +34,14 @@ module.exports = {
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false
-      }
+      }*/
     });
-    await queryInterface.addConstraint('restaurant_languages', {
+    /*await queryInterface.addConstraint('restaurant_languages', {
       fields: ['restaurantId', 'main'],
       type: 'unique',
       name: 'unique_main_language_per_restaurant',
       where: { main: true }
-    });
+    });*/
   },
 
   async down (queryInterface) {

@@ -8,14 +8,13 @@ module.exports = (sequelize) => {
       Restaurant.belongsTo(models.Street, { foreignKey: 'streetId', as: 'street' });
       // Association à plusieurs langues (optionnel, via table de jointure)
       // Décommente si tu veux utiliser la jointure plus tard :
-      /*
       Restaurant.belongsToMany(models.Language, {
         through: models.RestaurantLanguage,
         foreignKey: 'restaurantId',
         otherKey: 'languageId',
         as: 'languages'
       });
-      */
+      
     }
   }
 

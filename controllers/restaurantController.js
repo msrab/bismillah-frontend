@@ -1,6 +1,6 @@
 'use strict';
 
-const { Restaurant } = require('../models');
+const { Restaurant, Language, RestaurantLanguage } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
@@ -9,10 +9,16 @@ module.exports = {
    */
   async getProfile(req, res, next) {
     try {
-
       const rest = await Restaurant.findByPk(req.userId, {
         attributes: [
           'id','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
+        ],
+        include: [
+          {
+            model: Language,
+            as: 'languages',
+            through: { attributes: ['main'] }
+          }
         ]
       });
       if (!rest) {
@@ -29,7 +35,6 @@ module.exports = {
    */
   async updateProfile(req, res, next) {
     try {
-
       const rest = await Restaurant.findByPk(req.userId);
       if (!rest) {
         return next(createError('Restaurant non trouvé.', 404));
@@ -70,21 +75,136 @@ module.exports = {
 
       await rest.save();
 
+      // On retourne aussi les langues associées
+      const updated = await Restaurant.findByPk(rest.id, {
+        attributes: [
+          'id','name','company_number','address_number','phone','email','logo','nb_followers','createdAt','updatedAt'
+        ],
+        include: [
+          {
+            model: Language,
+            as: 'languages',
+            through: { attributes: ['main'] }
+          }
+        ]
+      });
+
       return res.status(200).json({
         message: 'Profil restaurateur mis à jour avec succès.',
-        restaurant: {
-          id:             rest.id,
-          name:           rest.name,
-          company_number: rest.company_number,
-          address_number: rest.address_number,
-          phone:          rest.phone,
-          email:          rest.email,
-          logo:           rest.logo,
-          nb_followers:   rest.nb_followers,
-          createdAt:      rest.createdAt,
-          updatedAt:      rest.updatedAt
-        }
+        restaurant: updated
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/restaurants/:id/languages
+   * Ajoute une ou plusieurs langues à un restaurant
+   * body: { languageIds: [1,2], mainId: 1 }
+   */
+  async addLanguages(req, res, next) {
+    try {
+      const restaurantId = parseInt(req.params.id, 10);
+      const { languageIds, mainId } = req.body;
+
+      const restaurant = await Restaurant.findByPk(restaurantId);
+      if (!restaurant) {
+        return next(createError('Restaurant non trouvé.', 404));
+      }
+
+      if (!Array.isArray(languageIds) || languageIds.length === 0) {
+        return next(createError('Aucune langue à ajouter.', 400));
+      }
+
+      await restaurant.setLanguages(languageIds);
+
+      // Met à jour la langue principale
+      if (mainId && languageIds.includes(mainId)) {
+        await RestaurantLanguage.update(
+          { main: false },
+          { where: { restaurantId } }
+        );
+        await RestaurantLanguage.update(
+          { main: true },
+          { where: { restaurantId, languageId: mainId } }
+        );
+      }
+
+      const updated = await Restaurant.findByPk(restaurantId, {
+        include: [
+          { model: Language, as: 'languages', through: { attributes: ['main'] } }
+        ]
+      });
+
+      return res.status(200).json({
+        message: 'Langues mises à jour.',
+        restaurant: updated
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * DELETE /api/restaurants/:id/languages/:languageId
+   * Supprime une langue d'un restaurant
+   */
+  async removeLanguage(req, res, next) {
+    try {
+      const restaurantId = parseInt(req.params.id, 10);
+      const languageId = parseInt(req.params.languageId, 10);
+
+      const restaurant = await Restaurant.findByPk(restaurantId);
+      if (!restaurant) {
+        return next(createError('Restaurant non trouvé.', 404));
+      }
+
+      await RestaurantLanguage.destroy({
+        where: { restaurantId, languageId }
+      });
+
+      return res.status(200).json({ message: 'Langue supprimée du restaurant.' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+    /**
+   * PATCH /api/restaurants/:id/languages/main
+   * Modifie la langue principale d'un restaurant
+   * body: { mainId: 2 }
+   */
+  async setMainLanguage(req, res, next) {
+    try {
+      const restaurantId = parseInt(req.params.id, 10);
+      const { mainId } = req.body;
+
+      const restaurant = await Restaurant.findByPk(restaurantId);
+      if (!restaurant) {
+        return next(createError('Restaurant non trouvé.', 404));
+      }
+
+      // Vérifie que la langue existe pour ce restaurant
+      const exists = await RestaurantLanguage.findOne({
+        where: { restaurantId, languageId: mainId }
+      });
+      if (!exists) {
+        return next(createError('Cette langue n\'est pas associée au restaurant.', 400));
+      }
+
+      // Met toutes les langues à main: false
+      await RestaurantLanguage.update(
+        { main: false },
+        { where: { restaurantId } }
+      );
+      // Met la nouvelle langue principale à main: true
+      await RestaurantLanguage.update(
+        { main: true },
+        { where: { restaurantId, languageId: mainId } }
+      );
+
+      return res.status(200).json({ message: 'Langue principale modifiée.' });
     } catch (error) {
       next(error);
     }
