@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { Restaurant } = require('../models');
+const { Restaurant, Street } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
@@ -14,17 +14,18 @@ module.exports = {
         phone,
         email,
         password,
-        logo
+        logo,
+        streetId
       } = req.body;
-
-      const existCIF = await Restaurant.findOne({ where: { company_number } });
-      if (existCIF) {
-        return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
-      }
 
       const existEmail = await Restaurant.findOne({ where: { email } });
       if (existEmail) {
         return next(createError('Cet email est déjà utilisé.', 409));
+      }
+
+      const existCompanyNumber = await Restaurant.findOne({ where: { company_number } });
+      if (existCompanyNumber) {
+        return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
       }
 
       const hash = await bcrypt.hash(password, 10);
@@ -36,20 +37,20 @@ module.exports = {
         phone: phone || null,
         email,
         password: hash,
-        logo: logo || null
+        logo: logo || null,
+        streetId
+      });
+
+      // On récupère le restaurant avec l'association street
+      const restaurantWithAssociations = await Restaurant.findByPk(newRestaurant.id, {
+        include: [
+          { model: Street, as: 'street' }
+        ]
       });
 
       return res.status(201).json({
         message: 'Restaurant créé avec succès.',
-        restaurant: {
-          id: newRestaurant.id,
-          name: newRestaurant.name,
-          email: newRestaurant.email,
-          company_number: newRestaurant.company_number,
-          address_number: newRestaurant.address_number,
-          phone: newRestaurant.phone,
-          logo: newRestaurant.logo
-        }
+        restaurant: restaurantWithAssociations
       });
     } catch (error) {
       // Gestion des erreurs de contrainte unique Sequelize
@@ -76,7 +77,12 @@ module.exports = {
         return next(createError('Le mot de passe est requis.', 400));
       }
 
-      const restaurant = await Restaurant.findOne({ where: { email } });
+      const restaurant = await Restaurant.findOne({
+        where: { email },
+        include: [
+          { model: Street, as: 'street' }
+        ]
+      });
       if (!restaurant) {
         return next(createError('Restaurant non trouvé.', 404));
       }
@@ -95,15 +101,7 @@ module.exports = {
       return res.status(200).json({
         message: 'Connexion réussie.',
         token,
-        restaurant: {
-          id: restaurant.id,
-          name: restaurant.name,
-          email: restaurant.email,
-          company_number: restaurant.company_number,
-          address_number: restaurant.address_number,
-          phone: restaurant.phone,
-          logo: restaurant.logo
-        }
+        restaurant
       });
     } catch (error) {
       next(error);

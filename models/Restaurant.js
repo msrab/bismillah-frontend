@@ -6,15 +6,16 @@ module.exports = (sequelize) => {
     static associate(models) {
       // Association à la rue
       Restaurant.belongsTo(models.Street, { foreignKey: 'streetId', as: 'street' });
-      // Association à la langue principale
-      Restaurant.belongsTo(models.Language, { foreignKey: 'languageId', as: 'language' });
-      // Association à plusieurs langues (optionnel si tu utilises une table de jointure)
-      /*Restaurant.belongsToMany(models.Language, {
+      // Association à plusieurs langues (optionnel, via table de jointure)
+      // Décommente si tu veux utiliser la jointure plus tard :
+      /*
+      Restaurant.belongsToMany(models.Language, {
         through: models.RestaurantLanguage,
         foreignKey: 'restaurantId',
         otherKey: 'languageId',
         as: 'languages'
-      });*/
+      });
+      */
     }
   }
 
@@ -34,12 +35,6 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: { model: 'streets', key: 'id' },
-        onDelete: 'SET NULL'
-      },
-      languageId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: { model: 'languages', key: 'id' },
         onDelete: 'SET NULL'
       }
     },
