@@ -32,8 +32,12 @@ module.exports = (sequelize) => {
         references: { model: 'languages', key: 'id' },
         onDelete: 'SET NULL'
       }
-    },
-    { sequelize, modelName: 'User', tableName: 'users', timestamps: true }
+    }, { 
+      sequelize, 
+      modelName: 'User', 
+      tableName: 'users', 
+      timestamps: true 
+    }
   );
   return User;
 };

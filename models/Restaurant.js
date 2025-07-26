@@ -7,14 +7,14 @@ module.exports = (sequelize) => {
       // Association à la rue
       Restaurant.belongsTo(models.Street, { foreignKey: 'streetId', as: 'street' });
       // Association à plusieurs langues (optionnel, via table de jointure)
-      // Décommente si tu veux utiliser la jointure plus tard :
       Restaurant.belongsToMany(models.Language, {
         through: models.RestaurantLanguage,
         foreignKey: 'restaurantId',
         otherKey: 'languageId',
         as: 'languages'
       });
-      
+      // Association au type de restaurant
+      Restaurant.belongsTo(models.RestaurantType, { foreignKey: 'restaurantTypeId', as: 'type' });
     }
   }
 
@@ -35,9 +35,19 @@ module.exports = (sequelize) => {
         allowNull: true,
         references: { model: 'streets', key: 'id' },
         onDelete: 'SET NULL'
+      },
+      restaurantTypeId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'restaurant_types', key: 'id' },
+        onDelete: 'SET NULL'
       }
-    },
-    { sequelize, modelName: 'Restaurant', tableName: 'restaurants', timestamps: true }
+    }, { 
+      sequelize, 
+      modelName: 'Restaurant', 
+      tableName: 'restaurants', 
+      timestamps: true 
+    }
   );
   return Restaurant;
 };

@@ -22,8 +22,12 @@ module.exports = (sequelize) => {
         references: { model: 'languages', key: 'id' }
       },
       main: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
-    },
-    { sequelize, modelName: 'RestaurantLanguage', tableName: 'restaurant_languages', timestamps: false }
+    }, { 
+      sequelize, 
+      modelName: 'RestaurantLanguage', 
+      tableName: 'restaurant_languages', 
+      timestamps: false 
+    }
   );
   return RestaurantLanguage;
 };

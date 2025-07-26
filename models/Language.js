@@ -33,7 +33,7 @@ module.exports = (sequelize) => {
     sequelize,
     modelName: 'Language',
     tableName: 'languages',
-    timestamps: true
+    timestamps: false
   });
   return Language;
 };
