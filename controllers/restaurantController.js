@@ -209,6 +209,36 @@ module.exports = {
       next(error);
     }
   },
+  
+    /**
+     * PATCH /api/restaurants/profil/type
+     * Permet au restaurant connecté de choisir son type de restaurant
+     * body: { restaurantTypeId }
+     */
+    async setType(req, res, next) {
+      try {
+        const { restaurantTypeId } = req.body;
+        const restaurant = await Restaurant.findByPk(req.userId);
+  
+        if (!restaurant) {
+          return next(createError('Restaurant non trouvé.', 404));
+        }
+  
+        // Vérifie que le type existe et est validé
+        const { RestaurantType } = require('../models');
+        const type = await RestaurantType.findOne({ where: { id: restaurantTypeId, isValidated: true } });
+        if (!type) {
+          return next(createError('Type de restaurant invalide ou non validé.', 400));
+        }
+  
+        restaurant.restaurantTypeId = restaurantTypeId;
+        await restaurant.save();
+  
+        return res.status(200).json({ message: 'Type de restaurant mis à jour.' });
+      } catch (error) {
+        next(error);
+      }
+    },
 
   /**
    * DELETE /api/restaurants/profil
