@@ -27,3 +27,7 @@ Ce document récapitule toutes les mesures et bonnes pratiques à appliquer pour
 ## 11. (Optionnel) Cookie HttpOnly SameSite pour stocker le JWT et se protéger contre XSS/CSRF.
 
 
+
+
+## TODO
+- supprimer les routes create, update et delete de languages
