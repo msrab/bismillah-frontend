@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { Restaurant, Street } = require('../models');
+const { Restaurant, Street, RestaurantType, RestaurantTypeDescription, PasswordResetToken } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
@@ -15,7 +15,9 @@ module.exports = {
         email,
         password,
         logo,
-        streetId
+        streetId,
+        restaurantTypeId,   // id d'un type existant
+        restaurantType      // objet pour créer un nouveau type
       } = req.body;
 
       const existEmail = await Restaurant.findOne({ where: { email } });
@@ -28,6 +30,25 @@ module.exports = {
         return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
       }
 
+      let typeIdToUse = null;
+
+      if (restaurantTypeId) {
+        // Vérifie que le type existe
+        const type = await RestaurantType.findOne({ where: { id: restaurantTypeId } });
+        if (!type) {
+          return next(createError('Type de restaurant non trouvé.', 400));
+        }
+        typeIdToUse = restaurantTypeId;
+      } else if (restaurantType) {
+        // Crée un nouveau type non validé
+        const { icon, descriptions } = restaurantType;
+        const newType = await RestaurantType.create({ icon, isValidated: false });
+        for (const desc of descriptions) {
+          await RestaurantTypeDescription.create({ ...desc, restaurantTypeId: newType.id });
+        }
+        typeIdToUse = newType.id;
+      }
+
       const hash = await bcrypt.hash(password, 10);
 
       const newRestaurant = await Restaurant.create({
@@ -38,7 +59,8 @@ module.exports = {
         email,
         password: hash,
         logo: logo || null,
-        streetId
+        streetId,
+        restaurantTypeId: typeIdToUse
       });
 
       // On récupère le restaurant avec l'association street
