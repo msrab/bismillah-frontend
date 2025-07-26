@@ -1,23 +1,38 @@
 const request = require('supertest');
 const { app } = require('../server');
-const { Restaurant, Street, City, Country } = require('../models');
+const { Restaurant, Street, City, Country, RestaurantType, RestaurantTypeDescription, Language } = require('../models');
 const bcrypt = require('bcrypt');
 
-let street, city, country;
+let street, city, country, typeValide;
 
 beforeEach(async () => {
+  // Nettoyage ciblé des tables concernées
   await Restaurant.destroy({ where: {} });
+  await RestaurantTypeDescription.destroy({ where: {} });
+  await RestaurantType.destroy({ where: {} });
   await Street.destroy({ where: {} });
   await City.destroy({ where: {} });
   await Country.destroy({ where: {} });
+  await Language.destroy({ where: {} });
 
+  // Création des entités nécessaires pour les tests
   country = await Country.create({ name: 'France', iso_code: 'FR' });
-  city = await City.create({ name: 'Paris', postal_code: '75001', countryId: country.id });
+  city = await City.create({ name: 'Paris', postal_code: '75000', countryId: country.id });
   street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
+  await Language.create({ id: 1, name: 'Français', icon: '🇫🇷' });
+
+  // Type validé pour les tests
+  typeValide = await RestaurantType.create({ icon: '🍔', isValidated: true });
+  await RestaurantTypeDescription.create({
+    restaurantTypeId: typeValide.id,
+    languageId: 1,
+    name: 'Fast Food',
+    description: 'Restauration rapide'
+  });
 });
 
 describe('Auth Restaurant', () => {
-  it('crée un restaurant avec succès', async () => {
+  it('crée un restaurant avec un type existant validé', async () => {
     const res = await request(app)
       .post('/api/auth/restaurant/signup')
       .send({
@@ -27,12 +42,49 @@ describe('Auth Restaurant', () => {
         address_number: '5',
         company_number: '123456789',
         phone: '0102030405',
-        streetId: street.id
+        streetId: street.id,
+        restaurantTypeId: typeValide.id
       });
     expect(res.statusCode).toBe(201);
     expect(res.body.restaurant).toHaveProperty('id');
     expect(res.body.restaurant).toHaveProperty('name', 'Le Gourmet');
     expect(res.body.restaurant.street).toHaveProperty('id', street.id);
+    expect(res.body.restaurant).toHaveProperty('restaurantTypeId', typeValide.id);
+  });
+
+  it('crée un restaurant avec un nouveau type (non validé)', async () => {
+    const res = await request(app)
+      .post('/api/auth/restaurant/signup')
+      .send({
+        name: 'Le Créatif',
+        email: 'creatif@example.com',
+        password: 'Password123!',
+        address_number: '10',
+        company_number: '222333444',
+        phone: '0102030406',
+        streetId: street.id,
+        restaurantType: {
+          icon: '🍜',
+          descriptions: [
+            { languageId: 1, name: 'Nouvelle Catégorie', description: 'Type proposé par le resto' }
+          ]
+        }
+      });
+    expect(res.statusCode).toBe(201);
+    expect(res.body.restaurant).toHaveProperty('id');
+    expect(res.body.restaurant).toHaveProperty('name', 'Le Créatif');
+    expect(res.body.restaurant.street).toHaveProperty('id', street.id);
+
+    // Vérifie que le type a bien été créé et n'est pas validé
+    const resto = await Restaurant.findByPk(res.body.restaurant.id);
+    const typeCree = await RestaurantType.findByPk(resto.restaurantTypeId);
+    expect(typeCree).not.toBeNull();
+    expect(typeCree.isValidated).toBe(false);
+
+    // Vérifie la description associée
+    const desc = await RestaurantTypeDescription.findOne({ where: { restaurantTypeId: typeCree.id, languageId: 1 } });
+    expect(desc).not.toBeNull();
+    expect(desc.name).toBe('Nouvelle Catégorie');
   });
 
   it('refuse un email déjà utilisé', async () => {
@@ -42,7 +94,8 @@ describe('Auth Restaurant', () => {
       password: await bcrypt.hash('Password123!', 10),
       address_number: '6',
       company_number: '987654321',
-      streetId: street.id
+      streetId: street.id,
+      restaurantTypeId: typeValide.id
     });
     const res = await request(app)
       .post('/api/auth/restaurant/signup')
@@ -52,7 +105,8 @@ describe('Auth Restaurant', () => {
         password: 'Password123!',
         address_number: '7',
         company_number: '987654321',
-        streetId: street.id
+        streetId: street.id,
+        restaurantTypeId: typeValide.id
       });
     expect(res.statusCode).toBe(409);
     expect(res.body.errors || res.body.error).toContain('Cet email est déjà utilisé.');
@@ -74,7 +128,8 @@ describe('Auth Restaurant', () => {
       password,
       address_number: '8',
       company_number: '111222333',
-      streetId: street.id
+      streetId: street.id,
+      restaurantTypeId: typeValide.id
     });
     const res = await request(app)
       .post('/api/auth/restaurant/login')
@@ -86,6 +141,7 @@ describe('Auth Restaurant', () => {
     expect(res.body).toHaveProperty('token');
     expect(res.body.restaurant).toHaveProperty('email', 'connect@example.com');
     expect(res.body.restaurant.street).toHaveProperty('id', street.id);
+    expect(res.body.restaurant).toHaveProperty('restaurantTypeId', typeValide.id);
   });
 
   it('refuse connexion mauvais mot de passe', async () => {
@@ -96,7 +152,8 @@ describe('Auth Restaurant', () => {
       password,
       address_number: '9',
       company_number: '444555666',
-      streetId: street.id
+      streetId: street.id,
+      restaurantTypeId: typeValide.id
     });
     const res = await request(app)
       .post('/api/auth/restaurant/login')

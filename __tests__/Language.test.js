@@ -3,6 +3,7 @@ const { app } = require('../server');
 const { Language } = require('../models');
 
 beforeEach(async () => {
+  // Nettoyage ciblé de la table concernée
   await Language.destroy({ where: {} });
 });
 

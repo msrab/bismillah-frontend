@@ -6,7 +6,9 @@ const jwt = require('jsonwebtoken');
 let token;
 
 beforeEach(async () => {
+  // Nettoyage ciblé de la table concernée
   await Country.destroy({ where: {} });
+
   token = jwt.sign(
     { id: 1, type: 'restaurant' },
     process.env.JWT_SECRET || 'testsecret',

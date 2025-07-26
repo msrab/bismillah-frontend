@@ -2,20 +2,23 @@ const request = require('supertest');
 const { app } = require('../server');
 const { User, Street, Language, City, Country } = require('../models');
 const bcrypt = require('bcrypt');
+const { execSync } = require('child_process');
 
 let street, language, city, country;
 
 beforeEach(async () => {
+  // Nettoyage ciblé des tables concernées
   await User.destroy({ where: {} });
   await Street.destroy({ where: {} });
   await Language.destroy({ where: {} });
   await City.destroy({ where: {} });
   await Country.destroy({ where: {} });
 
-  language = await Language.create({ name: 'Français', icon: '🇫🇷' });
+  // Création des entités nécessaires pour les tests
   country = await Country.create({ name: 'France', iso_code: 'FR' });
-  city = await City.create({ name: 'Paris', postal_code: '75001', countryId: country.id });
+  city = await City.create({ name: 'Paris', postal_code: '75000', countryId: country.id });
   street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
+  language = await Language.create({ name: 'Français', icon: '🇫🇷' });
 });
 
 describe('Auth User', () => {

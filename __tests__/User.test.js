@@ -7,25 +7,25 @@ const jwt = require('jsonwebtoken');
 let user, token, street, language, city, country;
 
 beforeEach(async () => {
+  // Nettoyage ciblé des tables concernées
   await User.destroy({ where: {} });
   await Street.destroy({ where: {} });
   await Language.destroy({ where: {} });
   await City.destroy({ where: {} });
   await Country.destroy({ where: {} });
 
-  language = await Language.create({ name: 'Français', icon: '🇫🇷' });
+  // Création des entités nécessaires pour les tests
   country = await Country.create({ name: 'France', iso_code: 'FR' });
-  city = await City.create({ name: 'Paris', postal_code: '75001', countryId: country.id });
+  city = await City.create({ name: 'Paris', postal_code: '75000', countryId: country.id });
   street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
+  language = await Language.create({ name: 'Français', icon: '🇫🇷' });
 
+  // Création d'un utilisateur de test
   user = await User.create({
     login: 'user1',
     email: 'user1@example.com',
     password: await bcrypt.hash('Password123!', 10),
     address_number: '10',
-    firstname: 'Jean',
-    surname: 'Dupont',
-    phone: '0600000000',
     streetId: street.id,
     languageId: language.id
   });

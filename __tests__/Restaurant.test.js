@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 let token, restaurant, street, city, country, lang1, lang2;
 
 beforeEach(async () => {
+  // Nettoyage ciblé des tables concernées
   await RestaurantLanguage.destroy({ where: {} });
   await Language.destroy({ where: {} });
   await Restaurant.destroy({ where: {} });
@@ -14,24 +15,25 @@ beforeEach(async () => {
   await City.destroy({ where: {} });
   await Country.destroy({ where: {} });
 
+  // Création des entités nécessaires pour les tests
   country = await Country.create({ name: 'France', iso_code: 'FR' });
-  city = await City.create({ name: 'Paris', postal_code: '75001', countryId: country.id });
+  city = await City.create({ name: 'Paris', postal_code: '75000', countryId: country.id });
   street = await Street.create({ name: 'Rue de Rivoli', cityId: city.id });
-
   lang1 = await Language.create({ name: 'Français', icon: '🇫🇷' });
   lang2 = await Language.create({ name: 'English', icon: '🇬🇧' });
 
+  // Crée un restaurant de test
   restaurant = await Restaurant.create({
     name: 'Le Testeur',
-    email: 'testeur@example.com',
+    email: 'resto@example.com',
     password: await bcrypt.hash('Password123!', 10),
-    address_number: '10',
-    company_number: 'FR123456789',
-    phone: '0100000001',
-    logo: null,
-    nb_followers: 0,
+    phone: '0100000000',
+    address_number: '1',
+    streetId: street.id,
+    cityId: city.id,
+    countryId: country.id,
     is_active: true,
-    streetId: street.id
+    company_number: '123456789'
   });
 
   token = jwt.sign(

@@ -6,9 +6,11 @@ const jwt = require('jsonwebtoken');
 let token, country;
 
 beforeEach(async () => {
+  // Nettoyage ciblé des tables concernées
   await City.destroy({ where: {} });
   await Country.destroy({ where: {} });
 
+  // Création des entités nécessaires pour les tests
   country = await Country.create({ name: 'France', iso_code: 'FR' });
 
   token = jwt.sign(
