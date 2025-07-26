@@ -29,12 +29,12 @@ app.use(helmet());
 const authUserRoutes       = require('./routes/authUserRoutes');
 const authRestaurantRoutes = require('./routes/authRestaurantRoutes');
 const userRoutes           = require('./routes/userRoutes');
-const restaurantRoutes     = require('./routes/restaurantRoutes');
+const restaurantRoutes     = require('./routes/RestaurantRoutes');
 const countryRoutes        = require('./routes/CountryRoutes');
 const cityRoutes           = require('./routes/CityRoutes');
 const streetRoutes         = require('./routes/StreetRoutes');
 const languageRoutes       = require('./routes/LanguageRoutes');
-const restaurantLanguageRoutes = require('./routes/restaurantLanguageRoutes');
+const restaurantLanguageRoutes = require('./routes/RestaurantLanguageRoutes');
 const restaurantTypeRoutes = require('./routes/RestaurantTypeRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
