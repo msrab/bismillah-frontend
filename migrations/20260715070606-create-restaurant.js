@@ -54,7 +54,16 @@ module.exports = {
           model: 'streets',
           key: 'id'
         },
-        onDelete: 'CASCADE'
+        onDelete: 'SET NULL'
+      },
+      restaurantTypeId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'restaurant_types',
+          key: 'id'
+        },
+        onDelete: 'SET NULL'
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -67,7 +76,7 @@ module.exports = {
     });
   },
 
-  async down (queryInterface, Sequelize) {
+  async down (queryInterface) {
     await queryInterface.dropTable('restaurants');
   }
 };
