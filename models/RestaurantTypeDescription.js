@@ -5,7 +5,7 @@ module.exports = (sequelize) => {
   class RestaurantTypeDescription extends Model {
     static associate(models) {
       RestaurantTypeDescription.belongsTo(models.RestaurantType, { foreignKey: 'restaurantTypeId' });
-      RestaurantTypeDescription.belongsTo(models.Language, { foreignKey: 'languageId' });
+      RestaurantTypeDescription.belongsTo(models.Language, { as: 'language', foreignKey: 'languageId' });
     }
   }
   RestaurantTypeDescription.init(

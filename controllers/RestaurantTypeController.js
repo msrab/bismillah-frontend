@@ -1,15 +1,47 @@
 const { RestaurantType, RestaurantTypeDescription, Language } = require('../models');
 
+// Fonction de validation pour descriptions
+function validateDescriptions(descriptions) {
+  if (!Array.isArray(descriptions)) return 'descriptions doit être un tableau';
+  if (descriptions.length === 0) return 'descriptions ne doit pas être vide';
+  const ids = new Set();
+  for (const desc of descriptions) {
+    if (!desc || typeof desc !== 'object') return 'Chaque description doit être un objet';
+    if (typeof desc.languageId !== 'number') return 'languageId manquant ou invalide';
+    if (ids.has(desc.languageId)) return 'Doublon de languageId';
+    ids.add(desc.languageId);
+    if (typeof desc.name !== 'string' || !desc.name.trim()) return 'name manquant ou vide';
+    if (typeof desc.description !== 'string' || !desc.description.trim()) return 'description manquant ou vide';
+  }
+  return null;
+}
+
 module.exports = {
   // Créer un type de restaurant avec ses traductions
   async create(req, res, next) {
     try {
-      const { icon, descriptions } = req.body; // descriptions: [{ languageId, name, description }]
+      const { icon, descriptions } = req.body;
+      if (typeof icon !== 'string' || !icon.trim()) {
+        return res.status(400).json({ error: 'icon manquant ou invalide' });
+      }
+      const descError = validateDescriptions(descriptions);
+      if (descError) {
+        return res.status(400).json({ error: descError });
+      }
       const type = await RestaurantType.create({ icon });
       for (const desc of descriptions) {
         await RestaurantTypeDescription.create({ ...desc, restaurantTypeId: type.id });
       }
-      res.status(201).json({ message: 'Type créé', typeId: type.id });
+      // On retourne l'objet complet pour les tests
+      const createdType = await RestaurantType.findByPk(type.id, {
+        include: [{ model: RestaurantTypeDescription, as: 'RestaurantTypeDescriptions', include: [{ model: Language, as: 'language' }] }]
+      });
+      res.status(201).json({
+        id: createdType.id,
+        icon: createdType.icon,
+        descriptions: createdType.RestaurantTypeDescriptions,
+        message: 'Type créé'
+      });
     } catch (err) {
       next(err);
     }
@@ -21,7 +53,7 @@ module.exports = {
       const { languageId } = req.query;
       const include = [{
         model: RestaurantTypeDescription,
-        as: 'descriptions',
+        as: 'RestaurantTypeDescriptions',
         include: [{ model: Language, as: 'language' }]
       }];
       if (languageId) {
@@ -39,7 +71,7 @@ module.exports = {
     try {
       const { id } = req.params;
       const type = await RestaurantType.findByPk(id, {
-        include: [{ model: RestaurantTypeDescription, as: 'descriptions', include: [{ model: Language, as: 'language' }] }]
+        include: [{ model: RestaurantTypeDescription, as: 'RestaurantTypeDescriptions', include: [{ model: Language, as: 'language' }] }]
       });
       if (!type) return res.status(404).json({ error: 'Type non trouvé' });
       res.json(type);
@@ -52,16 +84,37 @@ module.exports = {
   async update(req, res, next) {
     try {
       const { id } = req.params;
-      const { icon, descriptions } = req.body;
+      const { icon, descriptions, isValidated } = req.body;
       const type = await RestaurantType.findByPk(id);
       if (!type) return res.status(404).json({ error: 'Type non trouvé' });
-      if (icon) await type.update({ icon });
-      if (descriptions) {
-        for (const desc of descriptions) {
-          await RestaurantTypeDescription.upsert({ ...desc, restaurantTypeId: id });
-        }
+
+      if (typeof icon !== 'string' || !icon.trim()) {
+        return res.status(400).json({ error: 'icon manquant ou invalide' });
       }
-      res.json({ message: 'Type mis à jour' });
+      const descError = validateDescriptions(descriptions);
+      if (descError) {
+        return res.status(400).json({ error: descError });
+      }
+
+      await type.update({ icon, isValidated: !!isValidated });
+
+      // On supprime les anciennes descriptions et on insère les nouvelles pour éviter les doublons
+      await RestaurantTypeDescription.destroy({ where: { restaurantTypeId: id } });
+      for (const desc of descriptions) {
+        await RestaurantTypeDescription.create({ ...desc, restaurantTypeId: id });
+      }
+
+      const updatedType = await RestaurantType.findByPk(id, {
+        include: [{ model: RestaurantTypeDescription, as: 'RestaurantTypeDescriptions', include: [{ model: Language, as: 'language' }] }]
+      });
+
+      res.json({
+        id: updatedType.id,
+        icon: updatedType.icon,
+        isValidated: updatedType.isValidated,
+        descriptions: updatedType.RestaurantTypeDescriptions,
+        message: 'Type mis à jour'
+      });
     } catch (err) {
       next(err);
     }
