@@ -7,6 +7,7 @@ module.exports = {
     const hash = await bcrypt.hash('Password123!', 10);
     await queryInterface.bulkInsert('users', [
       {
+        id: 1,
         login: 'userfr',
         email: 'userfr@example.com',
         password: hash,
@@ -21,6 +22,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 2,
         login: 'userbe',
         email: 'userbe@example.com',
         password: hash,
@@ -35,6 +37,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 3,
         login: 'userde',
         email: 'userde@example.com',
         password: hash,
@@ -49,6 +52,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 4,
         login: 'useres',
         email: 'useres@example.com',
         password: hash,

@@ -7,6 +7,7 @@ module.exports = {
     await queryInterface.bulkInsert('restaurants', [
       // France (streetId: 1, 4)
       {
+        id: 1,
         name: 'Le Testeur ',
         email: 'paris@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', // hash à adapter
@@ -21,6 +22,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 2,
         name: 'Neo Crepe',
         email: 'lyon@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -36,6 +38,7 @@ module.exports = {
       },
       // Belgique (streetId: 7, 10)
       {
+        id: 3,
         name: 'La Ruche',
         email: 'bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -50,6 +53,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 4,
         name: 'Delhi Soup',
         email: 'anvers@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -65,6 +69,7 @@ module.exports = {
       },
       // Allemagne (streetId: 13, 16)
       {
+        id: 5,
         name: 'G La Dalle',
         email: 'berlin@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -79,6 +84,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 6,
         name: 'La Mama',
         email: 'munich@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -94,6 +100,7 @@ module.exports = {
       },
       // Espagne (streetId: 19, 22)
       {
+        id: 7,
         name: 'La Table Servie',
         email: 'madrid@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -108,6 +115,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 8,
         name: 'Groupo',
         email: 'barcelone@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -123,6 +131,7 @@ module.exports = {
       },
       // Italie (streetId: 25, 28)
       {
+        id: 9,
         name: 'Pomodoro',
         email: 'rome@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -137,6 +146,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 10,
         name: 'Gracia',
         email: 'milan@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -152,6 +162,7 @@ module.exports = {
       },
       // Suisse (streetId: 31, 34)
       {
+        id: 11,
         name: 'Chico',
         email: 'geneve@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
@@ -166,6 +177,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
+        id: 12,
         name: 'Le Mangeur',
         email: 'zurich@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',

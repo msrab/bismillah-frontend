@@ -24,15 +24,11 @@ module.exports = {
         restaurantId: restaurant.id,
         languageId: lang1.id,
         main: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
       });
       associations.push({
         restaurantId: restaurant.id,
         languageId: lang2.id,
         main: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
       });
     });
 
