@@ -3,6 +3,10 @@
 Ce document récapitule toutes les mesures et bonnes pratiques à appliquer pour durcir l’authentification (users et restaurants) dans notre API Node/Express/Sequelize.
 
 ---
+## 0. Sécuriser toutes les routes selon les types d’utilisateurs
+
+Chaque route de l’API doit être protégée par des middlewares d’authentification et d’autorisation adaptés au rôle de l’utilisateur (admin, restaurateur, utilisateur simple, etc.).  
+Aucune route sensible ne doit être accessible sans contrôle strict du type d’utilisateur autorisé.
 
 ## 1. Force HTTPS en production.
 
@@ -25,9 +29,3 @@ Ce document récapitule toutes les mesures et bonnes pratiques à appliquer pour
 ## 10. Uniformiser les messages d’erreur pour ne pas aider l’attaquant.
 
 ## 11. (Optionnel) Cookie HttpOnly SameSite pour stocker le JWT et se protéger contre XSS/CSRF.
-
-
-
-
-## TODO
-- supprimer les routes create, update et delete de languages
