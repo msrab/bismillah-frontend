@@ -13,6 +13,11 @@ module.exports = (sequelize) => {
       icon: {
         type: DataTypes.STRING,
         allowNull: false
+      },
+      isValidated: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
       }
     },
     {
