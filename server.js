@@ -36,6 +36,7 @@ const streetRoutes         = require('./routes/StreetRoutes');
 const languageRoutes       = require('./routes/LanguageRoutes');
 const restaurantLanguageRoutes = require('./routes/RestaurantLanguageRoutes');
 const restaurantTypeRoutes = require('./routes/RestaurantTypeRoutes');
+const categoryMenuRoutes  = require('./routes/CategoryMenuRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -55,6 +56,7 @@ app.use('/api/streets', streetRoutes);
 app.use('/api/languages', languageRoutes);
 app.use('/api/restaurants/languages', restaurantLanguageRoutes);
 app.use('/api/restaurants/types', restaurantTypeRoutes);
+app.use('/api/category-menus', categoryMenuRoutes);
 
 // Route de test basique
 app.get('/', (_, res) => {
