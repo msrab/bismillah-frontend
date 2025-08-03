@@ -2,15 +2,14 @@
 
 module.exports = {
   async up (queryInterface) {
-    // 2 restaurants par pays, donc 12 restaurants (1 par city pour la simplicité)
-    // Assure-toi que les streetId existent (voir 03-StreetSeed.js)
+    // 17 restaurants, avec types et noms réalistes
     await queryInterface.bulkInsert('restaurants', [
-      // France (streetId: 1, 4)
+      // Paris (streetId: 1, 2)
       {
         id: 1,
-        name: 'Le Testeur ',
-        email: 'paris@example.com',
-        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', // hash à adapter
+        name: 'Le Gourmet Parisien',
+        email: 'gourmet.paris@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'FR123456789',
         address_number: '10',
         phone: '0100000001',
@@ -18,13 +17,14 @@ module.exports = {
         nb_followers: 0,
         is_active: true,
         streetId: 1,
+        restaurantTypeId: 1, // Gastronomique
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: 2,
-        name: 'Neo Crepe',
-        email: 'lyon@example.com',
+        name: 'Crêperie de Montmartre',
+        email: 'creperie.paris@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'FR987654321',
         address_number: '11',
@@ -32,15 +32,17 @@ module.exports = {
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 4,
+        streetId: 2,
+        restaurantTypeId: 4, // Crêperie
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Belgique (streetId: 7, 10)
+
+      // Bruxelles (streetId: 7, 8, 9, 10, 11, 12, 13)
       {
         id: 3,
-        name: 'La Ruche',
-        email: 'bruxelles@example.com',
+        name: 'Pizzeria Bella Italia',
+        email: 'bella.italia.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE123456789',
         address_number: '12',
@@ -49,13 +51,14 @@ module.exports = {
         nb_followers: 0,
         is_active: true,
         streetId: 7,
+        restaurantTypeId: 2, // Pizzeria
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: 4,
-        name: 'Delhi Soup',
-        email: 'anvers@example.com',
+        name: 'Burger House Bruxelles',
+        email: 'burgerhouse.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE987654321',
         address_number: '13',
@@ -63,131 +66,222 @@ module.exports = {
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 10,
+        streetId: 8,
+        restaurantTypeId: 3, // Fast Food
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Allemagne (streetId: 13, 16)
       {
         id: 5,
-        name: 'G La Dalle',
-        email: 'berlin@example.com',
+        name: 'Sushi Royal Bruxelles',
+        email: 'sushi.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'DE123456789',
+        company_number: 'BE192837465',
         address_number: '14',
-        phone: '0300000001',
+        phone: '0200000003',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 13,
+        streetId: 9,
+        restaurantTypeId: 5, // Sushi Bar
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: 6,
-        name: 'La Mama',
-        email: 'munich@example.com',
+        name: 'El Mexicano Bruxelles',
+        email: 'mexicano.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'DE987654321',
+        company_number: 'BE564738291',
         address_number: '15',
-        phone: '0300000002',
+        phone: '0200000004',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 16,
+        streetId: 10,
+        restaurantTypeId: 6, // Mexicain
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Espagne (streetId: 19, 22)
       {
         id: 7,
-        name: 'La Table Servie',
-        email: 'madrid@example.com',
+        name: 'Asia Palace Bruxelles',
+        email: 'asia.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'ES123456789',
+        company_number: 'BE246813579',
         address_number: '16',
-        phone: '0400000001',
+        phone: '0200000005',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 19,
+        streetId: 11,
+        restaurantTypeId: 7, // Asiatique
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: 8,
-        name: 'Groupo',
-        email: 'barcelone@example.com',
+        name: 'Green Garden Bruxelles',
+        email: 'greengarden.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'ES987654321',
+        company_number: 'BE135792468',
         address_number: '17',
-        phone: '0400000002',
+        phone: '0200000006',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 22,
+        streetId: 12,
+        restaurantTypeId: 9, // Végétarien
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Italie (streetId: 25, 28)
       {
         id: 9,
-        name: 'Pomodoro',
-        email: 'rome@example.com',
+        name: 'Steakhouse Royal',
+        email: 'steakhouse.bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'IT123456789',
+        company_number: 'BE112233445',
         address_number: '18',
-        phone: '0500000001',
+        phone: '0200000007',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 25,
+        streetId: 13,
+        restaurantTypeId: 8, // Grill/Steakhouse
         createdAt: new Date(),
         updatedAt: new Date()
       },
+
+      // Liège (streetId: 14, 15, 16)
       {
         id: 10,
-        name: 'Gracia',
-        email: 'milan@example.com',
+        name: 'Le Jardin Végétarien',
+        email: 'jardin.vegetarien.liege@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'IT987654321',
+        company_number: 'BE135792468',
         address_number: '19',
-        phone: '0500000002',
+        phone: '0300000001',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 28,
+        streetId: 14,
+        restaurantTypeId: 9, // Végétarien
         createdAt: new Date(),
         updatedAt: new Date()
       },
-      // Suisse (streetId: 31, 34)
       {
         id: 11,
-        name: 'Chico',
-        email: 'geneve@example.com',
+        name: 'Asia Palace Liège',
+        email: 'asia.liege@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'CH123456789',
+        company_number: 'BE246813579',
         address_number: '20',
-        phone: '0600000001',
+        phone: '0300000002',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 31,
+        streetId: 15,
+        restaurantTypeId: 7, // Asiatique
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
         id: 12,
-        name: 'Le Mangeur',
-        email: 'zurich@example.com',
+        name: 'Steakhouse Liégeois',
+        email: 'steakhouse.liege@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        company_number: 'CH987654321',
+        company_number: 'BE112233445',
         address_number: '21',
-        phone: '0600000002',
+        phone: '0300000003',
         logo: null,
         nb_followers: 0,
         is_active: true,
-        streetId: 34,
+        streetId: 16,
+        restaurantTypeId: 8, // Grill/Steakhouse
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // Allemagne (streetId: 20, 21, 22)
+      {
+        id: 13,
+        name: 'Eis Paradies',
+        email: 'eisparadies.de@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        company_number: 'DE123456789',
+        address_number: '22',
+        phone: '0400000001',
+        logo: null,
+        nb_followers: 0,
+        is_active: true,
+        streetId: 20,
+        restaurantTypeId: 10, // Glacier
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 14,
+        name: 'Sushi Meister',
+        email: 'sushi.meister.de@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        company_number: 'DE987654321',
+        address_number: '23',
+        phone: '0400000002',
+        logo: null,
+        nb_followers: 0,
+        is_active: true,
+        streetId: 21,
+        restaurantTypeId: 5, // Sushi Bar
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 15,
+        name: 'Taco Haus',
+        email: 'taco.haus.de@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        company_number: 'DE192837465',
+        address_number: '24',
+        phone: '0400000003',
+        logo: null,
+        nb_followers: 0,
+        is_active: true,
+        streetId: 22,
+        restaurantTypeId: 6, // Mexicain
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
+      // Espagne (streetId: 25, 26)
+      {
+        id: 16,
+        name: 'La Casa de Tapas',
+        email: 'tapas.madrid@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        company_number: 'ES123456789',
+        address_number: '25',
+        phone: '0500000001',
+        logo: null,
+        nb_followers: 0,
+        is_active: true,
+        streetId: 25,
+        restaurantTypeId: 1, // Gastronomique (pour la diversité)
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 17,
+        name: 'Heladería Sol',
+        email: 'heladeria.sol.barcelona@example.com',
+        password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        company_number: 'ES987654321',
+        address_number: '26',
+        phone: '0500000002',
+        logo: null,
+        nb_followers: 0,
+        is_active: true,
+        streetId: 26,
+        restaurantTypeId: 10, // Glacier
         createdAt: new Date(),
         updatedAt: new Date()
       }
