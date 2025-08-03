@@ -3,35 +3,45 @@
 const { CategoryMenu, CategoryMenuDescription, Language } = require('../models');
 const { createError } = require('../utils/createError');
 
-// Fonction de validation pour descriptions
-function validateDescriptions(descriptions) {
-  if (!Array.isArray(descriptions)) return 'descriptions doit être un tableau';
-  if (descriptions.length === 0) return 'descriptions ne doit pas être vide';
-  const ids = new Set();
-  for (const desc of descriptions) {
-    if (!desc || typeof desc !== 'object') return 'Chaque description doit être un objet';
-    if (typeof desc.languageId !== 'number') return 'languageId manquant ou invalide';
-    if (ids.has(desc.languageId)) return 'Doublon de languageId';
-    ids.add(desc.languageId);
-    if (typeof desc.name !== 'string' || !desc.name.trim()) return 'name manquant ou vide';
-    if (typeof desc.description !== 'string') return 'description manquant';
-  }
-  return null;
+// --- Fonctions utilitaires pour les descriptions ---
+async function createDescription({ categoryMenuId, languageId, name, description }) {
+  const exists = await CategoryMenuDescription.findOne({ where: { categoryMenuId, languageId } });
+  if (exists) throw createError('Description déjà existante pour cette langue', 409);
+
+  return CategoryMenuDescription.create({
+    categoryMenuId,
+    languageId,
+    name,
+    description
+  });
 }
+
+async function updateDescriptionById(categoryMenuId, descriptionId, { languageId, name, description }) {
+  const desc = await CategoryMenuDescription.findOne({
+    where: { id: descriptionId, categoryMenuId }
+  });
+  if (!desc) throw createError('Description non trouvée', 404);
+
+  await desc.update({ languageId, name, description });
+  return desc;
+}
+
+async function deleteDescriptionById(categoryMenuId, descriptionId) {
+  const deleted = await CategoryMenuDescription.destroy({
+    where: { id: descriptionId, categoryMenuId }
+  });
+  if (!deleted) throw createError('Description non trouvée', 404);
+  return deleted;
+}
+
+// --- CRUD CategoryMenu ---
 
 exports.create = async (req, res, next) => {
   try {
     const { icon, isValidated, descriptions } = req.body;
-    if (typeof icon !== 'string' || !icon.trim()) {
-      return next(createError('icon manquant ou invalide', 400));
-    }
-    const descError = validateDescriptions(descriptions);
-    if (descError) {
-      return next(createError(descError, 400));
-    }
     const menu = await CategoryMenu.create({ icon, isValidated: !!isValidated });
     for (const desc of descriptions) {
-      await CategoryMenuDescription.create({ ...desc, categoryMenuId: menu.id });
+      await createDescription({ ...desc, categoryMenuId: menu.id });
     }
     const createdMenu = await CategoryMenu.findByPk(menu.id, {
       include: [
@@ -98,20 +108,12 @@ exports.update = async (req, res, next) => {
     const menu = await CategoryMenu.findByPk(id);
     if (!menu) return next(createError('Catégorie menu non trouvée', 404));
 
-    if (typeof icon !== 'string' || !icon.trim()) {
-      return next(createError('icon manquant ou invalide', 400));
-    }
-    const descError = validateDescriptions(descriptions);
-    if (descError) {
-      return next(createError(descError, 400));
-    }
-
     await menu.update({ icon, isValidated: !!isValidated });
 
-    // Supprime les anciennes descriptions et insère les nouvelles
+    // Supprime les anciennes descriptions et insère les nouvelles avec la fonction utilitaire
     await CategoryMenuDescription.destroy({ where: { categoryMenuId: id } });
     for (const desc of descriptions) {
-      await CategoryMenuDescription.create({ ...desc, categoryMenuId: id });
+      await createDescription({ ...desc, categoryMenuId: id });
     }
 
     const updatedMenu = await CategoryMenu.findByPk(id, {
@@ -143,6 +145,53 @@ exports.delete = async (req, res, next) => {
     const deleted = await CategoryMenu.destroy({ where: { id } });
     if (!deleted) return next(createError('Catégorie menu non trouvée', 404));
     return res.status(200).json({ message: 'Catégorie menu supprimée' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- MÉTHODES POUR LES DESCRIPTIONS ---
+
+exports.addDescription = async (req, res, next) => {
+  try {
+    const { categoryMenuId } = req.params;
+    const { languageId, name, description } = req.body;
+
+    // Vérifie que la catégorie existe
+    const menu = await CategoryMenu.findByPk(categoryMenuId);
+    if (!menu) return next(createError('Catégorie menu non trouvée', 404));
+
+    const desc = await createDescription({
+      categoryMenuId,
+      languageId,
+      name,
+      description
+    });
+
+    return res.status(201).json(desc);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateDescription = async (req, res, next) => {
+  try {
+    const { categoryMenuId, descriptionId } = req.params;
+    const { languageId, name, description } = req.body;
+
+    const desc = await updateDescriptionById(categoryMenuId, descriptionId, { languageId, name, description });
+
+    return res.status(200).json(desc);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteDescription = async (req, res, next) => {
+  try {
+    const { categoryMenuId, descriptionId } = req.params;
+    await deleteDescriptionById(categoryMenuId, descriptionId);
+    return res.status(200).json({ message: 'Description supprimée' });
   } catch (error) {
     next(error);
   }
