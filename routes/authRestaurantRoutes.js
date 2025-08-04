@@ -9,13 +9,17 @@ const {
   resetPasswordValidation,
   changePasswordValidation
 } = require('../middlewares/RestaurantValidation');
+const { requireRole } = require('../middlewares/roleMiddleware');
 
 
+// Routes publiques (pas besoin d'être connecté)
 router.post('/signup', signupRestaurantValidation, authRestaurantController.signup);
 router.post('/login', loginRestaurantValidation, authRestaurantController.login);
-router.post('/logout', verifyToken, authRestaurantController.logout);
-router.post('/reset-password', resetPasswordValidation, authRestaurantController.resetPassword);
 router.post('/forgot-password', forgotPasswordValidation, authRestaurantController.forgotPassword);
-router.post('/change-password', verifyToken, changePasswordValidation, authRestaurantController.changePassword);
+router.post('/reset-password', resetPasswordValidation, authRestaurantController.resetPassword);
+
+// Routes protégées (restaurant connecté uniquement)
+router.post('/logout', verifyToken, requireRole('restaurant'), authRestaurantController.logout);
+router.post('/change-password', verifyToken, requireRole('restaurant'), changePasswordValidation, authRestaurantController.changePassword);
 
 module.exports = router;

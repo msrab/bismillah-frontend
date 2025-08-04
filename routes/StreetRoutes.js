@@ -5,8 +5,11 @@ const { verifyToken } = require('../middlewares/authMiddleware');
 const { requireRole } = require('../middlewares/roleMiddleware');
 const { StreetValidation } = require('../middlewares/StreetValidation');
 
-router.post('/', verifyToken, requireRole('restaurant'), StreetValidation, StreetController.createStreet);
+// Routes publiques (lecture)
 router.get('/city/:cityId', StreetController.getStreetsByCity);
 router.get('/:id', StreetController.getStreetById);
+
+// Routes protégées (création par restaurant connecté uniquement)
+router.post('/', verifyToken, requireRole('restaurant'), StreetValidation, StreetController.createStreet);
 
 module.exports = router;

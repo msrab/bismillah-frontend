@@ -41,16 +41,15 @@ const ElementMenuRoutes   = require('./routes/ElementMenuRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
 
-// Middleware d’authentification (vérification JWT)
-const { verifyToken } = require('./middlewares/authMiddleware');
+
 
 // Routes “publiques” (inscription + connexion)
-app.use('/api/auth/user', authUserRoutes);
+//app.use('/api/auth/user', authUserRoutes);
 app.use('/api/auth/restaurant', authRestaurantRoutes);
 
 // Routes protégées par JWT
-app.use('/api/users',       verifyToken, userRoutes);
-app.use('/api/restaurants', verifyToken, restaurantRoutes);
+//app.use('/api/users',       verifyToken, userRoutes);
+app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/countries', countryRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/streets', streetRoutes);
@@ -58,7 +57,7 @@ app.use('/api/languages', languageRoutes);
 app.use('/api/restaurants/languages', restaurantLanguageRoutes);
 app.use('/api/restaurants/types', restaurantTypeRoutes);
 app.use('/api/category-menus', categoryMenuRoutes);
-app.use('/api/element-menus', verifyToken, ElementMenuRoutes);
+app.use('/api/element-menus', ElementMenuRoutes);
 
 // Route de test basique
 app.get('/', (_, res) => {

@@ -1,29 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const categoryMenuController = require('../controllers/CategoryMenuController');
-const { validateCategoryMenu, validateCategoryMenuDescription } = require('../middlewares/CategoryMenuValidation');
+const { validateCategoryMenu } = require('../middlewares/CategoryMenuValidation');
+const { verifyToken } = require('../middlewares/authMiddleware');
+const { requireRole } = require('../middlewares/roleMiddleware');
 
-// CRUD routes avec validation sur create et update
+// Routes publiques (tout le monde peut voir les catégories)
 router.get('/', categoryMenuController.getAll);
 router.get('/:id', categoryMenuController.getById);
-router.post('/', validateCategoryMenu, categoryMenuController.create);
-router.put('/:id', validateCategoryMenu, categoryMenuController.update);
-router.delete('/:id', categoryMenuController.delete);
 
-// Routes pour les descriptions d'une catégorie menu
-router.post(
-  '/:categoryMenuId/descriptions',
-  validateCategoryMenuDescription,
-  categoryMenuController.addDescription
-);
-router.put(
-  '/:categoryMenuId/descriptions/:descriptionId',
-  validateCategoryMenuDescription,
-  categoryMenuController.updateDescription
-);
-router.delete(
-  '/:categoryMenuId/descriptions/:descriptionId',
-  categoryMenuController.deleteDescription
-);
+// Routes protégées (restaurant connecté uniquement pour la création)
+router.post('/', verifyToken, requireRole('restaurant'), validateCategoryMenu, categoryMenuController.create);
+
+// Pas de PUT/DELETE ici (admin uniquement, à placer dans un autre fichier si besoin)
 
 module.exports = router;

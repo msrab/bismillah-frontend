@@ -5,11 +5,11 @@ const { verifyToken } = require('../middlewares/authMiddleware');
 const { validateRestaurantType } = require('../middlewares/RestaurantTypeValidation');
 const { requireRole } = require('../middlewares/roleMiddleware');
 
-// GET: tout le monde
+// Routes publiques (lecture)
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
 
-// POST: restaurant OU admin connecté
+// Routes protégées (création : restaurant OU admin connecté)
 router.post(
   '/',
   verifyToken,
@@ -18,8 +18,8 @@ router.post(
   controller.create
 );
 
-// PUT/DELETE: seulement admin
-router.put('/:id', verifyToken, requireRole('admin'), validateRestaurantType, controller.update);
-router.delete('/:id', verifyToken, requireRole('admin'), controller.delete);
+// Routes protégées (modification/suppression : admin uniquement)
+//router.put('/:id', verifyToken, requireRole('admin'), validateRestaurantType, controller.update);
+//router.delete('/:id', verifyToken, requireRole('admin'), controller.delete);
 
 module.exports = router;

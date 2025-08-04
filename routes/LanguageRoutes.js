@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const LanguageController = require('../controllers/LanguageController');
+const { verifyToken } = require('../middlewares/authMiddleware');
+const { requireRole } = require('../middlewares/roleMiddleware');
 
-// Liste toutes les langues
+// Routes publiques (lecture)
 router.get('/', LanguageController.getAll);
-
-// Récupère une langue par id
 router.get('/:id', LanguageController.getOne);
 
-// Crée une langue
-router.post('/', LanguageController.create);
-
-// Modifie une langue
-router.put('/:id', LanguageController.update);
+// Routes protégées (admin uniquement)
+//router.post('/', verifyToken, requireRole('admin'), LanguageController.create);
+//router.put('/:id', verifyToken, requireRole('admin'), LanguageController.update);
 
 module.exports = router;

@@ -5,14 +5,12 @@ const { verifyToken } = require('../middlewares/authMiddleware');
 const { requireRole } = require('../middlewares/roleMiddleware');
 const { CountryValidation } = require('../middlewares/CountryValidation');
 
-// Ajouter un pays (utilisé automatiquement lors de l'ajout d'une adresse restaurant)
-router.post('/', verifyToken, requireRole('restaurant'), CountryValidation, CountryController.createCountry);
-
-// Récupérer tous les pays
+// Routes publiques (lecture)
 router.get('/', CountryController.getAllCountries);
-
-// Récupérer un pays par ID
 router.get('/:id', CountryController.getCountryById);
+
+// Routes protégées (création par restaurant connecté uniquement)
+router.post('/', verifyToken, requireRole('restaurant'), CountryValidation, CountryController.createCountry);
 
 // Pas de routes PUT ou DELETE exposées
 
