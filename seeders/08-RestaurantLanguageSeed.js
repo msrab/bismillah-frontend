@@ -19,17 +19,7 @@ module.exports = {
 
       // Liège (Français, Anglais)
       { restaurantId: 10, languageIds: [1, 2] },       // Le Jardin Végétarien : Français (main), English
-      { restaurantId: 11, languageIds: [1, 2] },       // Asia Palace Liège : Français (main), English
-      { restaurantId: 12, languageIds: [1, 2] },       // Steakhouse Liégeois : Français (main), English
-
-      // Allemagne (Allemand, Anglais)
-      { restaurantId: 13, languageIds: [4, 2] },       // Eis Paradies : Deutsch (main), English
-      { restaurantId: 14, languageIds: [4, 2] },       // Sushi Meister : Deutsch (main), English
-      { restaurantId: 15, languageIds: [4, 2] },       // Taco Haus : Deutsch (main), English
-
-      // Espagne (Espagnol, Anglais)
-      { restaurantId: 16, languageIds: [5, 2] },       // La Casa de Tapas : Español (main), English
-      { restaurantId: 17, languageIds: [5, 2] },       // Heladería Sol : Español (main), English
+  
     ];
 
     const associations = [];
