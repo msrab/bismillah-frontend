@@ -18,7 +18,7 @@ require('./models');  // cette ligne charge automatiquement tous les modèles pr
  * -----------------------------------------------------------------*/
 const app = express();
 app.use(cors({
-  origin: 'https://monapp.front',
+  origin: 'http://localhost:5173',
   methods: ['GET','POST','PUT','DELETE'],
   allowedHeaders: ['Content-Type','Authorization']
 }));
