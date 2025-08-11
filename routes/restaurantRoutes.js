@@ -16,8 +16,8 @@ router.delete('/:id/languages/:languageId', verifyToken, requireRole('restaurant
 router.patch('/:id/languages/main', verifyToken, requireRole('restaurant'), restaurantController.setMainLanguage);
 
 // Routes protégées (user connecté uniquement)
-router.get('/', verifyToken, restaurantController.listRestaurants);
-router.get('/:id', verifyToken, restaurantController.getRestaurantById);
+router.get('/', restaurantController.listRestaurants);
+router.get('/:id', restaurantController.getRestaurantById);
 
 
 module.exports = router;
