@@ -2,6 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Languages Belgique: 1=Français, 2=English, 3=Nederlands, 4=Deutsch
     await queryInterface.bulkInsert('category_menu_descriptions', [
       // Français (id: 1)
       { categoryMenuId: 1, languageId: 1, name: 'Entrées', description: 'Entrées froides ou chaudes' },
@@ -27,17 +28,17 @@ module.exports = {
       { categoryMenuId: 9, languageId: 2, name: 'Savory Crepes', description: 'Homemade savory crepes' },
       { categoryMenuId: 10, languageId: 2, name: 'Milkshakes', description: 'Variety of milkshakes' },
 
-      // العربية (id: 3)
-      { categoryMenuId: 1, languageId: 3, name: 'مقبلات', description: 'مقبلات باردة أو ساخنة' },
-      { categoryMenuId: 2, languageId: 3, name: 'الأطباق الرئيسية', description: 'الأطباق الرئيسية' },
-      { categoryMenuId: 3, languageId: 3, name: 'حلويات', description: 'حلويات' },
-      { categoryMenuId: 4, languageId: 3, name: 'أجبان وخبز', description: 'تشكيلة من الأجبان والخبز' },
-      { categoryMenuId: 5, languageId: 3, name: 'بيتزا', description: 'أنواع البيتزا' },
-      { categoryMenuId: 6, languageId: 3, name: 'مشروبات', description: 'جميع المشروبات' },
-      { categoryMenuId: 7, languageId: 3, name: 'مثلجات', description: 'مثلجات وحلويات باردة' },
-      { categoryMenuId: 8, languageId: 3, name: 'كريب حلو', description: 'كريب حلو منزلي' },
-      { categoryMenuId: 9, languageId: 3, name: 'كريب مالح', description: 'كريب مالح منزلي' },
-      { categoryMenuId: 10, languageId: 3, name: 'ميلك شيك', description: 'ميلك شيك متنوع' },
+      // Nederlands (id: 3)
+      { categoryMenuId: 1, languageId: 3, name: 'Voorgerechten', description: 'Koude of warme voorgerechten' },
+      { categoryMenuId: 2, languageId: 3, name: 'Hoofdgerechten', description: 'Hoofdgerechten' },
+      { categoryMenuId: 3, languageId: 3, name: 'Desserts', description: 'Zoete desserts' },
+      { categoryMenuId: 4, languageId: 3, name: 'Kaas & brood', description: 'Selectie van kaas en brood' },
+      { categoryMenuId: 5, languageId: 3, name: 'Pizza\'s', description: 'Verschillende pizza\'s' },
+      { categoryMenuId: 6, languageId: 3, name: 'Dranken', description: 'Alle dranken' },
+      { categoryMenuId: 7, languageId: 3, name: 'IJs', description: 'IJs en koude desserts' },
+      { categoryMenuId: 8, languageId: 3, name: 'Zoete crêpes', description: 'Huisgemaakte zoete crêpes' },
+      { categoryMenuId: 9, languageId: 3, name: 'Hartige crêpes', description: 'Huisgemaakte hartige crêpes' },
+      { categoryMenuId: 10, languageId: 3, name: 'Milkshakes', description: 'Verschillende milkshakes' },
 
       // Deutsch (id: 4)
       { categoryMenuId: 1, languageId: 4, name: 'Vorspeisen', description: 'Kalte oder warme Vorspeisen' },
@@ -49,31 +50,7 @@ module.exports = {
       { categoryMenuId: 7, languageId: 4, name: 'Eis', description: 'Eis und gefrorene Desserts' },
       { categoryMenuId: 8, languageId: 4, name: 'Süße Crêpes', description: 'Hausgemachte süße Crêpes' },
       { categoryMenuId: 9, languageId: 4, name: 'Herzhafte Crêpes', description: 'Hausgemachte herzhafte Crêpes' },
-      { categoryMenuId: 10, languageId: 4, name: 'Milchshakes', description: 'Verschiedene Milchshakes' },
-
-      // Español (id: 5)
-      { categoryMenuId: 1, languageId: 5, name: 'Entrantes', description: 'Entrantes fríos o calientes' },
-      { categoryMenuId: 2, languageId: 5, name: 'Platos principales', description: 'Platos principales' },
-      { categoryMenuId: 3, languageId: 5, name: 'Postres', description: 'Postres dulces' },
-      { categoryMenuId: 4, languageId: 5, name: 'Quesos y panes', description: 'Selección de quesos y panes' },
-      { categoryMenuId: 5, languageId: 5, name: 'Pizzas', description: 'Variedad de pizzas' },
-      { categoryMenuId: 6, languageId: 5, name: 'Bebidas', description: 'Todas las bebidas' },
-      { categoryMenuId: 7, languageId: 5, name: 'Helados', description: 'Helados y postres fríos' },
-      { categoryMenuId: 8, languageId: 5, name: 'Crepes dulces', description: 'Crepes dulces caseras' },
-      { categoryMenuId: 9, languageId: 5, name: 'Crepes saladas', description: 'Crepes saladas caseras' },
-      { categoryMenuId: 10, languageId: 5, name: 'Batidos', description: 'Variedad de batidos' },
-
-      // Nederlands (id: 6)
-      { categoryMenuId: 1, languageId: 6, name: 'Voorgerechten', description: 'Koude of warme voorgerechten' },
-      { categoryMenuId: 2, languageId: 6, name: 'Hoofdgerechten', description: 'Hoofdgerechten' },
-      { categoryMenuId: 3, languageId: 6, name: 'Desserts', description: 'Zoete desserts' },
-      { categoryMenuId: 4, languageId: 6, name: 'Kaas & brood', description: 'Selectie van kaas en brood' },
-      { categoryMenuId: 5, languageId: 6, name: 'Pizza\'s', description: 'Verschillende pizza\'s' },
-      { categoryMenuId: 6, languageId: 6, name: 'Dranken', description: 'Alle dranken' },
-      { categoryMenuId: 7, languageId: 6, name: 'IJs', description: 'IJs en koude desserts' },
-      { categoryMenuId: 8, languageId: 6, name: 'Zoete crêpes', description: 'Huisgemaakte zoete crêpes' },
-      { categoryMenuId: 9, languageId: 6, name: 'Hartige crêpes', description: 'Huisgemaakte hartige crêpes' },
-      { categoryMenuId: 10, languageId: 6, name: 'Milkshakes', description: 'Verschillende milkshakes' }
+      { categoryMenuId: 10, languageId: 4, name: 'Milchshakes', description: 'Verschiedene Milchshakes' }
     ]);
   },
 
