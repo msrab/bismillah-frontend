@@ -15,6 +15,8 @@ module.exports = (sequelize) => {
       });
       // Association au type de restaurant
       Restaurant.belongsTo(models.RestaurantType, { foreignKey: 'restaurantTypeId', as: 'type' });
+      // Association aux certifications
+      Restaurant.hasMany(models.RestaurantCertification, { foreignKey: 'restaurantId', as: 'certifications' });
     }
   }
 

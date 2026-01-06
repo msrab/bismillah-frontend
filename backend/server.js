@@ -38,6 +38,8 @@ const restaurantLanguageRoutes = require('./routes/RestaurantLanguageRoutes');
 const restaurantTypeRoutes = require('./routes/RestaurantTypeRoutes');
 const categoryMenuRoutes  = require('./routes/CategoryMenuRoutes');
 const ElementMenuRoutes   = require('./routes/ElementMenuRoutes');
+const certifierRoutes     = require('./routes/CertifierRoutes');
+const restaurantCertificationRoutes = require('./routes/RestaurantCertificationRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -58,6 +60,8 @@ app.use('/api/restaurants/languages', restaurantLanguageRoutes);
 app.use('/api/restaurants/types', restaurantTypeRoutes);
 app.use('/api/category-menus', categoryMenuRoutes);
 app.use('/api/element-menus', ElementMenuRoutes);
+app.use('/api/certifiers', certifierRoutes);
+app.use('/api/certifications', restaurantCertificationRoutes);
 
 // Route de test basique
 app.get('/', (_, res) => {
