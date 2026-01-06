@@ -2,26 +2,25 @@
 
 module.exports = {
   async up (queryInterface) {
-    // countryId: 1 = France, 2 = Belgique, 3 = Allemagne, 4 = Espagne, 5 = Italie, 6 = Suisse
+    // countryId: 1 = Belgique uniquement
     await queryInterface.bulkInsert('cities', [
-      // France
-      { id: 1, name: 'Paris',        postal_code: '75001', countryId: 1 },
-      { id: 2, name: 'Lyon',         postal_code: '69001', countryId: 1 },
-      // Belgique
-      { id: 3, name: 'Bruxelles',    postal_code: '1000',  countryId: 2 },
-      { id: 4, name: 'Anvers',       postal_code: '2000',  countryId: 2 },
-      // Allemagne
-      { id: 5, name: 'Berlin',       postal_code: '10115', countryId: 3 },
-      { id: 6, name: 'Munich',       postal_code: '80331', countryId: 3 },
-      // Espagne
-      { id: 7, name: 'Madrid',       postal_code: '28001', countryId: 4 },
-      { id: 8, name: 'Barcelone',    postal_code: '08001', countryId: 4 },
-      // Italie
-      { id: 9, name: 'Rome',         postal_code: '00100', countryId: 5 },
-      { id: 10, name: 'Milan',        postal_code: '20100', countryId: 5 },
-      // Suisse
-      { id: 11, name: 'Genève',       postal_code: '1201',  countryId: 6 },
-      { id: 12, name: 'Zurich',       postal_code: '8001',  countryId: 6 }
+      // Belgique - Grandes villes (noms en langue locale)
+      // Bruxelles = bilingue FR/NL
+      { id: 1, name: 'Bruxelles / Brussel', postal_code: '1000',  countryId: 1 },
+      // Flandre (NL)
+      { id: 2, name: 'Antwerpen',    postal_code: '2000',  countryId: 1 },
+      { id: 3, name: 'Gent',         postal_code: '9000',  countryId: 1 },
+      { id: 6, name: 'Brugge',       postal_code: '8000',  countryId: 1 },
+      { id: 8, name: 'Leuven',       postal_code: '3000',  countryId: 1 },
+      // Wallonie (FR)
+      { id: 4, name: 'Charleroi',    postal_code: '6000',  countryId: 1 },
+      { id: 5, name: 'Liège',        postal_code: '4000',  countryId: 1 },
+      { id: 7, name: 'Namur',        postal_code: '5000',  countryId: 1 },
+      { id: 9, name: 'Mons',         postal_code: '7000',  countryId: 1 },
+      // Communes bruxelloises (bilingue)
+      { id: 10, name: 'Schaerbeek / Schaarbeek', postal_code: '1030', countryId: 1 },
+      { id: 11, name: 'Anderlecht',  postal_code: '1070',  countryId: 1 },
+      { id: 12, name: 'Molenbeek-Saint-Jean / Sint-Jans-Molenbeek', postal_code: '1080', countryId: 1 }
     ]);
   },
 

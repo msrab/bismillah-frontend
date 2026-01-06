@@ -2,55 +2,64 @@
 
 module.exports = {
   async up (queryInterface) {
-    // 2 cities par pays, donc 12 cities, donc 36 rues
+    // Rues pour les villes belges
     await queryInterface.bulkInsert('streets', [
-      // France (cityId: 1, 2)
-      { id: 1, name: 'Rue de Rivoli', cityId: 1 },
-      { id: 2, name: 'Avenue des Champs-Élysées', cityId: 1 },
-      { id: 3, name: 'Boulevard Saint-Germain', cityId: 1 },
-      { id: 4, name: 'Rue de la République', cityId: 2 },
-      { id: 5, name: 'Rue Victor Hugo', cityId: 2 },
-      { id: 6, name: 'Place Bellecour', cityId: 2 },
+      // Bruxelles (cityId: 1)
+      { id: 1, name: 'Avenue Louise', cityId: 1 },
+      { id: 2, name: 'Rue Neuve', cityId: 1 },
+      { id: 3, name: 'Boulevard Anspach', cityId: 1 },
+      { id: 4, name: 'Grand-Place', cityId: 1 },
+      { id: 5, name: 'Rue de la Loi', cityId: 1 },
 
-      // Belgique (cityId: 3, 4)
-      { id: 7, name: 'Avenue Louise', cityId: 3 },
-      { id: 8, name: 'Rue Neuve', cityId: 3 },
-      { id: 9, name: 'Boulevard Anspach', cityId: 3 },
-      { id: 10, name: 'Meir', cityId: 4 },
-      { id: 11, name: 'Kipdorpbrug', cityId: 4 },
-      { id: 12, name: 'Lange Nieuwstraat', cityId: 4 },
+      // Anvers (cityId: 2)
+      { id: 6, name: 'Meir', cityId: 2 },
+      { id: 7, name: 'Kipdorpbrug', cityId: 2 },
+      { id: 8, name: 'Lange Nieuwstraat', cityId: 2 },
+      { id: 9, name: 'Groenplaats', cityId: 2 },
 
-      // Allemagne (cityId: 5, 6)
-      { id: 13, name: 'Unter den Linden', cityId: 5 },
-      { id: 14, name: 'Kurfürstendamm', cityId: 5 },
-      { id: 15, name: 'Friedrichstraße', cityId: 5 },
-      { id: 16, name: 'Leopoldstraße', cityId: 6 },
-      { id: 17, name: 'Maximilianstraße', cityId: 6 },
-      { id: 18, name: 'Sendlinger Straße', cityId: 6 },
+      // Gand (cityId: 3)
+      { id: 10, name: 'Veldstraat', cityId: 3 },
+      { id: 11, name: 'Korenmarkt', cityId: 3 },
+      { id: 12, name: 'Sint-Baafsplein', cityId: 3 },
 
-      // Espagne (cityId: 7, 8)
-      { id: 19, name: 'Gran Vía', cityId: 7 },
-      { id: 20, name: 'Calle de Alcalá', cityId: 7 },
-      { id: 21, name: 'Paseo del Prado', cityId: 7 },
-      { id: 22, name: 'La Rambla', cityId: 8 },
-      { id: 23, name: 'Passeig de Gràcia', cityId: 8 },
-      { id: 24, name: 'Carrer de Balmes', cityId: 8 },
+      // Charleroi (cityId: 4)
+      { id: 13, name: 'Boulevard Tirou', cityId: 4 },
+      { id: 14, name: 'Rue de la Montagne', cityId: 4 },
+      { id: 15, name: 'Place Charles II', cityId: 4 },
 
-      // Italie (cityId: 9, 10)
-      { id: 25, name: 'Via del Corso', cityId: 9 },
-      { id: 26, name: 'Via Nazionale', cityId: 9 },
-      { id: 27, name: 'Via Appia Nuova', cityId: 9 },
-      { id: 28, name: 'Corso Buenos Aires', cityId: 10 },
-      { id: 29, name: 'Via Monte Napoleone', cityId: 10 },
-      { id: 30, name: 'Via Torino', cityId: 10 },
+      // Liège (cityId: 5)
+      { id: 16, name: 'Rue Vinâve d\'Île', cityId: 5 },
+      { id: 17, name: 'Place Saint-Lambert', cityId: 5 },
+      { id: 18, name: 'Boulevard de la Sauvenière', cityId: 5 },
 
-      // Suisse (cityId: 11, 12)
-      { id: 31, name: 'Rue du Rhône', cityId: 11 },
-      { id: 32, name: 'Boulevard Georges-Favon', cityId: 11 },
-      { id: 33, name: 'Rue de la Confédération', cityId: 11 },
-      { id: 34, name: 'Bahnhofstrasse', cityId: 12 },
-      { id: 35, name: 'Augustinergasse', cityId: 12 },
-      { id: 36, name: 'Limmatquai', cityId: 12 }
+      // Bruges (cityId: 6)
+      { id: 19, name: 'Markt', cityId: 6 },
+      { id: 20, name: 'Steenstraat', cityId: 6 },
+      { id: 21, name: 'Breidelstraat', cityId: 6 },
+
+      // Namur (cityId: 7)
+      { id: 22, name: 'Rue de l\'Ange', cityId: 7 },
+      { id: 23, name: 'Place d\'Armes', cityId: 7 },
+
+      // Louvain (cityId: 8)
+      { id: 24, name: 'Oude Markt', cityId: 8 },
+      { id: 25, name: 'Naamsestraat', cityId: 8 },
+
+      // Mons (cityId: 9)
+      { id: 26, name: 'Grand-Place', cityId: 9 },
+      { id: 27, name: 'Rue de la Chaussée', cityId: 9 },
+
+      // Schaerbeek (cityId: 10)
+      { id: 28, name: 'Chaussée de Haecht', cityId: 10 },
+      { id: 29, name: 'Avenue Louis Bertrand', cityId: 10 },
+
+      // Anderlecht (cityId: 11)
+      { id: 30, name: 'Rue Wayez', cityId: 11 },
+      { id: 31, name: 'Place de la Vaillance', cityId: 11 },
+
+      // Molenbeek-Saint-Jean (cityId: 12)
+      { id: 32, name: 'Chaussée de Gand', cityId: 12 },
+      { id: 33, name: 'Rue du Comte de Flandre', cityId: 12 }
     ]);
   },
 
