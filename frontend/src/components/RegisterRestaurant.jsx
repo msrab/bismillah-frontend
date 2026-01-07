@@ -126,7 +126,7 @@ function RegisterRestaurant() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     setMessage({ type: '', text: '' });
 
     // Validation étape 1
