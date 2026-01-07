@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import LinearProgress from '@mui/material/LinearProgress';
 import { 
   Box, TextField, Button, Typography, Paper, Alert, 
   Stepper, Step, StepLabel, FormControl, FormLabel, 
@@ -17,6 +18,36 @@ const steps = [
   'Coordonnées',
   'Connexion'
 ];
+
+function getPasswordStrength(password) {
+  let score = 0;
+  if (!password) return score;
+  // Critères: longueur, majuscule, minuscule, chiffre, caractère spécial
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return score;
+}
+
+function getStrengthLabel(score) {
+  switch (score) {
+    case 0:
+    case 1:
+      return 'Très faible';
+    case 2:
+      return 'Faible';
+    case 3:
+      return 'Moyen';
+    case 4:
+      return 'Fort';
+    case 5:
+      return 'Très fort';
+    default:
+      return '';
+  }
+}
 
 function RegisterRestaurant() {
   const navigate = useNavigate();
@@ -631,67 +662,89 @@ function RegisterRestaurant() {
   );
 
   // Étape 5 - Données de connexion
-  const renderStep5 = () => (
-    <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Données de connexion
-      </Typography>
+  const renderStep5 = () => {
+    const passwordScore = getPasswordStrength(credentials.password);
+    const passwordLabel = getStrengthLabel(passwordScore);
+    const progressColors = ["error", "error", "warning", "info", "success", "success"];
+    return (
+      <Box component="form" onSubmit={handleSubmit}>
+        <Typography variant="h6" sx={{ mb: 3 }}>
+          Données de connexion
+        </Typography>
 
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Cet email sera utilisé pour vous connecter et recevoir les notifications.
-      </Alert>
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Cet email sera utilisé pour vous connecter et recevoir les notifications.
+        </Alert>
 
-      <TextField
-        label="Email"
-        type="email"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={credentials.email}
-        onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-        placeholder="restaurant@exemple.be"
-      />
+        <TextField
+          label="Email"
+          type="email"
+          fullWidth
+          required
+          sx={{ mb: 2 }}
+          value={credentials.email}
+          onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+          placeholder="restaurant@exemple.be"
+        />
 
-      <TextField
-        label="Mot de passe"
-        type="password"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={credentials.password}
-        onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-        helperText="Minimum 8 caractères"
-      />
+        <TextField
+          label="Mot de passe"
+          type="password"
+          fullWidth
+          required
+          sx={{ mb: 1 }}
+          value={credentials.password}
+          onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+          helperText="Minimum 8 caractères, majuscule, minuscule, chiffre et caractère spécial recommandé."
+        />
 
-      <TextField
-        label="Confirmer le mot de passe"
-        type="password"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={credentials.confirmPassword}
-        onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
-        error={credentials.confirmPassword && credentials.password !== credentials.confirmPassword}
-        helperText={
-          credentials.confirmPassword && credentials.password !== credentials.confirmPassword
-            ? 'Les mots de passe ne correspondent pas'
-            : ''
-        }
-      />
+        {/* Baromètre de sécurité du mot de passe */}
+        <Box sx={{ mb: 1 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={passwordScore * 20} 
+            color={progressColors[passwordScore]}
+            sx={{ height: 8, borderRadius: 5 }}
+          />
+          <Typography variant="body2" sx={{ mt: 0.5, color: progressColors[passwordScore]+'.main' }}>
+            Sûreté du mot de passe : <b>{passwordLabel}</b>
+          </Typography>
+        </Box>
 
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        fullWidth
-        size="large"
-        disabled={loading}
-        sx={{ mt: 2, py: 1.5 }}
-      >
-        {loading ? 'Inscription en cours...' : 'Finaliser l\'inscription'}
-      </Button>
-    </Box>
-  );
+        <Typography variant="caption" sx={{ mb: 2, display: 'block' }}>
+          Astuce : Utilisez une phrase, des majuscules, minuscules, chiffres et caractères spéciaux pour un mot de passe fort.
+        </Typography>
+
+        <TextField
+          label="Confirmer le mot de passe"
+          type="password"
+          fullWidth
+          required
+          sx={{ mb: 2 }}
+          value={credentials.confirmPassword}
+          onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
+          error={credentials.confirmPassword && credentials.password !== credentials.confirmPassword}
+          helperText={
+            credentials.confirmPassword && credentials.password !== credentials.confirmPassword
+              ? 'Les mots de passe ne correspondent pas'
+              : ''
+          }
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          size="large"
+          disabled={loading}
+          sx={{ mt: 2, py: 1.5 }}
+        >
+          {loading ? 'Inscription en cours...' : 'Finaliser l\'inscription'}
+        </Button>
+      </Box>
+    );
+  };
 
   // Étape 6 - Coordonnées
   const renderStep6 = () => (
