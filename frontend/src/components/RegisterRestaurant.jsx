@@ -164,6 +164,18 @@ function RegisterRestaurant() {
           setMessage({ type: 'error', text: 'Veuillez entrer votre numéro de certification' });
           return;
         }
+        // Validation alphanumérique max 15 caractères
+        if (!/^[a-zA-Z0-9]{1,15}$/.test(certification.certificationNumber)) {
+          setMessage({ type: 'error', text: 'Le numéro de certification doit être alphanumérique (max 15 caractères)'});
+          return;
+        }
+        // Vérification unicité numéro de certification
+        const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
+        const checkCertifData = await checkCertif.json();
+        if (checkCertifData.exists) {
+          setMessage({ type: 'error', text: 'Ce numéro de certification existe déjà.' });
+          return;
+        }
       }
     }
 
@@ -186,22 +198,36 @@ function RegisterRestaurant() {
         return;
       }
       // Validation format BCE belge
-      const bceRegex = /^BE\s?0?\d{3}\.?\d{3}\.?\d{3}$/i;
+      const bceRegex = /^BE\s?0?\d{3}\.??\d{3}\.??\d{3}$/i;
       if (!bceRegex.test(identity.company_number.replace(/\s/g, ''))) {
         setMessage({ type: 'error', text: 'Format de numéro d\'entreprise invalide (ex: BE0123456789)' });
         return;
       }
+      // Vérification unicité numéro d'entreprise
+      const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(identity.company_number)}`);
+      const checkCompanyData = await checkCompany.json();
+      if (checkCompanyData.exists) {
+        setMessage({ type: 'error', text: 'Ce numéro d\'entreprise existe déjà.' });
+        return;
+      }
     }
 
-    // Validation étape 5 - Connexion
-    if (activeStep === 4) {
+    // Validation étape 6 - Connexion (après inversion des étapes)
+    if (activeStep === 5) {
       if (!credentials.email.trim()) {
-        setMessage({ type: 'error', text: 'L\'email est requis' });
+        setMessage({ type: 'error', text: "L'email est requis" });
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(credentials.email)) {
-        setMessage({ type: 'error', text: 'Format d\'email invalide' });
+        setMessage({ type: 'error', text: "Format d'email invalide" });
+        return;
+      }
+      // Vérification unicité email
+      const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(credentials.email)}`);
+      const checkEmailData = await checkEmail.json();
+      if (checkEmailData.exists) {
+        setMessage({ type: 'error', text: "Cet email est déjà utilisé." });
         return;
       }
       if (!credentials.password) {
@@ -247,6 +273,16 @@ function RegisterRestaurant() {
       setMessage({ type: 'error', text: 'Le numéro d\'adresse est requis' });
       return;
     }
+    // Vérification unicité adresse (streetId + numéro)
+    if (selectedCity && contact.address_number.trim()) {
+      // streetId = selectedCity.id (format: code-ville)
+      const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?streetId=${encodeURIComponent(selectedCity.id)}&address_number=${encodeURIComponent(contact.address_number)}`);
+      const checkAddressData = await checkAddress.json();
+      if (checkAddressData.exists) {
+        setMessage({ type: 'error', text: "Un restaurant existe déjà à cette adresse." });
+        return;
+      }
+    }
 
     setLoading(true);
 
@@ -272,7 +308,7 @@ function RegisterRestaurant() {
       };
 
       // 1. Inscription du restaurant
-      const registerRes = await fetch('http://localhost:5000/api/auth/restaurant/register', {
+      const registerRes = await fetch('http://localhost:5000/api/auth/restaurant/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationData)
@@ -428,11 +464,11 @@ function RegisterRestaurant() {
             sx={{ mb: 2 }}
             value={certification.certificationNumber}
             onChange={(e) => setCertification({ ...certification, certificationNumber: e.target.value })}
-            helperText={
+            /*helperText={
               certification.certifierId && certification.certifierId !== 'other'
                 ? `Format: ${certifiers.find(c => c.id === parseInt(certification.certifierId))?.format_regex || 'libre'}`
                 : 'Entrez votre numéro de certification'
-            }
+            }*/
           />
         </>
       )}
