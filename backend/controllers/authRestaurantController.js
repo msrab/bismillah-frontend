@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { Restaurant, Street, RestaurantType, RestaurantTypeDescription, PasswordResetToken } = require('../models');
+const { Restaurant, Street, City, RestaurantType, RestaurantTypeDescription, RestaurantLanguage, Language, PasswordResetToken } = require('../models');
 const { createError } = require('../utils/createError');
 
 module.exports = {
@@ -15,9 +15,14 @@ module.exports = {
         email,
         password,
         logo,
-        streetId,
+        website,
+        // Nouvelle méthode: cityId + streetName au lieu de streetId
+        cityId,
+        streetName,
+        streetId,           // Ancienne méthode (rétrocompatibilité)
         restaurantTypeId,   // id d'un type existant
-        restaurantType      // objet pour créer un nouveau type
+        restaurantType,     // objet pour créer un nouveau type
+        defaultLanguage     // langue par défaut (fr, en, nl, de)
       } = req.body;
 
       const existEmail = await Restaurant.findOne({ where: { email } });
@@ -49,6 +54,36 @@ module.exports = {
         typeIdToUse = newType.id;
       }
 
+      // Gestion de l'adresse (rue)
+      let streetIdToUse = streetId; // Rétrocompatibilité
+
+      // Nouvelle méthode: créer/trouver la rue à partir de cityId et streetName
+      if (cityId && streetName) {
+        // Vérifier que la ville existe
+        const city = await City.findByPk(cityId);
+        if (!city) {
+          return next(createError('Ville non trouvée.', 400));
+        }
+
+        // Chercher ou créer la rue
+        let street = await Street.findOne({ 
+          where: { name: streetName.trim(), cityId: cityId } 
+        });
+        
+        if (!street) {
+          street = await Street.create({ 
+            name: streetName.trim(), 
+            cityId: cityId 
+          });
+        }
+        
+        streetIdToUse = street.id;
+      }
+
+      if (!streetIdToUse) {
+        return next(createError('L\'adresse est requise.', 400));
+      }
+
       const hash = await bcrypt.hash(password, 10);
 
       const newRestaurant = await Restaurant.create({
@@ -59,14 +94,30 @@ module.exports = {
         email,
         password: hash,
         logo: logo || null,
-        streetId,
+        streetId: streetIdToUse,
         restaurantTypeId: typeIdToUse
       });
 
-      // On récupère le restaurant avec l'association street
+      // Ajouter la langue par défaut si spécifiée
+      if (defaultLanguage) {
+        const lang = await Language.findOne({ where: { code: defaultLanguage } });
+        if (lang) {
+          await RestaurantLanguage.create({
+            restaurantId: newRestaurant.id,
+            languageId: lang.id,
+            is_primary: true
+          });
+        }
+      }
+
+      // On récupère le restaurant avec les associations
       const restaurantWithAssociations = await Restaurant.findByPk(newRestaurant.id, {
         include: [
-          { model: Street, as: 'street' }
+          { 
+            model: Street, 
+            as: 'street',
+            include: [{ model: City, as: 'city' }]
+          }
         ]
       });
 

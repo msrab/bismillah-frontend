@@ -45,19 +45,19 @@ const errorHandler = require('./middlewares/errorHandler');
 
 
 
-// Routes “publiques” (inscription + connexion)
+// Routes "publiques" (inscription + connexion)
 //app.use('/api/auth/user', authUserRoutes);
 app.use('/api/auth/restaurant', authRestaurantRoutes);
 
 // Routes protégées par JWT
 //app.use('/api/users',       verifyToken, userRoutes);
+app.use('/api/restaurant-types', restaurantTypeRoutes);
+app.use('/api/restaurant-languages', restaurantLanguageRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/countries', countryRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/streets', streetRoutes);
 app.use('/api/languages', languageRoutes);
-app.use('/api/restaurants/languages', restaurantLanguageRoutes);
-app.use('/api/restaurants/types', restaurantTypeRoutes);
 app.use('/api/category-menus', categoryMenuRoutes);
 app.use('/api/element-menus', ElementMenuRoutes);
 app.use('/api/certifiers', certifierRoutes);

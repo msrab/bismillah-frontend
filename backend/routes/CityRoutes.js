@@ -6,6 +6,7 @@ const { requireRole } = require('../middlewares/roleMiddleware');
 const { CityValidation } = require('../middlewares/CityValidation');
 
 // Routes publiques (lecture)
+router.get('/search', CityController.searchCities); // Autocomplétion
 router.get('/country/:countryId', CityController.getCitiesByCountry);
 router.get('/:id', CityController.getCityById);
 
