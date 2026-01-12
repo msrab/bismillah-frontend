@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getPasswordStrength, getStrengthLabel } from '../utils/password';
 import LinearProgress from '@mui/material/LinearProgress';
 import { 
   Box, TextField, Button, Typography, Paper, Alert, 
@@ -25,35 +26,7 @@ const steps = [
   'Connexion'
 ];
 
-function getPasswordStrength(password) {
-  let score = 0;
-  if (!password) return score;
-  // Critères: longueur, majuscule, minuscule, chiffre, caractère spécial
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[a-z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  return score;
-}
-
-function getStrengthLabel(score) {
-  switch (score) {
-    case 0:
-    case 1:
-      return 'Très faible';
-    case 2:
-      return 'Faible';
-    case 3:
-      return 'Moyen';
-    case 4:
-      return 'Fort';
-    case 5:
-      return 'Très fort';
-    default:
-      return '';
-  }
-}
+// ...existing code...
 
 function RegisterRestaurant() {
   const navigate = useNavigate();

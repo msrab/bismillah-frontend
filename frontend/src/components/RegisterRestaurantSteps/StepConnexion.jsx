@@ -1,9 +1,11 @@
+
 import { Box, Typography, Alert, TextField, LinearProgress, Button } from '@mui/material';
+import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
 
 // Étape 6 - Connexion
 export default function StepConnexion({
   credentials, setCredentials, loading,
-  getPasswordStrength, getStrengthLabel, handleSubmit
+  handleSubmit
 }) {
   const passwordScore = getPasswordStrength(credentials.password);
   const passwordLabel = getStrengthLabel(passwordScore);
