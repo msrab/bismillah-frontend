@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useFileUpload } from '../hooks/useFileUpload';
 import { getPasswordStrength, getStrengthLabel } from '../utils/password';
 import LinearProgress from '@mui/material/LinearProgress';
 import { 
@@ -19,9 +20,9 @@ import StepCoordinates from './RegisterRestaurantSteps/StepCoordinates';
 import StepConnexion from './RegisterRestaurantSteps/StepConnexion';
 
 const steps = [
-  'Vérification Halal', 
-  'Certification', 
-  'Conditions', 
+  'Vérification Halal',
+  'Conditions',
+  'Certification',
   'Identité',
   'Coordonnées',
   'Connexion'
@@ -39,12 +40,12 @@ function RegisterRestaurant() {
   const stepCoordinatesRef = useRef();
   const stepConnexionRef = useRef();
   const stepRefs = [
-    stepHalalRef,
-    stepCertificationRef,
-    stepConditionsRef,
-    stepIdentityRef,
-    stepCoordinatesRef,
-    stepConnexionRef
+    stepHalalRef,         // 0 - Halal
+    stepConditionsRef,    // 1 - Conditions
+    stepCertificationRef, // 2 - Certification
+    stepIdentityRef,      // 3 - Identité
+    stepCoordinatesRef,   // 4 - Coordonnées
+    stepConnexionRef      // 5 - Connexion
   ];
   const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, setMessage);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -57,8 +58,12 @@ function RegisterRestaurant() {
     exclusivelyHalal: '',
     noAlcohol: ''
   });
+  
+  // Étape 2 - Conditions d'utilisation
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedCharter, setAcceptedCharter] = useState(false);
 
-  // Étape 2 - Certification
+  // Étape 3 - Certification
   const [certification, setCertification] = useState({
     hasCertification: '',
     certifierId: '',
@@ -66,27 +71,16 @@ function RegisterRestaurant() {
     certificationNumber: ''
   });
 
-  // Étape 3 - Conditions d'utilisation
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [acceptedCharter, setAcceptedCharter] = useState(false);
-
-  // Étape 4 - Identité du restaurant
+  // Étape 4 - Identité du restaurant (logo géré par hook)
   const [identity, setIdentity] = useState({
     name: '',
-    logo: null,
-    logoPreview: '',
     company_number: '',
     restaurantTypeId: ''
   });
+  // Hook pour gérer logo et preview
+  const { fileState: logoState, handleFileChange: handleLogoChange, resetFile: resetLogo } = useFileUpload({ file: null, preview: '' }, 'file', 'preview');
 
-  // Étape 5 - Données de connexion
-  const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-
-  // Étape 6 - Coordonnées
+  // Étape 5 - Coordonnées
   const [contact, setContact] = useState({
     website: '',
     phone: '',
@@ -94,21 +88,16 @@ function RegisterRestaurant() {
     address_number: ''
   });
 
+  // Étape 6 - Données de connexion
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
 
-  // Gestion du logo
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIdentity({
-        ...identity,
-        logo: file,
-        logoPreview: URL.createObjectURL(file)
-      });
-    }
-  };
 
-  // ...la navigation et la validation sont maintenant gérées par useStepNavigation
+  // Plus besoin de handleLogoChange ici, géré par le hook useFileUpload
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -181,9 +170,9 @@ function RegisterRestaurant() {
       }
 
       // 3. Upload du logo si présent
-      if (identity.logo && registerData.restaurant?.id) {
+      if (logoState.file && registerData.restaurant?.id) {
         const formData = new FormData();
-        formData.append('logo', identity.logo);
+        formData.append('logo', logoState.file);
         // TODO: Implémenter l'upload du logo
         // await fetch(`http://localhost:5000/api/restaurants/${registerData.restaurant.id}/logo`, {
         //   method: 'POST',
@@ -252,7 +241,15 @@ function RegisterRestaurant() {
           <StepCertification ref={stepCertificationRef} certification={certification} setCertification={setCertification} />
         )}
         {activeStep === 3 && (
-          <StepIdentity ref={stepIdentityRef} identity={identity} setIdentity={setIdentity} handleLogoChange={handleLogoChange} />
+          <StepIdentity
+            ref={stepIdentityRef}
+            identity={identity}
+            setIdentity={setIdentity}
+            logo={logoState.file}
+            logoPreview={logoState.preview}
+            handleLogoChange={handleLogoChange}
+            resetLogo={resetLogo}
+          />
         )}
         {activeStep === 4 && (
           <StepCoordinates ref={stepCoordinatesRef} contact={contact} setContact={setContact} selectedCity={selectedCity} setSelectedCity={setSelectedCity} />

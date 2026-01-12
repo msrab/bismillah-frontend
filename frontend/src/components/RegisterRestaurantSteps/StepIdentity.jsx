@@ -2,7 +2,14 @@ import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 
 // Étape 4 - Identité
-const StepIdentity = forwardRef(({ identity, setIdentity, handleLogoChange }, ref) => {
+const StepIdentity = forwardRef(({
+  identity,
+  setIdentity,
+  logo,
+  logoPreview,
+  handleLogoChange,
+  resetLogo
+}, ref) => {
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,16 +65,16 @@ const StepIdentity = forwardRef(({ identity, setIdentity, handleLogoChange }, re
           Logo du restaurant (optionnel)
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {identity.logoPreview && (
+          {logoPreview && (
             <Box
               component="img"
-              src={identity.logoPreview}
+              src={logoPreview}
               alt="Aperçu logo"
               sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 2 }}
             />
           )}
           <Button variant="outlined" component="label">
-            {identity.logo ? 'Changer le logo' : 'Ajouter un logo'}
+            {logo ? 'Changer le logo' : 'Ajouter un logo'}
             <input
               type="file"
               hidden
@@ -75,6 +82,11 @@ const StepIdentity = forwardRef(({ identity, setIdentity, handleLogoChange }, re
               onChange={handleLogoChange}
             />
           </Button>
+          {logo && (
+            <Button color="error" onClick={resetLogo} size="small" sx={{ ml: 1 }}>
+              Supprimer
+            </Button>
+          )}
         </Box>
       </Box>
 
