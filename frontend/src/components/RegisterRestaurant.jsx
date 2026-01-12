@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useMessage } from '../hooks/useMessage';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { getPasswordStrength, getStrengthLabel } from '../utils/password';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -47,8 +48,8 @@ function RegisterRestaurant() {
     stepCoordinatesRef,   // 4 - Coordonnées
     stepConnexionRef      // 5 - Connexion
   ];
-  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, setMessage);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const { message, showMessage, hideMessage } = useMessage(5000); // 5s auto-hide
+  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, showMessage);
   const [loading, setLoading] = useState(false);
 
   const [selectedCity, setSelectedCity] = useState(null);
@@ -109,7 +110,7 @@ function RegisterRestaurant() {
   // Soumission finale du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage({ type: '', text: '' });
+    hideMessage();
     setLoading(true);
 
     try {
@@ -143,7 +144,7 @@ function RegisterRestaurant() {
       const registerData = await registerRes.json();
 
       if (!registerRes.ok) {
-        setMessage({ type: 'error', text: registerData.message || 'Erreur lors de l\'inscription' });
+        showMessage({ type: 'error', text: registerData.message || "Erreur lors de l'inscription" });
         setLoading(false);
         return;
       }
@@ -189,11 +190,11 @@ function RegisterRestaurant() {
         // });
       }
 
-      setMessage({ type: 'success', text: 'Inscription réussie ! Redirection...' });
+      showMessage({ type: 'success', text: 'Inscription réussie ! Redirection...' });
       setTimeout(() => navigate('/login-restaurant'), 2000);
 
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
+      showMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
     } finally {
       setLoading(false);
     }
