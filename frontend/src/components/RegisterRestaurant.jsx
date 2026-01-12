@@ -9,6 +9,12 @@ import {
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../i18n';
+import StepHalal from './RegisterRestaurantSteps/StepHalal';
+import StepCertification from './RegisterRestaurantSteps/StepCertification';
+import StepConditions from './RegisterRestaurantSteps/StepConditions';
+import StepIdentity from './RegisterRestaurantSteps/StepIdentity';
+import StepCoordinates from './RegisterRestaurantSteps/StepCoordinates';
+import StepConnexion from './RegisterRestaurantSteps/StepConnexion';
 
 const steps = [
   'Vérification Halal', 
@@ -243,8 +249,8 @@ function RegisterRestaurant() {
       }
     }
 
-    // Validation étape 6 - Connexion (après inversion des étapes)
-    if (activeStep === 5) {
+    // Validation étape Connexion (maintenant étape 4)
+    if (activeStep === 6) {
       if (!credentials.email.trim()) {
         setMessage({ type: 'error', text: "L'email est requis" });
         return;
@@ -405,436 +411,6 @@ function RegisterRestaurant() {
     }
   };
 
-  // ============ RENDUS DES ÉTAPES ============
-
-  // Étape 1 - Questions Halal
-  const renderStep1 = () => (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Vérification des critères Halal
-      </Typography>
-
-      <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
-        <FormLabel component="legend">
-          Votre établissement sert-il exclusivement de la viande halal ?
-        </FormLabel>
-        <RadioGroup
-          value={halalQuestions.exclusivelyHalal}
-          onChange={(e) => setHalalQuestions({ ...halalQuestions, exclusivelyHalal: e.target.value })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Oui, exclusivement halal" />
-          <FormControlLabel value="no" control={<Radio />} label="Non" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
-        <FormLabel component="legend">
-          Votre établissement propose-t-il des boissons alcoolisées ?
-        </FormLabel>
-        <RadioGroup
-          value={halalQuestions.noAlcohol}
-          onChange={(e) => setHalalQuestions({ ...halalQuestions, noAlcohol: e.target.value })}
-        >
-          <FormControlLabel value="no" control={<Radio />} label="Non, nous ne proposons pas d'alcool" />
-          <FormControlLabel value="yes" control={<Radio />} label="Oui, nous proposons de l'alcool" />
-        </RadioGroup>
-      </FormControl>
-    </Box>
-  );
-
-  // Étape 2 - Certification
-  const renderStep2 = () => (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Certification Halal
-      </Typography>
-
-      <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
-        <FormLabel component="legend">
-          Avez-vous une certification halal officielle ?
-        </FormLabel>
-        <RadioGroup
-          value={certification.hasCertification}
-          onChange={(e) => setCertification({ ...certification, hasCertification: e.target.value })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Oui" />
-          <FormControlLabel value="no" control={<Radio />} label="Non, pas encore" />
-        </RadioGroup>
-      </FormControl>
-
-      {certification.hasCertification === 'yes' && (
-        <>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Organisme certificateur</InputLabel>
-            <Select
-              value={certification.certifierId}
-              label="Organisme certificateur"
-              onChange={(e) => setCertification({ ...certification, certifierId: e.target.value })}
-            >
-              {certifiers.map(c => (
-                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-              ))}
-              <MenuItem value="other">Autre (non listé)</MenuItem>
-            </Select>
-          </FormControl>
-
-          {certification.certifierId === 'other' && (
-            <TextField
-              label="Nom du certificateur"
-              fullWidth
-              sx={{ mb: 2 }}
-              value={certification.customCertifierName}
-              onChange={(e) => setCertification({ ...certification, customCertifierName: e.target.value })}
-              helperText="Ce certificateur sera soumis à vérification"
-            />
-          )}
-
-          <TextField
-            label="Numéro de certification"
-            fullWidth
-            sx={{ mb: 2 }}
-            value={certification.certificationNumber}
-            onChange={(e) => setCertification({ ...certification, certificationNumber: e.target.value })}
-            /*helperText={
-              certification.certifierId && certification.certifierId !== 'other'
-                ? `Format: ${certifiers.find(c => c.id === parseInt(certification.certifierId))?.format_regex || 'libre'}`
-                : 'Entrez votre numéro de certification'
-            }*/
-          />
-        </>
-      )}
-
-      {certification.hasCertification === 'no' && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Vous pourrez ajouter votre certification plus tard depuis votre profil.
-          Votre restaurant sera marqué comme "non certifié" jusqu'à validation.
-        </Alert>
-      )}
-    </Box>
-  );
-
-  // Étape 3 - Conditions d'utilisation
-  const renderStep3 = () => (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Conditions d'utilisation et Charte Halal
-      </Typography>
-
-      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-        Veuillez lire attentivement les documents suivants avant de continuer.
-      </Typography>
-
-      {/* Lien vers les conditions */}
-      <Paper sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          📄 Conditions d'utilisation
-        </Typography>
-        <Link 
-          component={RouterLink} 
-          to="/conditions-utilisation" 
-          target="_blank"
-          sx={{ fontSize: '0.9rem' }}
-        >
-          Lire les conditions d'utilisation →
-        </Link>
-      </Paper>
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={acceptedTerms}
-            onChange={(e) => setAcceptedTerms(e.target.checked)}
-            color="primary"
-          />
-        }
-        label={
-          <Typography variant="body2">
-            J'ai lu et j'accepte les conditions d'utilisation de la plateforme Bismillah.
-          </Typography>
-        }
-        sx={{ mb: 3 }}
-      />
-
-      {/* Lien vers la charte */}
-      <Paper sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          🕌 Charte Éthique Halal
-        </Typography>
-        <Link 
-          component={RouterLink} 
-          to="/charte-halal" 
-          target="_blank"
-          sx={{ fontSize: '0.9rem' }}
-        >
-          Lire la charte halal →
-        </Link>
-      </Paper>
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={acceptedCharter}
-            onChange={(e) => setAcceptedCharter(e.target.checked)}
-            color="primary"
-          />
-        }
-        label={
-          <Typography variant="body2">
-            Je m'engage à respecter la charte éthique halal de Bismillah.
-          </Typography>
-        }
-      />
-    </Box>
-  );
-
-  // Étape 4 - Identité du restaurant
-  const renderStep4 = () => (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Identité du restaurant
-      </Typography>
-
-      <TextField
-        label="Nom du restaurant"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={identity.name}
-        onChange={(e) => setIdentity({ ...identity, name: e.target.value })}
-        placeholder="Ex: Restaurant Le Délice"
-      />
-
-      {/* Upload logo */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
-          Logo du restaurant (optionnel)
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {identity.logoPreview && (
-            <Box
-              component="img"
-              src={identity.logoPreview}
-              alt="Aperçu logo"
-              sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 2 }}
-            />
-          )}
-          <Button variant="outlined" component="label">
-            {identity.logo ? 'Changer le logo' : 'Ajouter un logo'}
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleLogoChange}
-            />
-          </Button>
-        </Box>
-      </Box>
-
-      <TextField
-        label="Numéro d'entreprise (BCE)"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={identity.company_number}
-        onChange={(e) => setIdentity({ ...identity, company_number: e.target.value })}
-        placeholder="BE0123456789"
-        helperText="Format belge: BE suivi de 10 chiffres"
-      />
-
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Type de restaurant</InputLabel>
-        <Select
-          value={identity.restaurantTypeId}
-          label="Type de restaurant"
-          onChange={(e) => setIdentity({ ...identity, restaurantTypeId: e.target.value })}
-        >
-          <MenuItem value="">
-            <em>Sélectionner un type</em>
-          </MenuItem>
-          {restaurantTypes.map(type => (
-            <MenuItem key={type.id} value={type.id}>
-              {type.icon} {type.RestaurantTypeDescriptions?.[0]?.name || `Type ${type.id}`}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
-  );
-
-  // Étape 5 - Données de connexion
-  const renderStep5 = () => {
-    const passwordScore = getPasswordStrength(credentials.password);
-    const passwordLabel = getStrengthLabel(passwordScore);
-    const progressColors = ["error", "error", "warning", "info", "success", "success"];
-    return (
-      <Box component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" sx={{ mb: 3 }}>
-          Données de connexion
-        </Typography>
-
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Cet email sera utilisé pour vous connecter et recevoir les notifications.
-        </Alert>
-
-        <TextField
-          label="Email"
-          type="email"
-          fullWidth
-          required
-          sx={{ mb: 2 }}
-          value={credentials.email}
-          onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-          placeholder="restaurant@exemple.be"
-        />
-
-        <TextField
-          label="Mot de passe"
-          type="password"
-          fullWidth
-          required
-          sx={{ mb: 1 }}
-          value={credentials.password}
-          onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-          helperText="Minimum 8 caractères, majuscule, minuscule, chiffre et caractère spécial recommandé."
-        />
-
-        {/* Baromètre de sécurité du mot de passe */}
-        <Box sx={{ mb: 1 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={passwordScore * 20} 
-            color={progressColors[passwordScore]}
-            sx={{ height: 8, borderRadius: 5 }}
-          />
-          <Typography variant="body2" sx={{ mt: 0.5, color: progressColors[passwordScore]+'.main' }}>
-            Sûreté du mot de passe : <b>{passwordLabel}</b>
-          </Typography>
-        </Box>
-
-        <Typography variant="caption" sx={{ mb: 2, display: 'block' }}>
-          Astuce : Utilisez une phrase, des majuscules, minuscules, chiffres et caractères spéciaux pour un mot de passe fort.
-        </Typography>
-
-        <TextField
-          label="Confirmer le mot de passe"
-          type="password"
-          fullWidth
-          required
-          sx={{ mb: 2 }}
-          value={credentials.confirmPassword}
-          onChange={(e) => setCredentials({ ...credentials, confirmPassword: e.target.value })}
-          error={credentials.confirmPassword && credentials.password !== credentials.confirmPassword}
-          helperText={
-            credentials.confirmPassword && credentials.password !== credentials.confirmPassword
-              ? 'Les mots de passe ne correspondent pas'
-              : ''
-          }
-        />
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          size="large"
-          disabled={loading}
-          sx={{ mt: 2, py: 1.5 }}
-        >
-          {loading ? 'Inscription en cours...' : 'Finaliser l\'inscription'}
-        </Button>
-      </Box>
-    );
-  };
-
-  // Étape 6 - Coordonnées
-  const renderStep6 = () => (
-    <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Coordonnées
-      </Typography>
-
-      <TextField
-        label="Site web"
-        fullWidth
-        sx={{ mb: 2 }}
-        value={contact.website}
-        onChange={(e) => setContact({ ...contact, website: e.target.value })}
-        placeholder="https://www.monrestaurant.be"
-        InputProps={{
-          startAdornment: <InputAdornment position="start">🌐</InputAdornment>
-        }}
-      />
-
-      <TextField
-        label="Téléphone"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={contact.phone}
-        onChange={(e) => setContact({ ...contact, phone: e.target.value })}
-        placeholder="+32 2 123 45 67"
-        InputProps={{
-          startAdornment: <InputAdornment position="start">📞</InputAdornment>
-        }}
-      />
-
-      <Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: 'text.secondary' }}>
-        Adresse du restaurant
-      </Typography>
-
-      {/* Autocomplétion ville */}
-      <Autocomplete
-        options={cityOptions}
-        getOptionLabel={(option) => `${option.postal_code} - ${option.name}`}
-        loading={cityLoading}
-        value={selectedCity}
-        onChange={(_, newValue) => setSelectedCity(newValue)}
-        onInputChange={(_, newInputValue) => setCitySearch(newInputValue)}
-        isOptionEqualToValue={(option, value) => option.id === value?.id}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Ville ou code postal"
-            required
-            sx={{ mb: 2 }}
-            placeholder="Tapez un nom de ville ou code postal..."
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {cityLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              )
-            }}
-          />
-        )}
-        noOptionsText="Aucune ville trouvée"
-        loadingText="Recherche..."
-      />
-
-      <TextField
-        label="Nom de la rue"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={contact.streetName}
-        onChange={(e) => setContact({ ...contact, streetName: e.target.value })}
-        placeholder="Rue de Flandre"
-      />
-
-      <TextField
-        label="Numéro"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={contact.address_number}
-        onChange={(e) => setContact({ ...contact, address_number: e.target.value })}
-        placeholder="123A"
-      />
-    </Box>
-  );
-
   return (
     <Box sx={{ maxWidth: 700, mx: 'auto', mt: 4, px: 2, pb: 4 }}>
       <Paper sx={{ p: 4 }}>
@@ -875,12 +451,24 @@ function RegisterRestaurant() {
           </Alert>
         )}
 
-        {activeStep === 0 && renderStep1()}
-        {activeStep === 1 && renderStep2()}
-        {activeStep === 2 && renderStep3()}
-        {activeStep === 3 && renderStep4()}
-        {activeStep === 4 && renderStep6()}
-        {activeStep === 5 && renderStep5()}
+        {activeStep === 0 && (
+          <StepHalal halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />
+        )}
+        {activeStep === 1 && (
+          <StepCertification certification={certification} setCertification={setCertification} certifiers={certifiers} />
+        )}
+        {activeStep === 2 && (
+          <StepConditions acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
+        )}
+        {activeStep === 3 && (
+          <StepIdentity identity={identity} setIdentity={setIdentity} restaurantTypes={restaurantTypes} handleLogoChange={handleLogoChange} />
+        )}
+        {activeStep === 4 && (
+          <StepCoordinates contact={contact} setContact={setContact} cityOptions={cityOptions} cityLoading={cityLoading} selectedCity={selectedCity} setSelectedCity={setSelectedCity} citySearch={citySearch} setCitySearch={setCitySearch} />
+        )}
+        {activeStep === 5 && (
+          <StepConnexion credentials={credentials} setCredentials={setCredentials} loading={loading} getPasswordStrength={getPasswordStrength} getStrengthLabel={getStrengthLabel} handleSubmit={handleSubmit} />
+        )}
 
         {activeStep < 5 && (
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>

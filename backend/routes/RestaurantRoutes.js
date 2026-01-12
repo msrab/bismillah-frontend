@@ -1,3 +1,8 @@
+
+const express = require('express');
+const router  = express.Router();
+const { Restaurant, RestaurantCertification } = require('../models');
+
 // Vérification unicité adresse (streetId + numéro)
 router.get('/check-address', async (req, res) => {
 	const { streetId, address_number } = req.query;
@@ -6,11 +11,10 @@ router.get('/check-address', async (req, res) => {
 	res.json({ exists: !!exists });
 });
 // Vérification unicité numéro de certification
-const { RestaurantCertification } = require('../models');
 router.get('/check-certification-number', async (req, res) => {
 	const { certificationNumber } = req.query;
 	if (!certificationNumber) return res.status(400).json({ exists: false, error: 'Numéro manquant' });
-	const exists = await RestaurantCertification.findOne({ where: { certificationNumber } });
+	const exists = await RestaurantCertification.findOne({ where: { certification_number: certificationNumber } });
 	res.json({ exists: !!exists });
 });
 // Vérification unicité email
@@ -21,15 +25,12 @@ router.get('/check-email', async (req, res) => {
 	res.json({ exists: !!exists });
 });
 // Vérification unicité numéro d'entreprise
-const { Restaurant } = require('../models');
 router.get('/check-company-number', async (req, res) => {
 	const { company_number } = req.query;
 	if (!company_number) return res.status(400).json({ exists: false, error: 'Numéro manquant' });
 	const exists = await Restaurant.findOne({ where: { company_number } });
 	res.json({ exists: !!exists });
 });
-const express = require('express');
-const router  = express.Router();
 
 const { verifyToken } = require('../middlewares/authMiddleware');
 const restaurantController = require('../controllers/restaurantController');
