@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getPasswordStrength, getStrengthLabel } from '../utils/password';
 import LinearProgress from '@mui/material/LinearProgress';
 import { 
@@ -11,7 +11,7 @@ import {
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../i18n';
 import StepHalal from './RegisterRestaurantSteps/StepHalal';
-import { useRef } from 'react';
+import { useStepNavigation } from '../hooks/useStepNavigation';
 import StepCertification from './RegisterRestaurantSteps/StepCertification';
 import StepConditions from './RegisterRestaurantSteps/StepConditions';
 import StepIdentity from './RegisterRestaurantSteps/StepIdentity';
@@ -27,12 +27,26 @@ const steps = [
   'Connexion'
 ];
 
-// ...existing code...
 
 function RegisterRestaurant() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const [activeStep, setActiveStep] = useState(0);
+  // Centralisation navigation/validation via hook
+  const stepHalalRef = useRef();
+  const stepCertificationRef = useRef();
+  const stepConditionsRef = useRef();
+  const stepIdentityRef = useRef();
+  const stepCoordinatesRef = useRef();
+  const stepConnexionRef = useRef();
+  const stepRefs = [
+    stepHalalRef,
+    stepCertificationRef,
+    stepConditionsRef,
+    stepIdentityRef,
+    stepCoordinatesRef,
+    stepConnexionRef
+  ];
+  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, setMessage);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
 
@@ -43,12 +57,6 @@ function RegisterRestaurant() {
     exclusivelyHalal: '',
     noAlcohol: ''
   });
-  const stepHalalRef = useRef();
-  const stepCertificationRef = useRef();
-  const stepConditionsRef = useRef();
-  const stepIdentityRef = useRef();
-  const stepCoordinatesRef = useRef();
-  const stepConnexionRef = useRef();
 
   // Étape 2 - Certification
   const [certification, setCertification] = useState({
@@ -100,26 +108,7 @@ function RegisterRestaurant() {
     }
   };
 
-  const handleNext = async () => {
-    setMessage({ type: '', text: '' });
-    let result;
-    if (activeStep === 0) result = stepHalalRef.current?.validate();
-    if (activeStep === 1) result = await stepCertificationRef.current?.validate();
-    if (activeStep === 2) result = stepConditionsRef.current?.validate();
-    if (activeStep === 3) result = await stepIdentityRef.current?.validate();
-    if (activeStep === 4) result = await stepCoordinatesRef.current?.validate();
-    if (activeStep === 5) result = await stepConnexionRef.current?.validate();
-    if (result && !result.valid) {
-      setMessage({ type: 'error', text: result.message, showLink: result.showLink });
-      return;
-    }
-    setActiveStep(prev => prev + 1);
-  };
-
-  const handleBack = () => {
-    setMessage({ type: '', text: '' });
-    setActiveStep(prev => prev - 1);
-  };
+  // ...la navigation et la validation sont maintenant gérées par useStepNavigation
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -257,10 +246,10 @@ function RegisterRestaurant() {
           <StepHalal ref={stepHalalRef} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />
         )}
         {activeStep === 1 && (
-          <StepCertification ref={stepCertificationRef} certification={certification} setCertification={setCertification} />
+          <StepConditions ref={stepConditionsRef} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
         )}
         {activeStep === 2 && (
-          <StepConditions ref={stepConditionsRef} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
+          <StepCertification ref={stepCertificationRef} certification={certification} setCertification={setCertification} />
         )}
         {activeStep === 3 && (
           <StepIdentity ref={stepIdentityRef} identity={identity} setIdentity={setIdentity} handleLogoChange={handleLogoChange} />
