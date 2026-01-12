@@ -8,7 +8,8 @@ const StepIdentity = forwardRef(({
   logo,
   logoPreview,
   handleLogoChange,
-  resetLogo
+  resetLogo,
+  logoError
 }, ref) => {
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +79,7 @@ const StepIdentity = forwardRef(({
             <input
               type="file"
               hidden
-              accept="image/*"
+              accept="image/png, image/jpeg"
               onChange={handleLogoChange}
             />
           </Button>
@@ -88,6 +89,11 @@ const StepIdentity = forwardRef(({
             </Button>
           )}
         </Box>
+        {logoError && (
+          <Typography color="error" variant="caption" sx={{ mt: 1, display: 'block' }}>
+            {logoError}
+          </Typography>
+        )}
       </Box>
 
       <TextField

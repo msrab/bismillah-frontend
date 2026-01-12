@@ -77,8 +77,18 @@ function RegisterRestaurant() {
     company_number: '',
     restaurantTypeId: ''
   });
-  // Hook pour gérer logo et preview
-  const { fileState: logoState, handleFileChange: handleLogoChange, resetFile: resetLogo } = useFileUpload({ file: null, preview: '' }, 'file', 'preview');
+  // Hook pour gérer logo et preview, avec accept et maxSize personnalisés
+  const {
+    fileState: logoState,
+    handleFileChange: handleLogoChange,
+    resetFile: resetLogo,
+    error: logoError
+  } = useFileUpload(
+    { accept: 'image/png, image/jpeg', maxSize: 2 * 1024 * 1024 }, // 2 Mo, png/jpeg
+    { file: null, preview: '' },
+    'file',
+    'preview'
+  );
 
   // Étape 5 - Coordonnées
   const [contact, setContact] = useState({
@@ -95,10 +105,8 @@ function RegisterRestaurant() {
     confirmPassword: ''
   });
 
-
-
-  // Plus besoin de handleLogoChange ici, géré par le hook useFileUpload
-
+  
+  // Soumission finale du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
@@ -249,6 +257,7 @@ function RegisterRestaurant() {
             logoPreview={logoState.preview}
             handleLogoChange={handleLogoChange}
             resetLogo={resetLogo}
+            logoError={logoError}
           />
         )}
         {activeStep === 4 && (
