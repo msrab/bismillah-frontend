@@ -34,13 +34,7 @@ function RegisterRestaurant() {
   const [activeStep, setActiveStep] = useState(0);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(false);
-  const [certifiers, setCertifiers] = useState([]);
-  const [restaurantTypes, setRestaurantTypes] = useState([]);
 
-  // Autocomplétion ville
-  const [citySearch, setCitySearch] = useState('');
-  const [cityOptions, setCityOptions] = useState([]);
-  const [cityLoading, setCityLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
 
   // Étape 1 - Questions Halal
@@ -85,44 +79,7 @@ function RegisterRestaurant() {
     address_number: ''
   });
 
-  // Charger les certificateurs et types de restaurant
-  useEffect(() => {
-    fetch('http://localhost:5000/api/certifiers')
-      .then(res => res.json())
-      .then(data => setCertifiers(Array.isArray(data) ? data : []))
-      .catch(err => console.error('Erreur chargement certificateurs:', err));
 
-    fetch('http://localhost:5000/api/restaurant-types')
-      .then(res => res.json())
-      .then(data => setRestaurantTypes(Array.isArray(data) ? data : []))
-      .catch(err => console.error('Erreur chargement types:', err));
-  }, []);
-
-  // Recherche de villes avec debounce
-  const searchCities = useCallback(async (query) => {
-    if (!query || query.length < 2) {
-      setCityOptions([]);
-      return;
-    }
-
-    setCityLoading(true);
-    try {
-      const res = await fetch(`http://localhost:5000/api/cities/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setCityOptions(data);
-    } catch (error) {
-      console.error('Erreur recherche villes:', error);
-    } finally {
-      setCityLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      searchCities(citySearch);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [citySearch, searchCities]);
 
   // Gestion du logo
   const handleLogoChange = (e) => {
@@ -428,16 +385,16 @@ function RegisterRestaurant() {
           <StepHalal halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />
         )}
         {activeStep === 1 && (
-          <StepCertification certification={certification} setCertification={setCertification} certifiers={certifiers} />
+          <StepCertification certification={certification} setCertification={setCertification} />
         )}
         {activeStep === 2 && (
           <StepConditions acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
         )}
         {activeStep === 3 && (
-          <StepIdentity identity={identity} setIdentity={setIdentity} restaurantTypes={restaurantTypes} handleLogoChange={handleLogoChange} />
+          <StepIdentity identity={identity} setIdentity={setIdentity} handleLogoChange={handleLogoChange} />
         )}
         {activeStep === 4 && (
-          <StepCoordinates contact={contact} setContact={setContact} cityOptions={cityOptions} cityLoading={cityLoading} selectedCity={selectedCity} setSelectedCity={setSelectedCity} citySearch={citySearch} setCitySearch={setCitySearch} />
+          <StepCoordinates contact={contact} setContact={setContact} selectedCity={selectedCity} setSelectedCity={setSelectedCity} />
         )}
         {activeStep === 5 && (
           <StepConnexion credentials={credentials} setCredentials={setCredentials} loading={loading} getPasswordStrength={getPasswordStrength} getStrengthLabel={getStrengthLabel} handleSubmit={handleSubmit} />

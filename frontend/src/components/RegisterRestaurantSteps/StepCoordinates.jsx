@@ -1,9 +1,39 @@
+import { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, TextField, InputAdornment, Autocomplete, CircularProgress } from '@mui/material';
 
 export default function StepCoordinates({
   contact, setContact,
-  cityOptions, cityLoading, selectedCity, setSelectedCity, citySearch, setCitySearch
+  selectedCity, setSelectedCity
 }) {
+  const [citySearch, setCitySearch] = useState('');
+  const [cityOptions, setCityOptions] = useState([]);
+  const [cityLoading, setCityLoading] = useState(false);
+
+  // Recherche de villes avec debounce
+  const searchCities = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setCityOptions([]);
+      return;
+    }
+    setCityLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/cities/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setCityOptions(data);
+    } catch (error) {
+      setCityOptions([]);
+    } finally {
+      setCityLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchCities(citySearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [citySearch, searchCities]);
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>

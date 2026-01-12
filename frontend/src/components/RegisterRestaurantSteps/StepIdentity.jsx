@@ -1,7 +1,19 @@
-import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 
 // Étape 4 - Identité
-export default function StepIdentity({ identity, setIdentity, restaurantTypes, handleLogoChange }) {
+export default function StepIdentity({ identity, setIdentity, handleLogoChange }) {
+  const [restaurantTypes, setRestaurantTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/restaurant-types')
+      .then(res => res.json())
+      .then(data => setRestaurantTypes(Array.isArray(data) ? data : []))
+      .catch(() => setRestaurantTypes([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>
@@ -57,20 +69,26 @@ export default function StepIdentity({ identity, setIdentity, restaurantTypes, h
 
       <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel>Type de restaurant</InputLabel>
-        <Select
-          value={identity.restaurantTypeId}
-          label="Type de restaurant"
-          onChange={(e) => setIdentity({ ...identity, restaurantTypeId: e.target.value })}
-        >
-          <MenuItem value="">
-            <em>Sélectionner un type</em>
-          </MenuItem>
-          {restaurantTypes.map(type => (
-            <MenuItem key={type.id} value={type.id}>
-              {type.icon} {type.RestaurantTypeDescriptions?.[0]?.name || `Type ${type.id}`}
+        {loading ? (
+          <Select value="" label="Type de restaurant" disabled>
+            <MenuItem value=""><CircularProgress size={20} /> Chargement...</MenuItem>
+          </Select>
+        ) : (
+          <Select
+            value={identity.restaurantTypeId}
+            label="Type de restaurant"
+            onChange={(e) => setIdentity({ ...identity, restaurantTypeId: e.target.value })}
+          >
+            <MenuItem value="">
+              <em>Sélectionner un type</em>
             </MenuItem>
-          ))}
-        </Select>
+            {restaurantTypes.map(type => (
+              <MenuItem key={type.id} value={type.id}>
+                {type.icon} {type.RestaurantTypeDescriptions?.[0]?.name || `Type ${type.id}`}
+              </MenuItem>
+            ))}
+          </Select>
+        )}
       </FormControl>
     </Box>
   );

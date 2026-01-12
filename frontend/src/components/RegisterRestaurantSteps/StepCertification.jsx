@@ -1,7 +1,19 @@
-import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, InputLabel, Select, MenuItem, TextField, Alert } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, InputLabel, Select, MenuItem, TextField, Alert, CircularProgress } from '@mui/material';
 
 // Étape 2 - Certification
-export default function StepCertification({ certification, setCertification, certifiers }) {
+export default function StepCertification({ certification, setCertification }) {
+  const [certifiers, setCertifiers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/certifiers')
+      .then(res => res.json())
+      .then(data => setCertifiers(Array.isArray(data) ? data : []))
+      .catch(() => setCertifiers([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>
@@ -25,16 +37,22 @@ export default function StepCertification({ certification, setCertification, cer
         <>
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Organisme certificateur</InputLabel>
-            <Select
-              value={certification.certifierId}
-              label="Organisme certificateur"
-              onChange={(e) => setCertification({ ...certification, certifierId: e.target.value })}
-            >
-              {certifiers.map(c => (
-                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-              ))}
-              <MenuItem value="other">Autre (non listé)</MenuItem>
-            </Select>
+            {loading ? (
+              <Select value="" label="Organisme certificateur" disabled>
+                <MenuItem value=""><CircularProgress size={20} /> Chargement...</MenuItem>
+              </Select>
+            ) : (
+              <Select
+                value={certification.certifierId}
+                label="Organisme certificateur"
+                onChange={(e) => setCertification({ ...certification, certifierId: e.target.value })}
+              >
+                {certifiers.map(c => (
+                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                ))}
+                <MenuItem value="other">Autre (non listé)</MenuItem>
+              </Select>
+            )}
           </FormControl>
 
           {certification.certifierId === 'other' && (
