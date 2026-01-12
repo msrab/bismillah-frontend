@@ -179,8 +179,38 @@ function RegisterRestaurant() {
       }
     }
 
+    // Validation étape 5 - Coordonnées
+    if (activeStep === 4) {
+      if (!contact.phone.trim()) {
+        setMessage({ type: 'error', text: 'Le numéro de téléphone est requis' });
+        return;
+      }
+      if (!selectedCity) {
+        setMessage({ type: 'error', text: 'Veuillez sélectionner une ville' });
+        return;
+      }
+      if (!contact.streetName.trim()) {
+        setMessage({ type: 'error', text: 'Le nom de rue est requis' });
+        return;
+      }
+      if (!contact.address_number.trim()) {
+        setMessage({ type: 'error', text: 'Le numéro d\'adresse est requis' });
+        return;
+      }
+      // Vérification unicité adresse (streetId + numéro)
+      if (selectedCity && contact.address_number.trim()) {
+        // streetId = selectedCity.id (format: code-ville)
+        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?streetId=${encodeURIComponent(selectedCity.id)}&address_number=${encodeURIComponent(contact.address_number)}`);
+        const checkAddressData = await checkAddress.json();
+        if (checkAddressData.exists) {
+          setMessage({ type: 'error', text: "Un restaurant existe déjà à cette adresse." });
+          return;
+        }
+      }
+    }
+
     // Validation étape Connexion (maintenant étape 4)
-    if (activeStep === 6) {
+    if (activeStep === 5) {
       if (!credentials.email.trim()) {
         setMessage({ type: 'error', text: "L'email est requis" });
         return;
@@ -222,35 +252,6 @@ function RegisterRestaurant() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
-
-    // Validation finale - Coordonnées
-    if (!contact.phone.trim()) {
-      setMessage({ type: 'error', text: 'Le numéro de téléphone est requis' });
-      return;
-    }
-    if (!selectedCity) {
-      setMessage({ type: 'error', text: 'Veuillez sélectionner une ville' });
-      return;
-    }
-    if (!contact.streetName.trim()) {
-      setMessage({ type: 'error', text: 'Le nom de rue est requis' });
-      return;
-    }
-    if (!contact.address_number.trim()) {
-      setMessage({ type: 'error', text: 'Le numéro d\'adresse est requis' });
-      return;
-    }
-    // Vérification unicité adresse (streetId + numéro)
-    if (selectedCity && contact.address_number.trim()) {
-      // streetId = selectedCity.id (format: code-ville)
-      const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?streetId=${encodeURIComponent(selectedCity.id)}&address_number=${encodeURIComponent(contact.address_number)}`);
-      const checkAddressData = await checkAddress.json();
-      if (checkAddressData.exists) {
-        setMessage({ type: 'error', text: "Un restaurant existe déjà à cette adresse." });
-        return;
-      }
-    }
-
     setLoading(true);
 
     try {
@@ -322,7 +323,6 @@ function RegisterRestaurant() {
       if (identity.logo && registerData.restaurant?.id) {
         const formData = new FormData();
         formData.append('logo', identity.logo);
-        
         // TODO: Implémenter l'upload du logo
         // await fetch(`http://localhost:5000/api/restaurants/${registerData.restaurant.id}/logo`, {
         //   method: 'POST',
