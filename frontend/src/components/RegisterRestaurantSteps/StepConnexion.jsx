@@ -1,15 +1,41 @@
 
+import { forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, Alert, TextField, LinearProgress, Button } from '@mui/material';
 import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
 
 // Étape 6 - Connexion
-export default function StepConnexion({
-  credentials, setCredentials, loading,
-  handleSubmit
-}) {
+const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handleSubmit }, ref) => {
   const passwordScore = getPasswordStrength(credentials.password);
   const passwordLabel = getStrengthLabel(passwordScore);
   const progressColors = ["error", "error", "warning", "info", "success", "success"];
+
+  useImperativeHandle(ref, () => ({
+    validate: async () => {
+      if (!credentials.email.trim()) {
+        return { valid: false, message: "L'email est requis" };
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(credentials.email)) {
+        return { valid: false, message: "Format d'email invalide" };
+      }
+      // Vérification unicité email
+      const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(credentials.email)}`);
+      const checkEmailData = await checkEmail.json();
+      if (checkEmailData.exists) {
+        return { valid: false, message: "Cet email est déjà utilisé." };
+      }
+      if (!credentials.password) {
+        return { valid: false, message: 'Le mot de passe est requis' };
+      }
+      if (credentials.password.length < 8) {
+        return { valid: false, message: 'Le mot de passe doit contenir au moins 8 caractères' };
+      }
+      if (credentials.password !== credentials.confirmPassword) {
+        return { valid: false, message: 'Les mots de passe ne correspondent pas' };
+      }
+      return { valid: true };
+    }
+  }), [credentials]);
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -88,4 +114,5 @@ export default function StepConnexion({
       </Button>
     </Box>
   );
-}
+});
+export default StepConnexion;

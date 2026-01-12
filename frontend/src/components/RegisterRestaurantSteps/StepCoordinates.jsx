@@ -1,10 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, TextField, InputAdornment, Autocomplete, CircularProgress } from '@mui/material';
 
-export default function StepCoordinates({
-  contact, setContact,
-  selectedCity, setSelectedCity
-}) {
+const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSelectedCity }, ref) => {
   const [citySearch, setCitySearch] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
   const [cityLoading, setCityLoading] = useState(false);
@@ -33,6 +30,32 @@ export default function StepCoordinates({
     }, 300);
     return () => clearTimeout(timer);
   }, [citySearch, searchCities]);
+
+  useImperativeHandle(ref, () => ({
+    validate: async () => {
+      if (!contact.phone.trim()) {
+        return { valid: false, message: 'Le numéro de téléphone est requis' };
+      }
+      if (!selectedCity) {
+        return { valid: false, message: 'Veuillez sélectionner une ville' };
+      }
+      if (!contact.streetName.trim()) {
+        return { valid: false, message: 'Le nom de rue est requis' };
+      }
+      if (!contact.address_number.trim()) {
+        return { valid: false, message: 'Le numéro d\'adresse est requis' };
+      }
+      // Vérification unicité adresse (streetId + numéro)
+      if (selectedCity && contact.address_number.trim()) {
+        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?streetId=${encodeURIComponent(selectedCity.id)}&address_number=${encodeURIComponent(contact.address_number)}`);
+        const checkAddressData = await checkAddress.json();
+        if (checkAddressData.exists) {
+          return { valid: false, message: "Un restaurant existe déjà à cette adresse." };
+        }
+      }
+      return { valid: true };
+    }
+  }), [contact, selectedCity]);
 
   return (
     <Box>
@@ -121,4 +144,5 @@ export default function StepCoordinates({
       />
     </Box>
   );
-}
+});
+export default StepCoordinates;

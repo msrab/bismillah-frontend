@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, InputLabel, Select, MenuItem, TextField, Alert, CircularProgress } from '@mui/material';
 
 // Étape 2 - Certification
-export default function StepCertification({ certification, setCertification }) {
+const StepCertification = forwardRef(({ certification, setCertification }, ref) => {
   const [certifiers, setCertifiers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,6 +13,35 @@ export default function StepCertification({ certification, setCertification }) {
       .catch(() => setCertifiers([]))
       .finally(() => setLoading(false));
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    validate: async () => {
+      if (!certification.hasCertification) {
+        return { valid: false, message: 'Veuillez indiquer si vous avez une certification' };
+      }
+      if (certification.hasCertification === 'yes') {
+        if (!certification.certifierId) {
+          return { valid: false, message: 'Veuillez choisir un certificateur' };
+        }
+        if (certification.certifierId === 'other' && !certification.customCertifierName) {
+          return { valid: false, message: 'Veuillez entrer le nom de votre certificateur' };
+        }
+        if (!certification.certificationNumber) {
+          return { valid: false, message: 'Veuillez entrer votre numéro de certification' };
+        }
+        if (!/^[a-zA-Z0-9]{1,15}$/.test(certification.certificationNumber)) {
+          return { valid: false, message: 'Le numéro de certification doit être alphanumérique (max 15 caractères)'};
+        }
+        // Vérification unicité numéro de certification
+        const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
+        const checkCertifData = await checkCertif.json();
+        if (checkCertifData.exists) {
+          return { valid: false, message: 'Ce numéro de certification existe déjà.' };
+        }
+      }
+      return { valid: true };
+    }
+  }), [certification]);
 
   return (
     <Box>
@@ -84,4 +113,5 @@ export default function StepCertification({ certification, setCertification }) {
       )}
     </Box>
   );
-}
+});
+export default StepCertification;

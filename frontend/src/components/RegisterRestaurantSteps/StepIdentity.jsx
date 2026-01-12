@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, TextField, Button, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 
 // Étape 4 - Identité
-export default function StepIdentity({ identity, setIdentity, handleLogoChange }) {
+const StepIdentity = forwardRef(({ identity, setIdentity, handleLogoChange }, ref) => {
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,6 +13,28 @@ export default function StepIdentity({ identity, setIdentity, handleLogoChange }
       .catch(() => setRestaurantTypes([]))
       .finally(() => setLoading(false));
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    validate: async () => {
+      if (!identity.name.trim()) {
+        return { valid: false, message: 'Le nom du restaurant est requis' };
+      }
+      if (!identity.company_number.trim()) {
+        return { valid: false, message: 'Le numéro d\'entreprise est requis' };
+      }
+      const bceRegex = /^BE\s?0?\d{3}\.??\d{3}\.??\d{3}$/i;
+      if (!bceRegex.test(identity.company_number.replace(/\s/g, ''))) {
+        return { valid: false, message: 'Format de numéro d\'entreprise invalide (ex: BE0123456789)' };
+      }
+      // Vérification unicité numéro d'entreprise
+      const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(identity.company_number)}`);
+      const checkCompanyData = await checkCompany.json();
+      if (checkCompanyData.exists) {
+        return { valid: false, message: 'Ce numéro d\'entreprise existe déjà.' };
+      }
+      return { valid: true };
+    }
+  }), [identity]);
 
   return (
     <Box>
@@ -92,4 +114,5 @@ export default function StepIdentity({ identity, setIdentity, handleLogoChange }
       </FormControl>
     </Box>
   );
-}
+});
+export default StepIdentity;

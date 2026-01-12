@@ -1,7 +1,16 @@
+import { forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, Paper, Link, Checkbox, FormControlLabel } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
-export default function StepConditions({ acceptedTerms, setAcceptedTerms, acceptedCharter, setAcceptedCharter }) {
+const StepConditions = forwardRef(({ acceptedTerms, setAcceptedTerms, acceptedCharter, setAcceptedCharter }, ref) => {
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      if (!acceptedTerms || !acceptedCharter) {
+        return { valid: false, message: 'Vous devez accepter les conditions d\'utilisation et la charte halal pour continuer' };
+      }
+      return { valid: true };
+    }
+  }), [acceptedTerms, acceptedCharter]);
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>
@@ -74,4 +83,5 @@ export default function StepConditions({ acceptedTerms, setAcceptedTerms, accept
       />
     </Box>
   );
-}
+});
+export default StepConditions;

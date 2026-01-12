@@ -1,7 +1,22 @@
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { forwardRef, useImperativeHandle } from 'react';
 
 // Étape 1 - Vérification Halal
-export default function StepHalal({ halalQuestions, setHalalQuestions }) {
+const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      if (!halalQuestions.exclusivelyHalal || !halalQuestions.noAlcohol) {
+        return { valid: false, message: 'Veuillez répondre à toutes les questions' };
+      }
+      if (halalQuestions.exclusivelyHalal === 'no') {
+        return { valid: false, message: 'charter_error', showLink: true };
+      }
+      if (halalQuestions.noAlcohol === 'yes') {
+        return { valid: false, message: 'charter_error', showLink: true };
+      }
+      return { valid: true };
+    }
+  }), [halalQuestions]);
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>
@@ -35,4 +50,5 @@ export default function StepHalal({ halalQuestions, setHalalQuestions }) {
       </FormControl>
     </Box>
   );
-}
+});
+export default StepHalal;
