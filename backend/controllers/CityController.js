@@ -15,14 +15,29 @@ exports.createCity = async (req, res, next) => {
   }
 };
 
-// Recherche de villes par nom ou code postal (autocomplétion)
+// Recherche de villes par nom + code postal + pays (pour validation d'existence exacte)
 exports.searchCities = async (req, res, next) => {
   try {
-    const { q } = req.query;
+    const { name, postalCode, countryId, q } = req.query;
+    if (name && postalCode && countryId) {
+      // Recherche exacte en base
+      const city = await City.findOne({
+        where: {
+          name,
+          postal_code: postalCode,
+          countryId: parseInt(countryId, 10)
+        }
+      });
+      if (city) {
+        return res.status(200).json([{ id: city.id, name: city.name, postal_code: city.postal_code, countryId: city.countryId }]);
+      } else {
+        return res.status(200).json([]);
+      }
+    }
+    // Sinon, fallback autocomplétion (pour l'UI)
     if (!q || q.length < 2) {
       return res.status(200).json([]);
     }
-    // Si q contient des caractères spéciaux ou est alphanumérique, on ne cherche pas
     if (/[^a-zA-Z0-9]/.test(q)) {
       return res.status(200).json([]);
     }
@@ -33,17 +48,14 @@ exports.searchCities = async (req, res, next) => {
     const allCities = JSON.parse(raw);
     let filtered = [];
     if (/^\d+$/.test(q)) {
-      // Numérique : recherche code postal uniquement si 1 à 4 chiffres
       if (q.length > 4) {
         return res.status(200).json([]);
       }
       filtered = allCities.filter(city => city.postalCode.startsWith(q));
     } else if (/^[a-zA-Z]+$/.test(q)) {
-      // Alphabétique : recherche nom de ville
       const qLower = q.toLowerCase();
       filtered = allCities.filter(city => city.localityName.toLowerCase().includes(qLower));
     } else {
-      // Alphanumérique ou autre : pas de résultat
       return res.status(200).json([]);
     }
     filtered = filtered.slice(0, 5);

@@ -100,7 +100,7 @@ module.exports = {
 
       // Ajouter la langue par défaut si spécifiée
       if (defaultLanguage) {
-        const lang = await Language.findOne({ where: { code: defaultLanguage } });
+        const lang = await Language.findOne({ where: { name: defaultLanguage } });
         if (lang) {
           await RestaurantLanguage.create({
             restaurantId: newRestaurant.id,

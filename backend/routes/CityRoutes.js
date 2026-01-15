@@ -10,8 +10,8 @@ router.get('/search', CityController.searchCities); // Autocomplétion
 router.get('/country/:countryId', CityController.getCitiesByCountry);
 router.get('/:id', CityController.getCityById);
 
-// Routes protégées (création par restaurant connecté uniquement)
-router.post('/', verifyToken, requireRole('restaurant'), CityValidation, CityController.createCity);
+
+router.post('/', CityValidation, CityController.createCity);
 
 // Pas de routes PUT ou DELETE exposées
 
