@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, TextField, InputAdornment, Autocomplete, CircularProgress } from '@mui/material';
 
-const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSelectedCity }, ref) => {
+const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
   const [citySearch, setCitySearch] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
   const [cityLoading, setCityLoading] = useState(false);
@@ -36,7 +36,7 @@ const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSele
       if (!contact.phone.trim()) {
         return { valid: false, message: 'Le numéro de téléphone est requis' };
       }
-      if (!selectedCity) {
+      if (!contact.cityName || !contact.postalCode) {
         return { valid: false, message: 'Veuillez sélectionner une ville' };
       }
       if (!contact.streetName.trim()) {
@@ -45,9 +45,9 @@ const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSele
       if (!contact.address_number.trim()) {
         return { valid: false, message: 'Le numéro d\'adresse est requis' };
       }
-      // Vérification unicité adresse (streetId + numéro)
-      if (selectedCity && contact.address_number.trim()) {
-        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?streetId=${encodeURIComponent(selectedCity.id)}&address_number=${encodeURIComponent(contact.address_number)}`);
+      // Vérification unicité adresse (cityId + numéro) si cityId déjà connu
+      if (contact.cityId && contact.address_number.trim()) {
+        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(contact.cityId)}&address_number=${encodeURIComponent(contact.address_number)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
           return { valid: false, message: "Un restaurant existe déjà à cette adresse." };
@@ -55,7 +55,7 @@ const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSele
       }
       return { valid: true };
     }
-  }), [contact, selectedCity]);
+  }), [contact]);
 
   return (
     <Box>
@@ -97,9 +97,37 @@ const StepCoordinates = forwardRef(({ contact, setContact, selectedCity, setSele
         options={cityOptions}
         getOptionLabel={(option) => `${option.postal_code} - ${option.name}`}
         loading={cityLoading}
-        value={selectedCity}
-        onChange={(_, newValue) => setSelectedCity(newValue)}
-        onInputChange={(_, newInputValue) => setCitySearch(newInputValue)}
+        value={contact.cityId ? { id: contact.cityId, name: contact.cityName, postal_code: contact.postalCode, country_id: contact.countryId } : null}
+        onChange={(_, newValue) => {
+          if (newValue) {
+            setContact({
+              ...contact,
+              cityId: newValue.id,
+              cityName: newValue.name,
+              postalCode: newValue.postal_code,
+              countryId: newValue.country_id || 1
+            });
+          } else {
+            setContact({
+              ...contact,
+              cityId: null,
+              cityName: '',
+              postalCode: '',
+              countryId: 1
+            });
+          }
+        }}
+        onInputChange={(_, newInputValue) => {
+          setCitySearch(newInputValue);
+          // Si l'utilisateur modifie le champ, on reset la sélection
+          setContact({
+            ...contact,
+            cityId: null,
+            cityName: newInputValue,
+            postalCode: '',
+            countryId: 1
+          });
+        }}
         isOptionEqualToValue={(option, value) => option.id === value?.id}
         renderInput={(params) => (
           <TextField

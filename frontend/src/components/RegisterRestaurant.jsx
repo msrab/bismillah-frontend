@@ -50,9 +50,13 @@ function RegisterRestaurant() {
   ];
   const { message, showMessage, hideMessage } = useMessage(5000); // 5s auto-hide
   const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, showMessage);
-  const [loading, setLoading] = useState(false);
 
-  const [selectedCity, setSelectedCity] = useState(null);
+  // Debug : log contact à chaque passage au step suivant
+  const handleNextWithDebug = () => {
+    console.log('Contact (coordonnées) au step', activeStep, ':', contact);
+    handleNext();
+  };
+  const [loading, setLoading] = useState(false);
 
   // Étape 1 - Questions Halal
   const [halalQuestions, setHalalQuestions] = useState({
@@ -91,12 +95,16 @@ function RegisterRestaurant() {
     'preview'
   );
 
-  // Étape 5 - Coordonnées
+  // Étape 5 - Coordonnées 
   const [contact, setContact] = useState({
     website: '',
     phone: '',
     streetName: '',
-    address_number: ''
+    address_number: '',
+    cityName: '',
+    postalCode: '',
+    countryId: 1,
+    // cityId supprimé, on ne l'utilise plus à ce stade
   });
 
   // Étape 6 - Données de connexion
@@ -114,6 +122,45 @@ function RegisterRestaurant() {
     setLoading(true);
 
     try {
+      // 0. Vérifier ou créer la ville (nom + code postal) si besoin
+      const cityName = contact.cityName;
+      const cityPostalCode = contact.postalCode;
+      const countryId = contact.countryId || 1;
+      let cityId = null;
+      if (cityName && cityPostalCode) {
+        // Recherche de la ville en base par nom + code postal
+        const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(cityName)}&postalCode=${encodeURIComponent(cityPostalCode)}&countryId=${encodeURIComponent(countryId)}`);
+        const searchData = await searchRes.json();
+        if (searchRes.ok && Array.isArray(searchData) && searchData.length > 0 && searchData[0].id) {
+          cityId = searchData[0].id;
+        } else {
+          // Si la ville n'existe pas, on la crée
+          const cityPayload = {
+            name: cityName,
+            postal_code: cityPostalCode,
+            countryId
+          };
+          const cityRes = await fetch('http://localhost:5000/api/cities', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cityPayload)
+          });
+          const cityData = await cityRes.json();
+          if (cityRes.ok && cityData.id) {
+            cityId = cityData.id;
+          } else {
+            showMessage({ type: 'error', text: cityData.message || "Impossible de créer la ville." });
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      if (!cityId) {
+        showMessage({ type: 'error', text: "Veuillez renseigner une ville et un code postal valides." });
+        setLoading(false);
+        return;
+      }
+
       // Préparer les données
       const registrationData = {
         // Identité
@@ -128,7 +175,7 @@ function RegisterRestaurant() {
         website: contact.website || null,
         address_number: contact.address_number,
         // Adresse - on envoie les infos pour créer/trouver la rue
-        cityId: selectedCity.id,
+        cityId,
         streetName: contact.streetName,
         // Langue par défaut
         defaultLanguage: language
@@ -262,7 +309,7 @@ function RegisterRestaurant() {
           />
         )}
         {activeStep === 4 && (
-          <StepCoordinates ref={stepCoordinatesRef} contact={contact} setContact={setContact} selectedCity={selectedCity} setSelectedCity={setSelectedCity} />
+          <StepCoordinates ref={stepCoordinatesRef} contact={contact} setContact={setContact} />
         )}
         {activeStep === 5 && (
           <StepConnexion ref={stepConnexionRef} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />
@@ -278,7 +325,7 @@ function RegisterRestaurant() {
             </Button>
             <Button
               variant="contained"
-              onClick={handleNext}
+              onClick={handleNextWithDebug}
             >
               Suivant
             </Button>
