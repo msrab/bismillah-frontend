@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
 const { Restaurant, Street, City, RestaurantType, RestaurantTypeDescription, RestaurantLanguage, Language, PasswordResetToken } = require('../models');
 const { createError } = require('../utils/createError');
+const { generateRestaurantSlug } = require('../utils/restaurantSlugHelper');
 
 module.exports = {
 
@@ -86,8 +87,19 @@ module.exports = {
 
       const hash = await bcrypt.hash(password, 10);
 
+
+
+      // Slug généré automatiquement à partir du nom et de la ville (unique)
+      let cityName = '';
+      if (cityId) {
+        const city = await City.findByPk(cityId);
+        cityName = city ? city.name : '';
+      }
+      const slug = await generateRestaurantSlug(name, cityName, Restaurant);
+
       const newRestaurant = await Restaurant.create({
         name,
+        slug,
         company_number,
         address_number,
         phone: phone || null,
