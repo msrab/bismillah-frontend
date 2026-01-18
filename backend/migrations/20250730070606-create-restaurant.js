@@ -14,6 +14,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
+      slug: {
+        type: Sequelize.STRING,
+        allowNull: true, // temporairement nullable pour migration
+        unique: true
+      },
       email: {
         type: Sequelize.STRING,
         allowNull: false,
