@@ -8,6 +8,7 @@ module.exports = {
       {
         id: 1,
         name: 'La Ruche Halal',
+        slug: 'la-ruche-halal-bruxelles',
         email: 'bruxelles@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE0123456789',
@@ -24,6 +25,7 @@ module.exports = {
       {
         id: 2,
         name: 'Antwerp Kebab',
+        slug: 'antwerp-kebab-antwerpen',
         email: 'antwerpen@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE0234567890',
@@ -40,6 +42,7 @@ module.exports = {
       {
         id: 3,
         name: 'Gent Grillades',
+        slug: 'gent-grillades-gent',
         email: 'gent@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE0345678901',
@@ -56,6 +59,7 @@ module.exports = {
       {
         id: 4,
         name: 'Liège Délices',
+        slug: 'liege-delices-liege',
         email: 'liege@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE0456789012',
@@ -72,6 +76,7 @@ module.exports = {
       {
         id: 5,
         name: 'Charleroi Saveurs',
+        slug: 'charleroi-saveurs-charleroi',
         email: 'charleroi@example.com',
         password: '$2b$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
         company_number: 'BE0567890123',
