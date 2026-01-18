@@ -24,12 +24,14 @@ router.get('/check-email', async (req, res) => {
 	const exists = await Restaurant.findOne({ where: { email } });
 	res.json({ exists: !!exists });
 });
-// Vérification unicité numéro d'entreprise
-router.get('/check-company-number', async (req, res) => {
-	const { company_number } = req.query;
-	if (!company_number) return res.status(400).json({ exists: false, error: 'Numéro manquant' });
-	const exists = await Restaurant.findOne({ where: { company_number } });
-	res.json({ exists: !!exists });
+
+// Vérification unicité slug
+const { isSlugTaken } = require('../utils/slugify');
+router.get('/check-slug', async (req, res) => {
+	const { slug } = req.query;
+	if (!slug) return res.status(400).json({ available: false, error: 'Slug manquant' });
+	const available = !(await isSlugTaken(slug, Restaurant));
+	res.json({ available });
 });
 
 const { verifyToken } = require('../middlewares/authMiddleware');
