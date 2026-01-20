@@ -13,6 +13,7 @@ const StepIdentity = forwardRef(({
 }, ref) => {
   const [restaurantTypes, setRestaurantTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [companyError, setCompanyError] = useState('');
 
   useEffect(() => {
     fetch('http://localhost:5000/api/restaurant-types')
@@ -24,23 +25,34 @@ const StepIdentity = forwardRef(({
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
+      setCompanyError('');
       if (!identity.name.trim()) {
         return { valid: false, message: 'Le nom du restaurant est requis' };
       }
-      if (!identity.company_number.trim()) {
-        return { valid: false, message: 'Le numéro d\'entreprise est requis' };
+      const num = identity.company_number.replace(/\D/g, '');
+      if (!num || num.length !== 10) {
+        setCompanyError("Le numéro d'entreprise doit comporter exactement 10 chiffres.");
+        return { valid: false, message: "Le numéro d'entreprise doit comporter exactement 10 chiffres." };
       }
-      const bceRegex = /^BE\s?0?\d{3}\.??\d{3}\.??\d{3}$/i;
-      if (!bceRegex.test(identity.company_number.replace(/\s/g, ''))) {
-        return { valid: false, message: 'Format de numéro d\'entreprise invalide (ex: BE0123456789)' };
+      // Ajoute le préfixe BE avant l'appel API
+      const companyNumberToCheck = `BE${num}`;
+      try {
+        const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumberToCheck)}`);
+        const checkCompanyData = await checkCompany.json();
+        if (!checkCompany.ok) {
+          setCompanyError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");
+          return { valid: false, message: checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise." };
+        }
+        if (checkCompanyData.exists) {
+          setCompanyError("Ce numéro d'entreprise existe déjà.");
+          return { valid: false, message: "Ce numéro d'entreprise existe déjà." };
+        }
+        setCompanyError('');
+        return { valid: true };
+      } catch (err) {
+        setCompanyError("Erreur réseau lors de la vérification du numéro d'entreprise.");
+        return { valid: false, message: "Erreur réseau lors de la vérification du numéro d'entreprise." };
       }
-      // Vérification unicité numéro d'entreprise
-      const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(identity.company_number)}`);
-      const checkCompanyData = await checkCompany.json();
-      if (checkCompanyData.exists) {
-        return { valid: false, message: 'Ce numéro d\'entreprise existe déjà.' };
-      }
-      return { valid: true };
     }
   }), [identity]);
 
@@ -101,10 +113,18 @@ const StepIdentity = forwardRef(({
         fullWidth
         required
         sx={{ mb: 2 }}
-        value={identity.company_number}
-        onChange={(e) => setIdentity({ ...identity, company_number: e.target.value })}
-        placeholder="BE0123456789"
-        helperText="Format belge: BE suivi de 10 chiffres"
+        value={identity.company_number.replace(/^BE/, '')}
+        onChange={(e) => {
+          // N'accepte que des chiffres, max 10, stocke toujours avec 'BE' devant
+          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+          setIdentity({ ...identity, company_number: val ? `BE${val}` : '' });
+        }}
+        placeholder="0123456789"
+        error={!!companyError}
+        helperText={companyError || "Format belge: BE suivi de 10 chiffres"}
+        InputProps={{
+          startAdornment: <span style={{ fontWeight: 600, marginRight: 4 }}>BE</span>
+        }}
       />
 
       <FormControl fullWidth sx={{ mb: 2 }}>

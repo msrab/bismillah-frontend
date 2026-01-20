@@ -1,3 +1,16 @@
+// Vérification unicité numéro d'entreprise
+router.get('/check-company-number', async (req, res) => {
+	const { company_number } = req.query;
+	if (!company_number) {
+		return res.status(400).json({ error: "Numéro d'entreprise manquant" });
+	}
+	// Optionnel : validation format côté route (défense en profondeur)
+	if (!/^BE\d{10}$/.test(company_number)) {
+		return res.status(400).json({ error: "Format de numéro d'entreprise invalide (ex: BE0123456789)" });
+	}
+	const exists = await Restaurant.findOne({ where: { company_number } });
+	return res.json({ exists: !!exists });
+});
 
 const express = require('express');
 const router  = express.Router();
