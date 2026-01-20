@@ -10,7 +10,7 @@ const signupRestaurantValidation = [
     .trim()
     .escape()
     .notEmpty().withMessage('Le numéro d’entreprise est requis.')
-    .isAlphanumeric().withMessage('Le numéro d’entreprise ne doit contenir que lettres et chiffres.'),
+    .matches(/^BE\d{10}$/).withMessage("Le numéro d'entreprise doit être au format BE suivi de 10 chiffres (ex: BE0123456789)."),
 
   body('address_number')
     .trim()

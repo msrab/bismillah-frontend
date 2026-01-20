@@ -5,6 +5,8 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
   const [citySearch, setCitySearch] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
   const [cityLoading, setCityLoading] = useState(false);
+  const [addressError, setAddressError] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
 
   // Recherche de villes avec debounce
   const searchCities = useCallback(async (query) => {
@@ -33,8 +35,18 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
+      setAddressError('');
+      setWebsiteError('');
       if (!contact.phone.trim()) {
         return { valid: false, message: 'Le numéro de téléphone est requis' };
+      }
+      if (contact.website && contact.website.trim()) {
+        // Validation du format d'URL (domaine + extension, sous-domaines autorisés, chemin autorisé)
+        const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-zA-Z]{2,})(:[0-9]{2,5})?(\/.*)?$/;
+        if (!urlRegex.test(contact.website.trim())) {
+          setWebsiteError("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
+          return { valid: false, message: "Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)" };
+        }
       }
       if (!contact.cityName || !contact.postalCode) {
         return { valid: false, message: 'Veuillez sélectionner une ville' };
@@ -43,16 +55,20 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         return { valid: false, message: 'Le nom de rue est requis' };
       }
       if (!contact.address_number.trim()) {
-        return { valid: false, message: 'Le numéro d\'adresse est requis' };
+        setAddressError("Le numéro d'adresse est requis");
+        return { valid: false, message: "Le numéro d'adresse est requis" };
       }
       // Vérification unicité adresse (cityId + numéro) si cityId déjà connu
       if (contact.cityId && contact.address_number.trim()) {
         const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(contact.cityId)}&address_number=${encodeURIComponent(contact.address_number)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
+          setAddressError("Un restaurant existe déjà à cette adresse.");
           return { valid: false, message: "Un restaurant existe déjà à cette adresse." };
         }
       }
+      setAddressError('');
+      setWebsiteError('');
       return { valid: true };
     }
   }), [contact]);
@@ -70,6 +86,8 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         value={contact.website}
         onChange={(e) => setContact({ ...contact, website: e.target.value })}
         placeholder="https://www.monrestaurant.be"
+        error={!!websiteError}
+        helperText={websiteError}
         InputProps={{
           startAdornment: <InputAdornment position="start">🌐</InputAdornment>
         }}
@@ -169,6 +187,8 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         value={contact.address_number}
         onChange={(e) => setContact({ ...contact, address_number: e.target.value })}
         placeholder="123A"
+        error={!!addressError}
+        helperText={addressError}
       />
     </Box>
   );

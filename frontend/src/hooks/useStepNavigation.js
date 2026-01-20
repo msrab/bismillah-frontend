@@ -5,7 +5,7 @@ import { useState } from 'react';
  * @param {Array} stepRefs - Tableau de refs pour chaque étape
  * @param {Function} setMessage - Setter pour les messages d'erreur
  */
-export function useStepNavigation(stepRefs, setMessage) {
+export function useStepNavigation(stepRefs, setMessage, hideMessage) {
   const [activeStep, setActiveStep] = useState(0);
 
   const handleNext = async () => {
@@ -17,10 +17,14 @@ export function useStepNavigation(stepRefs, setMessage) {
         return;
       }
     }
+    hideMessage && hideMessage();
     setActiveStep(prev => prev + 1);
   };
 
-  const handleBack = () => setActiveStep(prev => prev - 1);
+  const handleBack = () => {
+    hideMessage && hideMessage();
+    setActiveStep(prev => prev - 1);
+  };
 
   return { activeStep, handleNext, handleBack, setActiveStep };
 }

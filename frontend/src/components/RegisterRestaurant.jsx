@@ -1,4 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+// Utilitaire pour valider une étape via son ref
+async function validateStep(stepRef) {
+  if (stepRef && stepRef.current && typeof stepRef.current.validate === 'function') {
+    const result = await stepRef.current.validate();
+    return result && result.valid;
+  }
+  return false;
+}
 import { useMessage } from '../hooks/useMessage';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { getPasswordStrength, getStrengthLabel } from '../utils/password';
@@ -48,13 +56,21 @@ function RegisterRestaurant() {
     stepCoordinatesRef,   // 4 - Coordonnées
     stepConnexionRef      // 5 - Connexion
   ];
-  const { message, showMessage, hideMessage } = useMessage(5000); // 5s auto-hide
-  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, showMessage);
+  const { message, showMessage, hideMessage } = useMessage();
+  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, showMessage, hideMessage);
 
   // Debug : log contact à chaque passage au step suivant
-  const handleNextWithDebug = () => {
+  const handleNextWithDebug = async () => {
+    // On valide l'étape avant d'avancer
+    const ref = stepRefs[activeStep];
+    const valid = await validateStep(ref);
+    setIsStepValid(valid);
+    if (!valid) return;
     console.log('Contact (coordonnées) au step', activeStep, ':', contact);
     handleNext();
+    setTimeout(() => {
+      console.log('Step après navigation :', activeStep + 1);
+    }, 100);
   };
   const [loading, setLoading] = useState(false);
 
@@ -114,6 +130,18 @@ function RegisterRestaurant() {
     confirmPassword: ''
   });
 
+  // État pour activer/désactiver le bouton suivant
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // Met à jour la validité à chaque changement d'étape ou de données
+  useEffect(() => {
+    const ref = stepRefs[activeStep];
+    let mounted = true;
+    validateStep(ref).then(valid => { if (mounted) setIsStepValid(valid); });
+    return () => { mounted = false; };
+    // eslint-disable-next-line
+  }, [activeStep, halalQuestions, acceptedTerms, acceptedCharter, certification, identity, contact, credentials]);
+
   
   // Soumission finale du formulaire
   const handleSubmit = async (e) => {
@@ -165,7 +193,7 @@ function RegisterRestaurant() {
       const registrationData = {
         // Identité
         name: identity.name,
-        company_number: identity.company_number.replace(/\s/g, '').toUpperCase(),
+        company_number: identity.company_number,
         restaurantTypeId: identity.restaurantTypeId || null,
         // Connexion
         email: credentials.email,
@@ -287,33 +315,36 @@ function RegisterRestaurant() {
           </Alert>
         )}
 
-        {activeStep === 0 && (
-          <StepHalal ref={stepHalalRef} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />
-        )}
-        {activeStep === 1 && (
-          <StepConditions ref={stepConditionsRef} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
-        )}
-        {activeStep === 2 && (
-          <StepCertification ref={stepCertificationRef} certification={certification} setCertification={setCertification} />
-        )}
-        {activeStep === 3 && (
-          <StepIdentity
-            ref={stepIdentityRef}
-            identity={identity}
-            setIdentity={setIdentity}
-            logo={logoState.file}
-            logoPreview={logoState.preview}
-            handleLogoChange={handleLogoChange}
-            resetLogo={resetLogo}
-            logoError={logoError}
-          />
-        )}
-        {activeStep === 4 && (
-          <StepCoordinates ref={stepCoordinatesRef} contact={contact} setContact={setContact} />
-        )}
-        {activeStep === 5 && (
-          <StepConnexion ref={stepConnexionRef} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />
-        )}
+        {/* Affiche la step courante et log le step */}
+        <>
+          {activeStep === 0 && (
+            <StepHalal ref={stepHalalRef} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />
+          )}
+          {activeStep === 1 && (
+            <StepConditions ref={stepConditionsRef} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />
+          )}
+          {activeStep === 2 && (
+            <StepCertification ref={stepCertificationRef} certification={certification} setCertification={setCertification} />
+          )}
+          {activeStep === 3 && (
+            <StepIdentity
+              ref={stepIdentityRef}
+              identity={identity}
+              setIdentity={setIdentity}
+              logo={logoState.file}
+              logoPreview={logoState.preview}
+              handleLogoChange={handleLogoChange}
+              resetLogo={resetLogo}
+              logoError={logoError}
+            />
+          )}
+          {activeStep === 4 && (
+            <StepCoordinates ref={stepCoordinatesRef} contact={contact} setContact={setContact} />
+          )}
+          {activeStep === 5 && (
+            <StepConnexion ref={stepConnexionRef} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />
+          )}
+        </>
 
         {activeStep < 5 && (
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
@@ -326,6 +357,7 @@ function RegisterRestaurant() {
             <Button
               variant="contained"
               onClick={handleNextWithDebug}
+              disabled={!isStepValid}
             >
               Suivant
             </Button>

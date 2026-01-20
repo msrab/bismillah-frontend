@@ -1,3 +1,7 @@
+const express = require('express');
+const router  = express.Router();
+const { Restaurant, RestaurantCertification } = require('../models');
+
 // Vérification unicité numéro d'entreprise
 router.get('/check-company-number', async (req, res) => {
 	const { company_number } = req.query;
@@ -11,10 +15,6 @@ router.get('/check-company-number', async (req, res) => {
 	const exists = await Restaurant.findOne({ where: { company_number } });
 	return res.json({ exists: !!exists });
 });
-
-const express = require('express');
-const router  = express.Router();
-const { Restaurant, RestaurantCertification } = require('../models');
 
 // Vérification unicité adresse (streetId + numéro)
 router.get('/check-address', async (req, res) => {

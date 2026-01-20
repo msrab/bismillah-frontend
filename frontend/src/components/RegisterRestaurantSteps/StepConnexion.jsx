@@ -1,5 +1,5 @@
 
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Box, Typography, Alert, TextField, LinearProgress, Button } from '@mui/material';
 import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
 
@@ -8,22 +8,28 @@ const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handle
   const passwordScore = getPasswordStrength(credentials.password);
   const passwordLabel = getStrengthLabel(passwordScore);
   const progressColors = ["error", "error", "warning", "info", "success", "success"];
+  const [emailError, setEmailError] = useState('');
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
+      setEmailError('');
       if (!credentials.email.trim()) {
+        setEmailError("L'email est requis");
         return { valid: false, message: "L'email est requis" };
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(credentials.email)) {
+        setEmailError("Format d'email invalide");
         return { valid: false, message: "Format d'email invalide" };
       }
       // Vérification unicité email
       const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(credentials.email)}`);
       const checkEmailData = await checkEmail.json();
       if (checkEmailData.exists) {
+        setEmailError("Cet email est déjà utilisé.");
         return { valid: false, message: "Cet email est déjà utilisé." };
       }
+      setEmailError('');
       if (!credentials.password) {
         return { valid: false, message: 'Le mot de passe est requis' };
       }
@@ -56,6 +62,8 @@ const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handle
         value={credentials.email}
         onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
         placeholder="restaurant@exemple.be"
+        error={!!emailError}
+        helperText={emailError}
       />
 
       <TextField

@@ -36,6 +36,11 @@ module.exports = {
         return next(createError('Ce numéro d’entreprise est déjà pris.', 409));
       }
 
+      // Validation explicite du format côté backend (défense en profondeur)
+      if (!/^BE\d{10}$/.test(company_number)) {
+        return next(createError("Le numéro d'entreprise doit être au format BE suivi de 10 chiffres (ex: BE0123456789).", 400));
+      }
+
       let typeIdToUse = null;
 
       if (restaurantTypeId) {
