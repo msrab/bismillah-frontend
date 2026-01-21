@@ -1,49 +1,15 @@
-import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Box, Typography, TextField, InputAdornment, CircularProgress } from '@mui/material';
+import { useState, forwardRef, useImperativeHandle } from 'react';
+import { Box, Typography, TextField, InputAdornment } from '@mui/material';
 import AddressFields from '../common/AddressFields';
 import CityAutocomplete from '../common/CityAutocomplete';
 import ErrorDisplay from '../common/ErrorDisplay';
-import { validateAddress } from '../../utils/validation';
+import useCitySearch from '../../hooks/useCitySearch';
+import { validateAddress, isValidBelgianPhoneNumber, isValidWebsiteUrl } from '../../utils/validation';
 
 const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
-  const [citySearch, setCitySearch] = useState('');
-  const [cityOptions, setCityOptions] = useState([]);
-
-  // Debug: log cityOptions whenever it changes
-  useEffect(() => {
-    console.log('cityOptions:', cityOptions);
-  }, [cityOptions]);
-  const [cityLoading, setCityLoading] = useState(false);
   const [errors, setErrors] = useState([]);
   const [websiteError, setWebsiteError] = useState('');
-
-  // Recherche de villes avec debounce
-  const searchCities = useCallback(async (query) => {
-    if (!query || query.length < 2) {
-      setCityOptions([]);
-      return;
-    }
-    setCityLoading(true);
-    try {
-      const res = await fetch(`http://localhost:5000/api/cities/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setCityOptions(data);
-    } catch (error) {
-      setCityOptions([]);
-    } finally {
-      setCityLoading(false);
-    }
-  }, []);
-
-  // Lance la recherche à chaque saisie (dès 2 caractères), mais pas lors de la sélection d'une ville
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (citySearch.length >= 2) {
-        searchCities(citySearch);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [citySearch, searchCities]);
+  const { cityOptions, cityLoading, setCitySearch } = useCitySearch();
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
@@ -58,10 +24,11 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       });
       if (!contact.phone || !contact.phone.trim()) {
         addressErrors.push('Le numéro de téléphone est requis');
+      } else if (!isValidBelgianPhoneNumber(contact.phone.trim())) {
+        addressErrors.push('Le numéro de téléphone doit être belge, commencer par +32 et être valide.');
       }
       if (contact.website && contact.website.trim()) {
-        const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-zA-Z]{2,})(:[0-9]{2,5})?(\/.*)?$/;
-        if (!urlRegex.test(contact.website.trim())) {
+        if (!isValidWebsiteUrl(contact.website.trim())) {
           setWebsiteError("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
           addressErrors.push("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
         }
@@ -146,9 +113,9 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         sx={{ mb: 2 }}
         value={contact.phone}
         onChange={(e) => setContact({ ...contact, phone: e.target.value })}
-        placeholder="+32 2 123 45 67"
+        placeholder="4XXXXXXXX ou 2XXXXXXX"
         InputProps={{
-          startAdornment: <InputAdornment position="start">📞</InputAdornment>
+          startAdornment: <InputAdornment position="start">+32</InputAdornment>
         }}
       />
 
@@ -175,6 +142,16 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
               countryId: 1
             });
           }
+        }}
+        onInputChange={(_, newInputValue) => {
+          setCitySearch(newInputValue);
+          setContact({
+            ...contact,
+            cityId: null,
+            cityName: newInputValue,
+            postalCode: '',
+            countryId: 1
+          });
         }}
         loading={cityLoading}
         disabled={false}
