@@ -26,20 +26,12 @@ const StepIdentity = forwardRef(({
   resetLogo,
   logoError
 }, ref) => {
-  const [restaurantTypes, setRestaurantTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Plus besoin de gérer restaurantTypes ni loading ici, tout est dans RestaurantTypeSelect
   // Erreur de validation du numéro d'entreprise (affichée uniquement après validation globale)
   const [companyError, setCompanyError] = useState('');
 
 
-  // Récupère la liste des types de restaurant au chargement
-  useEffect(() => {
-    fetch('http://localhost:5000/api/restaurant-types')
-      .then(res => res.json())
-      .then(data => setRestaurantTypes(Array.isArray(data) ? data : []))
-      .catch(() => setRestaurantTypes([]))
-      .finally(() => setLoading(false));
-  }, []);
+  // (chargement des types géré dans RestaurantTypeSelect)
 
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
@@ -132,8 +124,6 @@ const StepIdentity = forwardRef(({
       <RestaurantTypeSelect
         value={identity.restaurantTypeId}
         onChange={e => setIdentity({ ...identity, restaurantTypeId: e.target.value })}
-        options={restaurantTypes}
-        loading={loading}
         required
       />
     </Box>
