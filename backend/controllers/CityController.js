@@ -1,15 +1,27 @@
+// Utilitaire pour transformer un objet City Sequelize en camelCase
+function mapCityToCamel(city) {
+  if (!city) return null;
+  return {
+    id: city.id,
+    name: city.name,
+    postalCode: city.postal_code,
+    countryId: city.countryId
+  };
+}
 const { City, Country } = require('../models');
 const { createError } = require('../utils/createError');
 const { Op } = require('sequelize');
 
 exports.createCity = async (req, res, next) => {
   try {
-    const { name, postal_code, countryId } = req.body;
+    const { name, postalCode, countryId } = req.body;
     let city = await City.findOne({ where: { name, countryId } });
-    if (city) return res.status(201).json(city);
+    if (city) {
+      return res.status(201).json(mapCityToCamel(city));
+    }
 
-    city = await City.create({ name, postal_code, countryId });
-    return res.status(201).json(city);
+    city = await City.create({ name, postal_code: postalCode, countryId });
+    return res.status(201).json(mapCityToCamel(city));
   } catch (error) {
     next(error);
   }
@@ -29,7 +41,7 @@ exports.searchCities = async (req, res, next) => {
         }
       });
       if (city) {
-        return res.status(200).json([{ id: city.id, name: city.name, postal_code: city.postal_code, countryId: city.countryId }]);
+        return res.status(200).json([mapCityToCamel(city)]);
       } else {
         return res.status(200).json([]);
       }
@@ -61,7 +73,7 @@ exports.searchCities = async (req, res, next) => {
     filtered = filtered.slice(0, 5);
     const result = filtered.map(city => ({
       id: `${city.postalCode}-${city.localityName}`,
-      postal_code: city.postalCode,
+      postalCode: city.postalCode,
       name: city.localityName,
     }));
     return res.status(200).json(result);
@@ -74,7 +86,8 @@ exports.getCitiesByCountry = async (req, res, next) => {
   try {
     const { countryId } = req.params;
     const cities = await City.findAll({ where: { countryId } });
-    return res.status(200).json(cities);
+    const mapped = cities.map(mapCityToCamel);
+    return res.status(200).json(mapped);
   } catch (error) {
     next(error);
   }
@@ -85,7 +98,7 @@ exports.getCityById = async (req, res, next) => {
     const city = await City.findByPk(req.params.id);
     if (!city) 
       return next(createError('Ville non trouvée.', 404));
-    return res.status(200).json(city);
+    return res.status(200).json(mapCityToCamel(city));
   } catch (error) {
     next(error);
   }
