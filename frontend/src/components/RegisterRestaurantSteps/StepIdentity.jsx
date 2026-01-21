@@ -1,9 +1,9 @@
 import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
-import RestaurantNameField from '../common/RestaurantNameField';
-import LogoUploadField from '../common/LogoUploadField';
-import CompanyNumberField from '../common/CompanyNumberField';
-import RestaurantTypeSelect from '../common/RestaurantTypeSelect';
+import RestaurantNameField from '../restaurantFormComponents/RestaurantNameField';
+import LogoUploadField from '../restaurantFormComponents/LogoUploadField';
+import CompanyNumberField from '../restaurantFormComponents/CompanyNumberField';
+import RestaurantTypeSelect from '../restaurantFormComponents/RestaurantTypeSelect';
 
 /**
  * Composant StepIdentity

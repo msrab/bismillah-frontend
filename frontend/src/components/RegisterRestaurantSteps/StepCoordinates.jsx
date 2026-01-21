@@ -1,10 +1,10 @@
 import { useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
-import PhoneField from '../common/PhoneField';
-import WebsiteField from '../common/WebsiteField';
-import AddressFields from '../common/AddressFields';
-import CityAutocomplete from '../common/CityAutocomplete';
-import ErrorDisplay from '../common/ErrorDisplay';
+import PhoneField from '../restaurantFormComponents/PhoneField';
+import WebsiteField from '../restaurantFormComponents/WebsiteField';
+import AddressFields from '../restaurantFormComponents/AddressFields';
+import CityAutocomplete from '../restaurantFormComponents/CityAutocomplete';
+import ErrorDisplay from '../restaurantFormComponents/ErrorDisplay';
 import { validateAddress, isValidBelgianPhoneNumber, isValidWebsiteUrl } from '../../utils/validation';
 
 /**
