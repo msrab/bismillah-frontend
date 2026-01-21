@@ -58,9 +58,40 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         setAddressError("Le numéro d'adresse est requis");
         return { valid: false, message: "Le numéro d'adresse est requis" };
       }
-      // Vérification unicité adresse (cityId + numéro) si cityId déjà connu
-      if (contact.cityId && contact.address_number.trim()) {
-        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(contact.cityId)}&address_number=${encodeURIComponent(contact.address_number)}`);
+      // Recherche ou création de la ville en BD avant de vérifier l'adresse
+      let cityId = contact.cityId;
+      if (!cityId && contact.cityName && contact.postalCode && contact.countryId) {
+        // 1. Chercher la ville exacte en BD
+        const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(contact.cityName)}&postalCode=${encodeURIComponent(contact.postalCode)}&countryId=${encodeURIComponent(contact.countryId)}`);
+        const searchData = await searchRes.json();
+        if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id) {
+          cityId = searchData[0].id;
+        } else {
+          // 2. Créer la ville si absente
+          const cityPayload = {
+            name: contact.cityName,
+            postal_code: contact.postalCode,
+            countryId: contact.countryId
+          };
+          const cityRes = await fetch('http://localhost:5000/api/cities', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cityPayload)
+          });
+          const cityData = await cityRes.json();
+          if (cityRes.ok && cityData.id) {
+            cityId = cityData.id;
+          } else {
+            setAddressError(cityData.message || "Impossible de créer la ville.");
+            return { valid: false, message: cityData.message || "Impossible de créer la ville." };
+          }
+        }
+        // Met à jour le state contact avec le vrai cityId
+        setContact({ ...contact, cityId });
+      }
+      // Vérification unicité adresse (cityId + numéro)
+      if (cityId && contact.address_number.trim()) {
+        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&address_number=${encodeURIComponent(contact.address_number)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
           setAddressError("Un restaurant existe déjà à cette adresse.");
