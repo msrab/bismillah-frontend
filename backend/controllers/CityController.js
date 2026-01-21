@@ -29,7 +29,7 @@ exports.createCity = async (req, res, next) => {
 };
 
 // Recherche de villes par nom + code postal + pays (pour validation d'existence exacte)
-exports.searchCities = async (req, res, next) => {
+exports.autocompleteCities = async (req, res, next) => {
   try {
     const { name, postalCode, countryId, q } = req.query;
     if (name && postalCode && countryId) {

@@ -1,9 +1,10 @@
 import { useState, forwardRef, useImperativeHandle } from 'react';
-import { Box, Typography, TextField, InputAdornment } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import PhoneField from '../common/PhoneField';
+import WebsiteField from '../common/WebsiteField';
 import AddressFields from '../common/AddressFields';
 import CityAutocomplete from '../common/CityAutocomplete';
 import ErrorDisplay from '../common/ErrorDisplay';
-import useCitySearch from '../../hooks/useCitySearch';
 import { validateAddress, isValidBelgianPhoneNumber, isValidWebsiteUrl } from '../../utils/validation';
 
 /**
@@ -18,8 +19,6 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
   const [errors, setErrors] = useState([]);
   // État pour l'erreur spécifique au site web
   const [websiteError, setWebsiteError] = useState('');
-  // Hook personnalisé pour la recherche de ville (API + debounce)
-  const { cityOptions, cityLoading, setCitySearch } = useCitySearch();
 
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
@@ -60,12 +59,11 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       }
       // 2. Recherche ou création de la ville en base de données
       let cityId;
-      if (
-        contact.cityName && contact.postalCode && contact.countryId
-      ) {
+      if ( contact.cityName && contact.postalCode && contact.countryId) {
         // Recherche la ville exacte
         const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(contact.cityName)}&postalCode=${encodeURIComponent(contact.postalCode)}&countryId=${encodeURIComponent(contact.countryId)}`);
         const searchData = await searchRes.json();
+        
         if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id && !isNaN(Number(searchData[0].id))) {
           cityId = searchData[0].id;
         } else {
@@ -116,33 +114,21 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       {/* Affichage des erreurs de validation */}
       <ErrorDisplay errors={errors} />
 
-      {/* Champ site web avec validation */}
-      <TextField
-        label="Site web"
-        fullWidth
-        sx={{ mb: 2 }}
+      {/* Champ site web avec validation (composant réutilisable) */}
+      <WebsiteField
         value={contact.website}
-        onChange={(e) => setContact({ ...contact, website: e.target.value })}
-        placeholder="https://www.monrestaurant.be"
+        onChange={e => setContact({ ...contact, website: e.target.value })}
         error={!!websiteError}
         helperText={websiteError}
-        InputProps={{
-          startAdornment: <InputAdornment position="start">🌐</InputAdornment>
-        }}
       />
 
-      {/* Champ téléphone belge avec préfixe +32 fixe */}
-      <TextField
-        label="Téléphone"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
+      {/* Champ téléphone belge avec préfixe +32 (composant réutilisable) */}
+      <PhoneField
         value={contact.phone}
-        onChange={(e) => setContact({ ...contact, phone: e.target.value.trimStart() })}
-        placeholder="4XXXXXXXX ou 2XXXXXXX"
-        InputProps={{
-          startAdornment: <InputAdornment position="start">+32</InputAdornment>
-        }}
+        onChange={e => setContact({ ...contact, phone: e.target.value.trimStart() })}
+        error={false}
+        helperText={''}
+        required
       />
 
       {/* Sous-titre pour la section adresse */}
@@ -153,8 +139,7 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       {/* Autocomplétion ville/code postal avec recherche API */}
       <CityAutocomplete
         value={contact.cityName && contact.postalCode ? { postalCode: contact.postalCode, localityName: contact.cityName, countryId: contact.countryId } : null}
-        options={cityOptions}
-        onChange={(_, newValue) => {
+        onChange={newValue => {
           if (newValue) {
             setContact({
               ...contact,
@@ -171,21 +156,9 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
             });
           }
         }}
-        onInputChange={(_, newInputValue) => {
-          setCitySearch(newInputValue.trimStart());
-          setContact({
-            ...contact,
-            cityId: null,
-            cityName: newInputValue.trim(),
-            postalCode: '',
-            countryId: 1
-          });
-        }}
-        loading={cityLoading}
-        disabled={false}
       />
 
-      {/* Champs d'adresse (rue, numéro, boîte) */}
+      {/* Champs d'adresse (rue, numéro) */}
       <AddressFields
         streetName={contact.streetName}
         addressNumber={contact.addressNumber}
