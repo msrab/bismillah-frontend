@@ -54,23 +54,23 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       if (!contact.streetName.trim()) {
         return { valid: false, message: 'Le nom de rue est requis' };
       }
-      if (!contact.address_number.trim()) {
+      if (!contact.addressNumber.trim()) {
         setAddressError("Le numéro d'adresse est requis");
         return { valid: false, message: "Le numéro d'adresse est requis" };
       }
       // Recherche ou création de la ville en BD avant de vérifier l'adresse
-      let cityId = contact.cityId;
-      if (!cityId && contact.cityName && contact.postalCode && contact.countryId) {
+      let cityId;
+      if (contact.cityName && contact.postalCode && contact.countryId) {
         // 1. Chercher la ville exacte en BD
         const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(contact.cityName)}&postalCode=${encodeURIComponent(contact.postalCode)}&countryId=${encodeURIComponent(contact.countryId)}`);
         const searchData = await searchRes.json();
-        if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id) {
+        if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id && !isNaN(Number(searchData[0].id))) {
           cityId = searchData[0].id;
         } else {
           // 2. Créer la ville si absente
           const cityPayload = {
             name: contact.cityName,
-            postal_code: contact.postalCode,
+            postalCode: contact.postalCode,
             countryId: contact.countryId
           };
           const cityRes = await fetch('http://localhost:5000/api/cities', {
@@ -79,19 +79,19 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
             body: JSON.stringify(cityPayload)
           });
           const cityData = await cityRes.json();
-          if (cityRes.ok && cityData.id) {
+          if (cityRes.ok && cityData.id && !isNaN(Number(cityData.id))) {
             cityId = cityData.id;
           } else {
             setAddressError(cityData.message || "Impossible de créer la ville.");
             return { valid: false, message: cityData.message || "Impossible de créer la ville." };
           }
         }
-        // Met à jour le state contact avec le vrai cityId
+        // Met à jour le state contact avec le vrai cityId numérique
         setContact({ ...contact, cityId });
       }
-      // Vérification unicité adresse (cityId + numéro)
-      if (cityId && contact.address_number.trim()) {
-        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&address_number=${encodeURIComponent(contact.address_number)}`);
+      // Vérification unicité adresse (cityId + numéro + nom de rue)
+      if (cityId && contact.addressNumber.trim() && contact.streetName.trim()) {
+        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(contact.addressNumber)}&streetName=${encodeURIComponent(contact.streetName)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
           setAddressError("Un restaurant existe déjà à cette adresse.");
@@ -144,22 +144,22 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       {/* Autocomplétion ville */}
       <Autocomplete
         options={cityOptions}
-        getOptionLabel={(option) => `${option.postal_code} - ${option.name}`}
+        getOptionLabel={(option) => `${option.postalCode} - ${option.name}`}
         loading={cityLoading}
-        value={contact.cityId ? { id: contact.cityId, name: contact.cityName, postal_code: contact.postalCode, country_id: contact.countryId } : null}
+        value={contact.cityName && contact.postalCode ? { name: contact.cityName, postalCode: contact.postalCode, countryId: contact.countryId } : null}
         onChange={(_, newValue) => {
           if (newValue) {
             setContact({
               ...contact,
-              cityId: newValue.id,
+              // cityId n'est pas renseigné ici
               cityName: newValue.name,
-              postalCode: newValue.postal_code,
-              countryId: newValue.country_id || 1
+              postalCode: newValue.postalCode,
+              countryId: newValue.countryId || 1
             });
           } else {
             setContact({
               ...contact,
-              cityId: null,
+              // cityId n'est pas renseigné ici
               cityName: '',
               postalCode: '',
               countryId: 1
@@ -215,8 +215,8 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         fullWidth
         required
         sx={{ mb: 2 }}
-        value={contact.address_number}
-        onChange={(e) => setContact({ ...contact, address_number: e.target.value })}
+        value={contact.addressNumber}
+        onChange={(e) => setContact({ ...contact, addressNumber: e.target.value })}
         placeholder="123A"
         error={!!addressError}
         helperText={addressError}
