@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Box, Typography, TextField, InputAdornment, Autocomplete, CircularProgress } from '@mui/material';
+import { Box, Typography, TextField, InputAdornment, CircularProgress } from '@mui/material';
+import AddressFields from '../common/AddressFields';
+import CityAutocomplete from '../common/CityAutocomplete';
+import ErrorDisplay from '../common/ErrorDisplay';
+import { validateAddress } from '../../utils/validation';
 
 const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
   const [citySearch, setCitySearch] = useState('');
@@ -10,7 +14,7 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
     console.log('cityOptions:', cityOptions);
   }, [cityOptions]);
   const [cityLoading, setCityLoading] = useState(false);
-  const [addressError, setAddressError] = useState('');
+  const [errors, setErrors] = useState([]);
   const [websiteError, setWebsiteError] = useState('');
 
   // Recherche de villes avec debounce
@@ -43,42 +47,44 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
-      setAddressError('');
+      setErrors([]);
       setWebsiteError('');
-      if (!contact.phone.trim()) {
-        return { valid: false, message: 'Le numéro de téléphone est requis' };
+      // Validation locale
+      const addressErrors = validateAddress({
+        street: contact.streetName,
+        number: contact.addressNumber,
+        city: contact.cityName,
+        postalCode: contact.postalCode
+      });
+      if (!contact.phone || !contact.phone.trim()) {
+        addressErrors.push('Le numéro de téléphone est requis');
       }
       if (contact.website && contact.website.trim()) {
-        // Validation du format d'URL (domaine + extension, sous-domaines autorisés, chemin autorisé)
         const urlRegex = /^(https?:\/\/)?([\w.-]+)\.([a-zA-Z]{2,})(:[0-9]{2,5})?(\/.*)?$/;
         if (!urlRegex.test(contact.website.trim())) {
           setWebsiteError("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
-          return { valid: false, message: "Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)" };
+          addressErrors.push("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
         }
       }
-      if (!contact.cityName || !contact.postalCode) {
-          return { valid: false, message: 'Veuillez sélectionner une ville' };
-      }
-      if (!contact.streetName.trim()) {
-        return { valid: false, message: 'Le nom de rue est requis' };
-      }
-      if (!contact.addressNumber.trim()) {
-        setAddressError("Le numéro d'adresse est requis");
-        return { valid: false, message: "Le numéro d'adresse est requis" };
+      if (addressErrors.length > 0) {
+        setErrors(addressErrors);
+        return { valid: false, message: addressErrors[0] };
       }
       // Recherche ou création de la ville en BD avant de vérifier l'adresse
       let cityId;
-      if (contact.cityName && contact.postalCode && contact.countryId) {
-        // 1. Chercher la ville exacte en BD
+      if (
+        contact.cityName && contact.cityName.trim() &&
+        contact.postalCode && contact.postalCode.trim() &&
+        contact.countryId
+      ) {
         const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(contact.cityName)}&postalCode=${encodeURIComponent(contact.postalCode)}&countryId=${encodeURIComponent(contact.countryId)}`);
         const searchData = await searchRes.json();
         if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id && !isNaN(Number(searchData[0].id))) {
           cityId = searchData[0].id;
         } else {
-          // 2. Créer la ville si absente
           const cityPayload = {
             name: contact.cityName,
-              postalCode: contact.postalCode,
+            postalCode: contact.postalCode,
             countryId: contact.countryId
           };
           const cityRes = await fetch('http://localhost:5000/api/cities', {
@@ -90,11 +96,10 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
           if (cityRes.ok && cityData.id && !isNaN(Number(cityData.id))) {
             cityId = cityData.id;
           } else {
-            setAddressError(cityData.message || "Impossible de créer la ville.");
+            setErrors([cityData.message || "Impossible de créer la ville."]);
             return { valid: false, message: cityData.message || "Impossible de créer la ville." };
           }
         }
-        // Met à jour le state contact avec le vrai cityId numérique
         setContact({ ...contact, cityId });
       }
       // Vérification unicité adresse (cityId + numéro + nom de rue)
@@ -102,21 +107,23 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(contact.addressNumber)}&streetName=${encodeURIComponent(contact.streetName)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
-          setAddressError("Un restaurant existe déjà à cette adresse.");
+          setErrors(["Un restaurant existe déjà à cette adresse."]);
           return { valid: false, message: "Un restaurant existe déjà à cette adresse." };
         }
       }
-      setAddressError('');
+      setErrors([]);
       setWebsiteError('');
       return { valid: true };
     }
-  }), [contact]);
+  }), [contact, setContact]);
 
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 3 }}>
         Coordonnées
       </Typography>
+
+      <ErrorDisplay errors={errors} />
 
       <TextField
         label="Site web"
@@ -149,17 +156,14 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         Adresse du restaurant
       </Typography>
 
-      {/* Autocomplétion ville */}
-      <Autocomplete
+      <CityAutocomplete
+        value={contact.cityName && contact.postalCode ? { postalCode: contact.postalCode, localityName: contact.cityName, countryId: contact.countryId } : null}
         options={cityOptions}
-        getOptionLabel={(option) => `${option.postalCode || ''} - ${option.name || ''}`}
-        loading={cityLoading}
-        value={contact.cityName && contact.postalCode ? { name: contact.cityName, postalCode: contact.postalCode, countryId: contact.countryId } : null}
         onChange={(_, newValue) => {
           if (newValue) {
             setContact({
               ...contact,
-              cityName: newValue.name || '',
+              cityName: newValue.localityName || '',
               postalCode: newValue.postalCode || '',
               countryId: newValue.countryId || 1
             });
@@ -172,60 +176,17 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
             });
           }
         }}
-        onInputChange={(_, newInputValue) => {
-          setCitySearch(newInputValue);
-          // Si l'utilisateur modifie le champ, on reset la sélection
-          setContact({
-            ...contact,
-            cityId: null,
-            cityName: newInputValue,
-            postalCode: '',
-            countryId: 1
-          });
+        loading={cityLoading}
+        disabled={false}
+      />
+
+      <AddressFields
+        address={{ street: contact.streetName, number: contact.addressNumber, box: contact.addressBox }}
+        onChange={(field, value) => {
+          if (field === 'street') setContact({ ...contact, streetName: value });
+          if (field === 'number') setContact({ ...contact, addressNumber: value });
+          if (field === 'box') setContact({ ...contact, addressBox: value });
         }}
-        isOptionEqualToValue={(option, value) => option.id === value?.id}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Ville ou code postal"
-            required
-            sx={{ mb: 2 }}
-            placeholder="Tapez un nom de ville ou code postal..."
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {cityLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              )
-            }}
-          />
-        )}
-        noOptionsText="Aucune ville trouvée"
-        loadingText="Recherche..."
-      />
-
-      <TextField
-        label="Nom de la rue"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={contact.streetName}
-        onChange={(e) => setContact({ ...contact, streetName: e.target.value })}
-        placeholder="Rue de Flandre"
-      />
-
-      <TextField
-        label="Numéro"
-        fullWidth
-        required
-        sx={{ mb: 2 }}
-        value={contact.addressNumber}
-        onChange={(e) => setContact({ ...contact, addressNumber: e.target.value })}
-        placeholder="123A"
-        error={!!addressError}
-        helperText={addressError}
       />
     </Box>
   );
