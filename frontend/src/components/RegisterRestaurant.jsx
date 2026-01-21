@@ -66,11 +66,9 @@ function RegisterRestaurant() {
     const valid = await validateStep(ref);
     setIsStepValid(valid);
     if (!valid) return;
-    console.log('Contact (coordonnées) au step', activeStep, ':', contact);
+    // Debug logs supprimés
     handleNext();
-    setTimeout(() => {
-      console.log('Step après navigation :', activeStep + 1);
-    }, 100);
+    // Step après navigation log supprimé
   };
   const [loading, setLoading] = useState(false);
 
