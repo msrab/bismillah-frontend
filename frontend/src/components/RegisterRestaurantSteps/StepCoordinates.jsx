@@ -47,9 +47,11 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       }
       // Validation du site web si renseigné
       if (contact.website) {
+        let messageError = '';
         if (!isValidWebsiteUrl(contact.website)) {
-          setWebsiteError("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
-          addressErrors.push("Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)");
+          messageError = "Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)";
+          setWebsiteError(messageError);
+          addressErrors.push(messageError);
         }
       }
       // Si erreurs locales, on les affiche et on arrête
@@ -82,8 +84,9 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
           if (cityRes.ok && cityData.id && !isNaN(Number(cityData.id))) {
             cityId = cityData.id;
           } else {
-            setErrors([cityData.message || "Impossible de créer la ville."]);
-            return { valid: false, message: cityData.message || "Impossible de créer la ville." };
+            const cityCreateMsg = cityData.message || "Impossible de créer la ville.";
+            setErrors([cityCreateMsg]);
+            return { valid: false, message: cityCreateMsg };
           }
         }
         // Met à jour le contact avec l'id de la ville
@@ -94,8 +97,9 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(contact.addressNumber)}&streetName=${encodeURIComponent(contact.streetName)}`);
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
-          setErrors(["Un restaurant existe déjà à cette adresse."]);
-          return { valid: false, message: "Un restaurant existe déjà à cette adresse." };
+          const addressExistsMsg = "Un restaurant existe déjà à cette adresse.";
+          setErrors([addressExistsMsg]);
+          return { valid: false, message: addressExistsMsg };
         }
       }
       setErrors([]);
