@@ -1,4 +1,8 @@
-// Utilitaire pour transformer un objet City Sequelize en camelCase
+const { City, Country } = require('../models');
+const { createError } = require('../utils/createError');
+const { Op } = require('sequelize');
+
+// Utilitaire pour mapper un objet City Sequelize
 function mapCityToCamel(city) {
   if (!city) return null;
   return {
@@ -8,9 +12,6 @@ function mapCityToCamel(city) {
     countryId: city.countryId
   };
 }
-const { City, Country } = require('../models');
-const { createError } = require('../utils/createError');
-const { Op } = require('sequelize');
 
 exports.createCity = async (req, res, next) => {
   try {
@@ -50,7 +51,8 @@ exports.searchCities = async (req, res, next) => {
     if (!q || q.length < 2) {
       return res.status(200).json([]);
     }
-    if (/[^a-zA-Z0-9]/.test(q)) {
+    // On n'exclut plus les accents, tirets, espaces, apostrophes
+    if (/[^\p{L}\d\s'-]/u.test(q)) {
       return res.status(200).json([]);
     }
     const fs = require('fs');
@@ -64,9 +66,11 @@ exports.searchCities = async (req, res, next) => {
         return res.status(200).json([]);
       }
       filtered = allCities.filter(city => city.postalCode.startsWith(q));
-    } else if (/^[a-zA-Z]+$/.test(q)) {
-      const qLower = q.toLowerCase();
-      filtered = allCities.filter(city => city.localityName.toLowerCase().includes(qLower));
+    } else if (/^[\p{L}\s'-]+$/u.test(q)) {
+      // Fonction pour supprimer les accents
+      const normalize = str => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const qLower = normalize(q.toLowerCase());
+      filtered = allCities.filter(city => normalize(city.localityName.toLowerCase()).includes(qLower));
     } else {
       return res.status(200).json([]);
     }

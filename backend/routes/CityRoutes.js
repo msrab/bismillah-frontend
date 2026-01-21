@@ -13,6 +13,6 @@ router.get('/:id', CityController.getCityById);
 
 router.post('/', CityValidation, CityController.createCity);
 
-// Pas de routes PUT ou DELETE exposées
+
 
 module.exports = router;

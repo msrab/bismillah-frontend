@@ -4,6 +4,11 @@ import { Box, Typography, TextField, InputAdornment, Autocomplete, CircularProgr
 const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
   const [citySearch, setCitySearch] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
+
+  // Debug: log cityOptions whenever it changes
+  useEffect(() => {
+    console.log('cityOptions:', cityOptions);
+  }, [cityOptions]);
   const [cityLoading, setCityLoading] = useState(false);
   const [addressError, setAddressError] = useState('');
   const [websiteError, setWebsiteError] = useState('');
@@ -26,9 +31,12 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
     }
   }, []);
 
+  // Lance la recherche à chaque saisie (dès 2 caractères), mais pas lors de la sélection d'une ville
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchCities(citySearch);
+      if (citySearch.length >= 2) {
+        searchCities(citySearch);
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [citySearch, searchCities]);
@@ -49,7 +57,7 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         }
       }
       if (!contact.cityName || !contact.postalCode) {
-        return { valid: false, message: 'Veuillez sélectionner une ville' };
+          return { valid: false, message: 'Veuillez sélectionner une ville' };
       }
       if (!contact.streetName.trim()) {
         return { valid: false, message: 'Le nom de rue est requis' };
@@ -70,7 +78,7 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
           // 2. Créer la ville si absente
           const cityPayload = {
             name: contact.cityName,
-            postalCode: contact.postalCode,
+              postalCode: contact.postalCode,
             countryId: contact.countryId
           };
           const cityRes = await fetch('http://localhost:5000/api/cities', {
@@ -144,22 +152,20 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       {/* Autocomplétion ville */}
       <Autocomplete
         options={cityOptions}
-        getOptionLabel={(option) => `${option.postalCode} - ${option.name}`}
+        getOptionLabel={(option) => `${option.postalCode || ''} - ${option.name || ''}`}
         loading={cityLoading}
         value={contact.cityName && contact.postalCode ? { name: contact.cityName, postalCode: contact.postalCode, countryId: contact.countryId } : null}
         onChange={(_, newValue) => {
           if (newValue) {
             setContact({
               ...contact,
-              // cityId n'est pas renseigné ici
-              cityName: newValue.name,
-              postalCode: newValue.postalCode,
+              cityName: newValue.name || '',
+              postalCode: newValue.postalCode || '',
               countryId: newValue.countryId || 1
             });
           } else {
             setContact({
               ...contact,
-              // cityId n'est pas renseigné ici
               cityName: '',
               postalCode: '',
               countryId: 1
