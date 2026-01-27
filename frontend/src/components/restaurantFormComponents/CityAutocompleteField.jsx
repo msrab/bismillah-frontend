@@ -1,48 +1,15 @@
+
 import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Autocomplete, TextField, Grid } from "@mui/material";
+import { useCountry } from '../../context/CountryContext';
 
 
-/**
- * CityAutocomplete
- * Composant autonome pour l'autocomplétion de la ville et du code postal
- * Gère la logique de recherche, l'état sélectionné et l'affichage
- * Props :
- *   - value: valeur initiale (optionnel)
- *   - onChange: (newValue) => void (optionnel)
- *   - disabled: bool (optionnel)
- */
-/**
- * CityAutocomplete
- * Composant autonome pour l'autocomplétion et la validation de la ville et du code postal.
- * - Recherche les villes via une API (avec debounce)
- * - Permet la création automatique de la ville si absente
- * - Expose une méthode validateAndEnsureCity() via ref pour garantir l'existence de la ville
- *
- * Props :
- *   - value: valeur initiale (optionnel)
- *   - onChange: (newValue) => void (optionnel)
- *   - disabled: bool (optionnel)
- *   - countryId: identifiant du pays (optionnel, défaut 1)
- */
-  // --- État local ---
-  // cityOptions : liste des villes proposées par l'autocomplete
-  // cityLoading : état de chargement de la recherche
-  // cityValue : valeur sélectionnée (objet {postalCode, localityName, countryId})
-  // cityInput : valeur de l'input utilisateur (string)
-  // error : message d'erreur affiché sous le champ
-  // --- Recherche API avec debounce sur la saisie utilisateur ---
-  // --- Expose la méthode validateAndEnsureCity au parent ---
-  /**
-   * Recherche ou crée la ville sélectionnée et retourne son id
-   * - Si la ville existe déjà, retourne son id
-   * - Sinon, tente de la créer en base et retourne le nouvel id
-   * - Affiche un message d'erreur si la ville est absente ou la création échoue
-   * @returns {Promise<{valid: boolean, cityId?: number, message?: string}>}
-   */
-  // --- Handler pour la saisie utilisateur dans l'autocomplete ---
-  // --- Handler pour la sélection d'une ville dans la liste ---
-  // --- Rendu du champ autocomplete avec gestion des erreurs ---
+const cityFiles = {
+  BE: '/data/belgium-cities-2025.json',
+};
+
 const CityAutocomplete = ({ value = null, onChange, disabled = false, countryId = 1 }, ref) => {
+  const { countryIsoCode } = useCountry ? useCountry() : { countryIsoCode: 'BE' };
     const [error, setError] = useState("");
     // Expose la méthode validateAndEnsureCity au parent
     useImperativeHandle(ref, () => ({
@@ -59,7 +26,7 @@ const CityAutocomplete = ({ value = null, onChange, disabled = false, countryId 
         return { valid: true };
       },
       /**
-       * Recherche ou crée la ville sélectionnée et retourne son id
+       * Recherche ou crée la ville sélectionnée dans la base de données et retourne son id
        * @returns {Promise<{valid: boolean, cityId?: number, message?: string}>}
        */
       ensureCityInDatabase: async () => {
@@ -100,36 +67,27 @@ const CityAutocomplete = ({ value = null, onChange, disabled = false, countryId 
   const [cityValue, setCityValue] = useState(value);
   const [cityInput, setCityInput] = useState("");
 
-  // Recherche API avec debounce
-  const searchCities = useCallback(async (query) => {
-    if (!query || query.length < 2) {
+  // Autocomplete dynamique via backend selon le pays
+  useEffect(() => {
+    if (cityInput.length < 2) {
       setCityOptions([]);
       return;
     }
     setCityLoading(true);
-    try {
-      const res = await fetch(`http://localhost:5000/api/cities/autocomplete?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setCityOptions(data);
-      } else {
-        setCityOptions([]);
-      }
-    } catch (error) {
-      setCityOptions([]);
-    } finally {
-      setCityLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (cityInput.length >= 2) {
-        searchCities(cityInput);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [cityInput, searchCities]);
+    // Appel à l'API backend pour l'autocomplétion
+    fetch(`http://localhost:5000/api/cities/autocomplete?q=${encodeURIComponent(cityInput)}&countryIsoCode=${encodeURIComponent(countryIsoCode)}`)
+      .then(res => res.json())
+      .then(data => {
+        // Le backend doit retourner [{ postalCode, name, id }]
+        setCityOptions(data.map(city => ({
+          postalCode: city.postalCode,
+          localityName: city.name,
+          id: city.id
+        })));
+      })
+      .catch(() => setCityOptions([]))
+      .finally(() => setCityLoading(false));
+  }, [cityInput, countryIsoCode]);
 
   // Handler pour l'input utilisateur
   const handleCityInputChange = (_, newInputValue) => {

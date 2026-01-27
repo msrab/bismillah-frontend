@@ -31,7 +31,7 @@ exports.createCity = async (req, res, next) => {
 // Recherche de villes par nom + code postal + pays (pour validation d'existence exacte)
 exports.autocompleteCities = async (req, res, next) => {
   try {
-    const { name, postalCode, countryId, q } = req.query;
+    const { name, postalCode, countryId, q, countryIsoCode } = req.query;
     if (name && postalCode && countryId) {
       // Recherche exacte en base
       const city = await City.findOne({
@@ -57,7 +57,15 @@ exports.autocompleteCities = async (req, res, next) => {
     }
     const fs = require('fs');
     const path = require('path');
-    const filePath = path.join(__dirname, '../data/belgium-postcodes-2025.json');
+    // Sélection dynamique du fichier selon le code ISO
+    let filePath;
+    if (countryIsoCode === 'BE' || !countryIsoCode) {
+      filePath = path.join(__dirname, '../data/belgium-postcodes-2025.json');
+    } else {
+      // Ajoute ici d'autres pays si besoin
+      // filePath = path.join(__dirname, `../data/${countryIsoCode.toLowerCase()}-cities.json`);
+      return res.status(200).json([]); // Pas de fichier pour ce pays
+    }
     const raw = fs.readFileSync(filePath, 'utf8');
     const allCities = JSON.parse(raw);
     let filtered = [];

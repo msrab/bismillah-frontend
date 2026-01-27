@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { TextField, InputAdornment } from '@mui/material';
-import { isValidBelgianPhoneNumber } from '../../utils/validation';
+import { isValidBelgianPhoneNumber } from '../../utils/countries/belgiumValidation';
 
 /**
  * PhoneField
@@ -30,9 +30,14 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
         setHelperText('Le numéro de téléphone est requis');
         return false;
       }
-      if (value && !/^\d{8,9}$/.test(value)) {
+      // On formate le numéro pour la validation (ajoute +32 si besoin)
+      let formatted = value;
+      if (value && !value.startsWith('+32')) {
+        formatted = '+32' + value.replace(/^0/, '');
+      }
+      if (value && !isValidBelgianPhoneNumber(formatted)) {
         setError(true);
-        setHelperText('Le numéro doit comporter 8 ou 9 chiffres (sans le 0 initial, ni +32).');
+        setHelperText('Numéro de téléphone belge invalide.');
         return false;
       }
       setError(false);
