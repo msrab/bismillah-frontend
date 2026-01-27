@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
+
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { FormControl, InputLabel, Select, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
 
 /**
- * RestaurantTypeSelect
- * Sélecteur pour le type de restaurant
- * Props :
- *   - value : string|number
- *   - onChange : (event) => void
- *   - required : bool (optionnel)
- *   - disabled : bool (optionnel)
+ * RestaurantTypeSelect autonome
+ * Gère sa propre valeur, validation, erreur
+ * Expose via ref : validate(), getError(), getValue()
  */
-const RestaurantTypeSelect = ({ value, onChange, required = false, disabled = false }) => {
+const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, disabled = false }, ref) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState(initialValue);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetch('http://localhost:5000/api/restaurant-types')
@@ -22,8 +21,21 @@ const RestaurantTypeSelect = ({ value, onChange, required = false, disabled = fa
       .finally(() => setLoading(false));
   }, []);
 
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      if (required && (!value || value === '')) {
+        setError('Le type de restaurant est requis.');
+        return false;
+      }
+      setError('');
+      return true;
+    },
+    getError: () => error,
+    getValue: () => value
+  }), [value, error, required]);
+
   return (
-    <FormControl fullWidth sx={{ mb: 2 }} required={required} disabled={disabled}>
+    <FormControl fullWidth sx={{ mb: 2 }} required={required} disabled={disabled} error={!!error}>
       <InputLabel>Type de restaurant</InputLabel>
       {loading ? (
         <Select value="" label="Type de restaurant" disabled>
@@ -33,7 +45,10 @@ const RestaurantTypeSelect = ({ value, onChange, required = false, disabled = fa
         <Select
           value={value}
           label="Type de restaurant"
-          onChange={onChange}
+          onChange={e => {
+            setValue(e.target.value);
+            if (error) setError('');
+          }}
         >
           <MenuItem value="">
             <em>Sélectionner un type</em>
@@ -45,8 +60,9 @@ const RestaurantTypeSelect = ({ value, onChange, required = false, disabled = fa
           ))}
         </Select>
       )}
+      {!!error && <FormHelperText>{error}</FormHelperText>}
     </FormControl>
   );
-};
+});
 
 export default RestaurantTypeSelect;
