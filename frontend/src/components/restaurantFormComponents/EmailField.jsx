@@ -1,44 +1,78 @@
-import React from 'react';
-import { TextField } from '@mui/material';
+
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import { TextField, CircularProgress, InputAdornment } from '@mui/material';
 
 /**
- * EmailField
- * Composant autonome pour la saisie et la validation de l'adresse email.
- *
- * Props :
- *   - value : string, valeur de l'email
- *   - onChange : fonction de mise à jour (event => void)
- *   - error : bool, indique une erreur de validation
- *   - helperText : string, message d'aide ou d'erreur
- *   - required : bool (optionnel)
- *   - disabled : bool (optionnel)
- *   - placeholder : string (optionnel)
+ * EmailField autonome
+ * Gère sa propre valeur, validation (format + unicité asynchrone), erreur
+ * Expose via ref : validate(), getError(), getValue()
  */
-const EmailField = ({
-  value,
-  onChange,
-  error = false,
-  helperText = '',
+const EmailField = forwardRef(({
+  initialValue = '',
   required = true,
   disabled = false,
   placeholder = 'restaurant@exemple.be',
-}) => {
+}, ref) => {
+  const [value, setValue] = useState(initialValue);
+  const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    validate: async () => {
+      if (required && !value.trim()) {
+        setError("L'email est requis");
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        setError("Format d'email invalide");
+        return false;
+      }
+      setError('');
+      setChecking(true);
+      try {
+        const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(value)}`);
+        const checkEmailData = await checkEmail.json();
+        if (checkEmailData.exists) {
+          setError("Cet email est déjà utilisé.");
+          setChecking(false);
+          return false;
+        }
+        setError('');
+        setChecking(false);
+        return true;
+      } catch (err) {
+        setError("Erreur réseau lors de la vérification de l'email.");
+        setChecking(false);
+        return false;
+      }
+    },
+    getError: () => error,
+    getValue: () => value
+  }), [value, error, required]);
+
   return (
     <TextField
       label="Email"
       type="email"
       fullWidth
       required={required}
-      disabled={disabled}
+      disabled={disabled || checking}
       sx={{ mb: 2 }}
       value={value}
-      onChange={onChange}
+      onChange={e => {
+        setValue(e.target.value);
+        if (error) setError('');
+      }}
       placeholder={placeholder}
-      error={error}
-      helperText={helperText}
+      error={!!error}
+      helperText={error}
       autoComplete="email"
+      InputProps={{
+        endAdornment: checking ? <InputAdornment position="end"><CircularProgress size={18} /></InputAdornment> : null
+      }}
     />
   );
-};
+});
 
 export default EmailField;

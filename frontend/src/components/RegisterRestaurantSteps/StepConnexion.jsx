@@ -1,7 +1,7 @@
 
 
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { Box, Typography, Alert, TextField, LinearProgress, Button } from '@mui/material';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { Box, Typography, Alert, LinearProgress, Button } from '@mui/material';
 import EmailField from '../restaurantFormComponents/EmailField';
 import NewPasswordField from '../restaurantFormComponents/NewPasswordField';
 import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
@@ -23,54 +23,50 @@ import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
 
 
 // Étape Connexion : création des identifiants
-const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handleSubmit }, ref) => {
-  const passwordScore = getPasswordStrength(credentials.password);
+const StepConnexion = forwardRef(({ loading, handleSubmit }, ref) => {
+  // Refs pour les champs autonomes
+  const emailRef = useRef();
+  const passwordRef = useRef();
+  const confirmRef = useRef();
+  const [submitted, setSubmitted] = useState(false);
+
+  // Pour le baromètre de sécurité
+  const passwordValue = passwordRef.current?.getValue?.() || '';
+  const passwordScore = getPasswordStrength(passwordValue);
   const passwordLabel = getStrengthLabel(passwordScore);
   const progressColors = ["error", "error", "warning", "info", "success", "success"];
-  const [emailError, setEmailError] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [formError, setFormError] = useState('');
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
       setSubmitted(true);
-      setEmailError('');
-      setFormError('');
-      if (!credentials.email.trim()) {
-        setEmailError("L'email est requis");
-        setFormError("L'email est requis");
-        return { valid: false, message: "L'email est requis" };
+      const emailValid = await emailRef.current?.validate();
+      const passwordValid = passwordRef.current?.validate();
+      // Pour la confirmation, on passe la valeur du champ password comme confirmWith
+      const confirmValid = confirmRef.current?.validate();
+      return emailValid && passwordValid && confirmValid;
+    },
+    getAllFieldErrors: () => {
+      const errors = [];
+      if (emailRef.current?.getError) {
+        const err = emailRef.current.getError();
+        if (err) errors.push(err);
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(credentials.email)) {
-        setEmailError("Format d'email invalide");
-        setFormError("Format d'email invalide");
-        return { valid: false, message: "Format d'email invalide" };
+      if (passwordRef.current?.getError) {
+        const err = passwordRef.current.getError();
+        if (err) errors.push(err);
       }
-      const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(credentials.email)}`);
-      const checkEmailData = await checkEmail.json();
-      if (checkEmailData.exists) {
-        setEmailError("Cet email est déjà utilisé.");
-        setFormError("Cet email est déjà utilisé.");
-        return { valid: false, message: "Cet email est déjà utilisé." };
+      if (confirmRef.current?.getError) {
+        const err = confirmRef.current.getError();
+        if (err) errors.push(err);
       }
-      setEmailError('');
-      if (!credentials.password) {
-        setFormError('Le mot de passe est requis');
-        return { valid: false, message: 'Le mot de passe est requis' };
-      }
-      if (credentials.password.length < 8) {
-        setFormError('Le mot de passe doit contenir au moins 8 caractères');
-        return { valid: false, message: 'Le mot de passe doit contenir au moins 8 caractères' };
-      }
-      if (credentials.password !== credentials.confirmPassword) {
-        setFormError('Les mots de passe ne correspondent pas');
-        return { valid: false, message: 'Les mots de passe ne correspondent pas' };
-      }
-      setFormError('');
-      return { valid: true };
-    }
-  }), [credentials]);
+      return errors;
+    },
+    getFormData: () => ({
+      email: emailRef.current?.getValue() || '',
+      password: passwordRef.current?.getValue() || '',
+      confirmPassword: confirmRef.current?.getValue() || ''
+    })
+  }), []);
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -91,16 +87,14 @@ const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handle
 
       {/* Champ email (autonome) */}
       <EmailField
-        value={credentials.email}
-        onChange={e => setCredentials({ ...credentials, email: e.target.value })}
-        error={submitted && !!emailError}
-        helperText={submitted ? emailError : ''}
+        ref={emailRef}
+        required
       />
 
       {/* Champ mot de passe (autonome) */}
       <NewPasswordField
-        value={credentials.password}
-        onChange={e => setCredentials({ ...credentials, password: e.target.value })}
+        ref={passwordRef}
+        required
         helperText="Minimum 8 caractères, majuscule, minuscule, chiffre et caractère spécial recommandé."
       />
 
@@ -124,16 +118,11 @@ const StepConnexion = forwardRef(({ credentials, setCredentials, loading, handle
 
       {/* Champ confirmation mot de passe (autonome) */}
       <NewPasswordField
+        ref={confirmRef}
         label="Confirmer le mot de passe"
-        value={credentials.confirmPassword}
-        onChange={e => setCredentials({ ...credentials, confirmPassword: e.target.value })}
-        error={submitted && credentials.confirmPassword && credentials.password !== credentials.confirmPassword}
-        helperText={
-          submitted && credentials.confirmPassword && credentials.password !== credentials.confirmPassword
-            ? 'Les mots de passe ne correspondent pas'
-            : ''
-        }
+        required
         autoComplete="new-password"
+        confirmWith={passwordValue}
       />
 
       {/* Bouton de soumission */}
