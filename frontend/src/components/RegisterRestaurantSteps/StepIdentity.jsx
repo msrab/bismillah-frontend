@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
 import RestaurantNameField from '../restaurantFormComponents/RestaurantNameField';
 import LogoUploadField from '../restaurantFormComponents/LogoUploadField';
@@ -28,7 +28,9 @@ const StepIdentity = forwardRef(({
 }, ref) => {
   // Plus besoin de gérer restaurantTypes ni loading ici, tout est dans RestaurantTypeSelect
   // Erreur de validation du numéro d'entreprise (affichée uniquement après validation globale)
+
   const [companyError, setCompanyError] = useState('');
+  const [companyTouched, setCompanyTouched] = useState(false);
 
 
   // (chargement des types géré dans RestaurantTypeSelect)
@@ -111,12 +113,19 @@ const StepIdentity = forwardRef(({
       <CompanyNumberField
         value={identity.company_number}
         onChange={e => {
+          setCompanyTouched(true);
           // N'accepte que des chiffres, max 10, stocke toujours avec 'BE' devant
           const val = e.target.value.replace(/\D/g, '').slice(0, 10);
           setIdentity({ ...identity, company_number: val ? `BE${val}` : '' });
+          // Validation locale immédiate : efface l'erreur si le champ redevient valide
+          if (!val || val.length !== 10) {
+            setCompanyError("Le numéro d'entreprise doit comporter exactement 10 chiffres.");
+          } else {
+            setCompanyError('');
+          }
         }}
-        error={!!companyError}
-        helperText={companyError}
+        error={companyTouched && !!companyError}
+        helperText={companyTouched ? companyError : ''}
         required
       />
 

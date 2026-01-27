@@ -1,11 +1,10 @@
-import { useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
 import PhoneField from '../restaurantFormComponents/PhoneField';
 import WebsiteField from '../restaurantFormComponents/WebsiteField';
 import AddressFields from '../restaurantFormComponents/AddressFields';
-import CityAutocomplete from '../restaurantFormComponents/CityAutocomplete';
+import CityAutocomplete from '../restaurantFormComponents/CityAutocompleteField';
 import ErrorDisplay from '../restaurantFormComponents/ErrorDisplay';
-import { validateAddress, isValidBelgianPhoneNumber, isValidWebsiteUrl } from '../../utils/validation';
 
 /**
  * Composant StepCoordinates
@@ -15,99 +14,51 @@ import { validateAddress, isValidBelgianPhoneNumber, isValidWebsiteUrl } from '.
  * @param {function} setContact - Fonction pour mettre à jour l'objet contact
  */
 const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
-  // État pour les erreurs de validation générales
-  const [errors, setErrors] = useState([]);
-  // État pour l'erreur spécifique au site web
-  const [websiteError, setWebsiteError] = useState('');
+  // Refs pour les champs autonomes
+  const phoneRef = useRef();
+  const websiteRef = useRef();
+  const addressRef = useRef();
+  const cityRef = useRef();
 
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
     /**
-     * Valide tous les champs du formulaire
-     * - Validation locale (adresse, téléphone, site web)
-     * - Recherche ou création de la ville en base
-     * - Vérifie l'unicité de l'adresse
-     * @returns {Promise<{valid: boolean, message?: string}>}
+     * Valide tous les champs du formulaire via les refs des Fields
      */
     validate: async () => {
-      setErrors([]);
-      setWebsiteError('');
-      // 1. Validation locale des champs principaux
-      const addressErrors = validateAddress({
-        street: contact.streetName,
-        number: contact.addressNumber,
-        city: contact.cityName,
-        postalCode: contact.postalCode
-      });
-      // Validation du téléphone belge
-      if (!contact.phone) {
-        addressErrors.push('Le numéro de téléphone est requis');
-      } else if (!isValidBelgianPhoneNumber(contact.phone)) {
-        addressErrors.push('Le numéro de téléphone doit être belge, commencer par +32 et être valide.');
-      }
-      // Validation du site web si renseigné
-      if (contact.website) {
-        let messageError = '';
-        if (!isValidWebsiteUrl(contact.website)) {
-          messageError = "Format d'URL invalide (ex: monrestaurant.be, www.monrestaurant.be, https://monrestaurant.be)";
-          setWebsiteError(messageError);
-          addressErrors.push(messageError);
-        }
-      }
-      // Si erreurs locales, on les affiche et on arrête
-      if (addressErrors.length > 0) {
-        setErrors(addressErrors);
-        return { valid: false, message: addressErrors[0] };
-      }
-      // 2. Recherche ou création de la ville en base de données
-      let cityId;
-      if ( contact.cityName && contact.postalCode && contact.countryId) {
-        // Recherche la ville exacte
-        const searchRes = await fetch(`http://localhost:5000/api/cities/search?name=${encodeURIComponent(contact.cityName)}&postalCode=${encodeURIComponent(contact.postalCode)}&countryId=${encodeURIComponent(contact.countryId)}`);
-        const searchData = await searchRes.json();
-        
-        if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id && !isNaN(Number(searchData[0].id))) {
-          cityId = searchData[0].id;
-        } else {
-          // Crée la ville si absente
-          const cityPayload = {
-            name: contact.cityName,
-            postalCode: contact.postalCode,
-            countryId: contact.countryId
-          };
-          const cityRes = await fetch('http://localhost:5000/api/cities', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(cityPayload)
-          });
-          const cityData = await cityRes.json();
-          if (cityRes.ok && cityData.id && !isNaN(Number(cityData.id))) {
-            cityId = cityData.id;
-          } else {
-            const cityCreateMsg = cityData.message || "Impossible de créer la ville.";
-            setErrors([cityCreateMsg]);
-            return { valid: false, message: cityCreateMsg };
-          }
-        }
-        // Met à jour le contact avec l'id de la ville
-        setContact({ ...contact, cityId });
-      }
-      // 3. Vérifie l'unicité de l'adresse (cityId + numéro + rue)
-      if (cityId && contact.addressNumber && contact.streetName) {
-        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(contact.addressNumber)}&streetName=${encodeURIComponent(contact.streetName)}`);
-        const checkAddressData = await checkAddress.json();
-        if (checkAddressData.exists) {
-          const addressExistsMsg = "Un restaurant existe déjà à cette adresse.";
-          setErrors([addressExistsMsg]);
-          return { valid: false, message: addressExistsMsg };
-        }
-      }
-      setErrors([]);
-      setWebsiteError('');
-      return { valid: true };
+      // 1. ValidationS
+      const phoneValid = phoneRef.current?.validate();
+      const websiteValid = websiteRef.current?.validate();
+      const cityResult = cityRef.current?.validateFields();
+      const addressValid = await addressRef.current?.validateAndCheckUnique();
+      // 4. Récupération du numéro formaté via PhoneField autonome
+      setContact({ ...contact, phone: phoneRef.current.getFormatted() });
+      // La gestion des erreurs et leur affichage sont déléguées aux champs et à ErrorDisplay
+      // Cette fonction peut simplement retourner true si tout est valide
+      return phoneValid && websiteValid && cityResult?.valid && addressValid?.valid;
     }
   }), [contact, setContact]);
 
+  // Regroupe tous les messages d'erreur des champs autonomes
+  const getAllFieldErrors = () => {
+    const errors = [];
+    if (phoneRef.current?.getError) {
+      const err = phoneRef.current.getError();
+      if (err) errors.push(err);
+    }
+    if (websiteRef.current?.getError) {
+      const err = websiteRef.current.getError();
+      if (err) errors.push(err);
+    }
+    if (addressRef.current?.getError) {
+      const errs = addressRef.current.getError();
+      if (errs && Array.isArray(errs)) errors.push(...errs);
+      else if (errs) errors.push(errs);
+    }
+    return errors;
+  };
+
+  // ...existing code...
   return (
     <Box>
       {/* Titre principal */}
@@ -116,22 +67,25 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       </Typography>
 
       {/* Affichage des erreurs de validation */}
-      <ErrorDisplay errors={errors} />
+      {/* Affichage des erreurs uniquement après soumission (clic sur Suivant) */}
+      <ErrorDisplay errors={getAllFieldErrors()} />
 
-      {/* Champ site web avec validation (composant réutilisable) */}
+      {/* Champ site web autonome */}
       <WebsiteField
+        ref={websiteRef}
         value={contact.website}
-        onChange={e => setContact({ ...contact, website: e.target.value })}
-        error={!!websiteError}
-        helperText={websiteError}
+        onChange={e => {
+          setContact({ ...contact, website: e.target.value });
+        }}
       />
 
-      {/* Champ téléphone belge avec préfixe +32 (composant réutilisable) */}
+      {/* Champ téléphone autonome */}
       <PhoneField
+        ref={phoneRef}
         value={contact.phone}
-        onChange={e => setContact({ ...contact, phone: e.target.value.trimStart() })}
-        error={false}
-        helperText={''}
+        onChange={e => {
+          setContact({ ...contact, phone: e.target.value });
+        }}
         required
       />
 
@@ -142,6 +96,7 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
 
       {/* Autocomplétion ville/code postal avec recherche API */}
       <CityAutocomplete
+        ref={cityRef}
         value={contact.cityName && contact.postalCode ? { postalCode: contact.postalCode, localityName: contact.cityName, countryId: contact.countryId } : null}
         onChange={newValue => {
           if (newValue) {
@@ -162,10 +117,12 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
         }}
       />
 
-      {/* Champs d'adresse (rue, numéro) */}
+      {/* Champs d'adresse autonome */}
       <AddressFields
+        ref={addressRef}
         streetName={contact.streetName}
         addressNumber={contact.addressNumber}
+        cityId={contact.cityId}
         onChange={(field, value) => {
           if (field === 'streetName') setContact({ ...contact, streetName: value });
           if (field === 'addressNumber') setContact({ ...contact, addressNumber: value });

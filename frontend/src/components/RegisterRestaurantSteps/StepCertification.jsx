@@ -1,5 +1,5 @@
 
-import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Alert } from '@mui/material';
 import CertifierSelector from '../restaurantFormComponents/CertifierSelector';
@@ -29,6 +29,9 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
   const [certifiers, setCertifiers] = useState([]);
   // Indique si la liste est en cours de chargement
   const [loading, setLoading] = useState(true);
+  // Gestion de l'affichage des erreurs uniquement après soumission
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   // Récupère la liste des certificateurs au montage
   useEffect(() => {
@@ -41,40 +44,40 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
 
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
-    /**
-     * Valide les champs de certification
-     * - Si "oui", vérifie tous les champs obligatoires et unicité du numéro
-     * - Si "non", aucune info supplémentaire requise
-     * @returns { valid: boolean, message: string }
-     */
     validate: async () => {
-      // L'utilisateur doit répondre à la question principale
+      setSubmitted(true);
+      // On ne valide que si la question principale est cochée
       if (!certification.hasCertification) {
-        return { valid: false, message: 'Veuillez indiquer si vous avez une certification' };
+        return { valid: false };
       }
       // Si certification déclarée, vérifie tous les champs
       if (certification.hasCertification === 'yes') {
         if (!certification.certifierId) {
+          setError('Veuillez choisir un certificateur');
           return { valid: false, message: 'Veuillez choisir un certificateur' };
         }
         if (certification.certifierId === 'other' && !certification.customCertifierName) {
+          setError('Veuillez entrer le nom de votre certificateur');
           return { valid: false, message: 'Veuillez entrer le nom de votre certificateur' };
         }
         if (!certification.certificationNumber) {
+          setError('Veuillez entrer votre numéro de certification');
           return { valid: false, message: 'Veuillez entrer votre numéro de certification' };
         }
         // Numéro : alphanumérique, max 15 caractères
         if (!/^[a-zA-Z0-9]{1,15}$/.test(certification.certificationNumber)) {
+          setError('Le numéro de certification doit être alphanumérique (max 15 caractères)');
           return { valid: false, message: 'Le numéro de certification doit être alphanumérique (max 15 caractères)'};
         }
         // Vérification unicité numéro de certification (appel API)
         const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
         const checkCertifData = await checkCertif.json();
         if (checkCertifData.exists) {
+          setError('Ce numéro de certification existe déjà.');
           return { valid: false, message: 'Ce numéro de certification existe déjà.' };
         }
       }
-      // Tout est conforme
+      setError('');
       return { valid: true };
     }
   }), [certification]);
@@ -85,6 +88,13 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
       <Typography variant="h6" sx={{ mb: 3 }}>
         Certification Halal
       </Typography>
+
+      {/* Affichage de l'erreur uniquement après soumission, sauf pour la question principale */}
+      {submitted && error && (
+        error !== 'Veuillez indiquer si vous avez une certification' && (
+          <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
+        )
+      )}
 
       {/* Question principale : avez-vous une certification ? */}
       <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>

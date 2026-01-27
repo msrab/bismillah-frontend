@@ -1,5 +1,4 @@
-
-import { forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { Box, Typography, Paper, Link, Checkbox, FormControlLabel } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -19,19 +18,16 @@ import { Link as RouterLink } from 'react-router-dom';
 
 
 const StepConditions = forwardRef(({ acceptedTerms, setAcceptedTerms, acceptedCharter, setAcceptedCharter }, ref) => {
-  // Expose la méthode validate au parent via la ref
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
   useImperativeHandle(ref, () => ({
-    /**
-     * Valide l'acceptation des conditions et de la charte
-     * - Les deux cases doivent être cochées
-     * @returns { valid: boolean, message: string }
-     */
     validate: () => {
-      // Vérifie que les deux cases sont cochées
+      setSubmitted(true);
       if (!acceptedTerms || !acceptedCharter) {
-        return { valid: false, message: "Vous devez accepter les conditions d'utilisation et la charte halal pour continuer" };
+        return { valid: false };
       }
-      // Tout est conforme
+      setError('');
       return { valid: true };
     }
   }), [acceptedTerms, acceptedCharter]);
@@ -42,6 +38,8 @@ const StepConditions = forwardRef(({ acceptedTerms, setAcceptedTerms, acceptedCh
       <Typography variant="h6" sx={{ mb: 3 }}>
         Conditions d'utilisation et Charte Halal
       </Typography>
+
+      {/* Plus d'affichage d'erreur ici, le bouton suivant doit être désactivé tant que les deux cases ne sont pas cochées */}
 
       {/* Message d'instruction */}
       <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>

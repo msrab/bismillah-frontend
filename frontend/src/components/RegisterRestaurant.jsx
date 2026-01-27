@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Utilitaire pour valider une étape via son ref
 async function validateStep(stepRef) {
   if (stepRef && stepRef.current && typeof stepRef.current.validate === 'function') {

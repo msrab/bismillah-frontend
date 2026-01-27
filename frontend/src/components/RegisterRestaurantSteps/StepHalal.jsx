@@ -1,6 +1,6 @@
 
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
-import { forwardRef, useImperativeHandle } from 'react';
 
 /**
  * Composant StepHalal
@@ -14,29 +14,35 @@ import { forwardRef, useImperativeHandle } from 'react';
  */
 
 
+
 const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
-  // Expose la méthode validate au parent via la ref
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  // Réinitialise submitted et error à chaque arrivée sur la step ou changement de questions
+  React.useEffect(() => {
+    setSubmitted(false);
+    setError('');
+  }, [halalQuestions]);
+
   useImperativeHandle(ref, () => ({
-    /**
-     * Valide les réponses aux questions halal
-     * - Les deux questions doivent être répondues
-     * - Si l'établissement n'est pas exclusivement halal OU propose de l'alcool, on bloque l'inscription
-     * @returns { valid: boolean, message: string, showLink?: boolean }
-     */
     validate: () => {
-      // Vérifie que toutes les questions sont répondues
+      setSubmitted(true);
+      // On ne valide que si les deux questions sont cochées
       if (!halalQuestions.exclusivelyHalal || !halalQuestions.noAlcohol) {
-        return { valid: false, message: 'Veuillez répondre à toutes les questions' };
+        return { valid: false };
       }
       // Si l'établissement n'est pas exclusivement halal, on bloque
-      if (halalQuestions.exclusivelyHalal === 'no') {
+      if (halalQuestions.exclusivelyHalal !== 'yes') {
+        setError('charter_error');
         return { valid: false, message: 'charter_error', showLink: true };
       }
       // Si l'établissement propose de l'alcool, on bloque
-      if (halalQuestions.noAlcohol === 'yes') {
+      if (halalQuestions.noAlcohol !== 'no') {
+        setError('charter_error');
         return { valid: false, message: 'charter_error', showLink: true };
       }
-      // Tout est conforme
+      setError('');
       return { valid: true };
     }
   }), [halalQuestions]);
@@ -47,6 +53,11 @@ const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
       <Typography variant="h6" sx={{ mb: 3 }}>
         Vérification des critères Halal
       </Typography>
+
+      {/* Affichage de l'erreur uniquement après soumission */}
+      {submitted && error && (
+        <Typography color="error" sx={{ mb: 2 }}>{error === 'charter_error' ? "Votre établissement ne respecte pas la charte halal." : error}</Typography>
+      )}
 
       {/* Question 1 : exclusivement halal */}
       <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
