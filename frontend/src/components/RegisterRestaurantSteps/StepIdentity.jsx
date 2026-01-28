@@ -43,9 +43,31 @@ const StepIdentity = forwardRef(({
   useImperativeHandle(ref, () => ({
     validate: async () => {
       const nameValid = nameRef.current?.validate();
-      const companyValid = await companyRef.current?.validate();
+      const companyValid = companyRef.current?.validate();
       const typeValid = typeRef.current?.validate();
-      return nameValid && companyValid && typeValid;
+      if (!nameValid || !companyValid || !typeValid) {
+        return false;
+      }
+      // Uniqueness check for company number (Belgium)
+      const companyNumber = companyRef.current?.getValue() || '';
+      if (companyNumber.startsWith('BE') && companyNumber.length === 12) {
+        try {
+          const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumber)}`);
+          const checkCompanyData = await checkCompany.json();
+          if (!checkCompany.ok) {
+            companyRef.current?.setError && companyRef.current.setError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");
+            return false;
+          }
+          if (checkCompanyData.exists) {
+            companyRef.current?.setError && companyRef.current.setError("Ce numéro d'entreprise existe déjà.");
+            return false;
+          }
+        } catch (err) {
+          companyRef.current?.setError && companyRef.current.setError("Erreur réseau lors de la vérification du numéro d'entreprise.");
+          return false;
+        }
+      }
+      return true;
     },
     getAllFieldErrors: () => {
       const errors = [];

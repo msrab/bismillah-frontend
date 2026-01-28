@@ -12,7 +12,7 @@ const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, 
   const [loading, setLoading] = useState(true);
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState('');
-
+  const [touched, setTouched] = useState(false);
   useEffect(() => {
     fetch('http://localhost:5000/api/restaurant-types')
       .then(res => res.json())
@@ -35,32 +35,35 @@ const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, 
   }), [value, error, required]);
 
   return (
-    <FormControl fullWidth sx={{ mb: 2 }} required={required} disabled={disabled} error={!!error}>
+    <FormControl fullWidth sx={{ mb: 2 }} required={required} disabled={disabled} error={touched && !!error}>
       <InputLabel>Type de restaurant</InputLabel>
       {loading ? (
-        <Select value="" label="Type de restaurant" disabled>
-          <MenuItem value=""><CircularProgress size={20} /> Chargement...</MenuItem>
-        </Select>
+        <CircularProgress size={24} sx={{ mt: 1, mb: 1 }} />
       ) : (
         <Select
           value={value}
           label="Type de restaurant"
           onChange={e => {
             setValue(e.target.value);
+            setTouched(true);
             if (error) setError('');
           }}
+          onBlur={() => setTouched(true)}
+          disabled={disabled}
         >
-          <MenuItem value="">
-            <em>Sélectionner un type</em>
-          </MenuItem>
-          {options.map(type => (
-            <MenuItem key={type.id} value={type.id}>
-              {type.icon} {type.RestaurantTypeDescriptions?.[0]?.name || `Type ${type.id}`}
-            </MenuItem>
-          ))}
+          <MenuItem value="">Sélectionner...</MenuItem>
+          {options.map(opt => {
+            const frenchDesc = opt.RestaurantTypeDescriptions?.find(desc => desc.languageId === 1);
+            return (
+              <MenuItem key={opt.id} value={opt.id}>
+                {opt.icon ? `${opt.icon} ` : ''}
+                {frenchDesc ? frenchDesc.name : 'Type ' + opt.id}
+              </MenuItem>
+            );
+          })}
         </Select>
       )}
-      {!!error && <FormHelperText>{error}</FormHelperText>}
+      <FormHelperText>{touched ? error : ''}</FormHelperText>
     </FormControl>
   );
 });

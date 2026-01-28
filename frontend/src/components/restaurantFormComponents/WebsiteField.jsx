@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { TextField, InputAdornment } from '@mui/material';
-import { isValidWebsiteUrl } from '../../utils/validation';
+import { isValidWebsiteUrl } from '../../utils/validationUtils';
 
 /**
  * WebsiteField

@@ -10,6 +10,7 @@ import { TextField } from '@mui/material';
 const RestaurantNameField = forwardRef(({ initialValue = '', required = false, disabled = false }, ref) => {
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState('');
+  const [touched, setTouched] = useState(false);
 
   useImperativeHandle(ref, () => ({
     validate: () => {
@@ -33,11 +34,13 @@ const RestaurantNameField = forwardRef(({ initialValue = '', required = false, d
       value={value}
       onChange={e => {
         setValue(e.target.value);
+        setTouched(true);
         if (error) setError('');
       }}
+      onBlur={() => setTouched(true)}
       placeholder="Ex: Restaurant Le Délice"
-      error={!!error}
-      helperText={error}
+      error={touched && !!error}
+      helperText={touched ? error : ''}
       disabled={disabled}
     />
   );

@@ -4,7 +4,7 @@ import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { Box, Typography, Alert, LinearProgress, Button } from '@mui/material';
 import EmailField from '../restaurantFormComponents/EmailField';
 import NewPasswordField from '../restaurantFormComponents/NewPasswordField';
-import { getPasswordStrength, getStrengthLabel } from '../../utils/password';
+import { getPasswordStrength, getStrengthLabel } from '../../utils/passwordUtils';
 
 /**
  * Composant StepConnexion

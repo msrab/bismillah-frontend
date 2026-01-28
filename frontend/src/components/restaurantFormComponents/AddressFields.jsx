@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { TextField, Grid } from "@mui/material";
-import { isNonEmptyString } from '../../utils/validation';
+import { isNonEmptyString } from '../../utils/validationUtils';
 
 /**
  * AddressFields
