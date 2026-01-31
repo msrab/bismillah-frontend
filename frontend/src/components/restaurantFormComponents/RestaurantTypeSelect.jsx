@@ -23,12 +23,16 @@ const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, 
 
   useImperativeHandle(ref, () => ({
     validate: () => {
+      if (!touched) {
+        setError('Le type de restaurant est requis.');
+        return { valid: false };
+      }
       if (required && (!value || value === '')) {
         setError('Le type de restaurant est requis.');
-        return false;
+        return { valid: false };
       }
       setError('');
-      return true;
+      return { valid: true };
     },
     getError: () => error,
     getValue: () => value

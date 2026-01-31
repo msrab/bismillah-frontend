@@ -14,12 +14,16 @@ const RestaurantNameField = forwardRef(({ initialValue = '', required = false, d
 
   useImperativeHandle(ref, () => ({
     validate: () => {
+      if (!touched) {
+        setError('Le nom du restaurant est requis');
+        return { valid: false };
+      }
       if (required && !value.trim()) {
         setError('Le nom du restaurant est requis');
-        return false;
+        return { valid: false };
       }
       setError('');
-      return true;
+      return { valid: true };
     },
     getError: () => error,
     getValue: () => value

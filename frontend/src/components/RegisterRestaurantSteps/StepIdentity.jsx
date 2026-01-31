@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
 import RestaurantNameField from '../restaurantFormComponents/RestaurantNameField';
 import LogoUploadField from '../restaurantFormComponents/LogoUploadField';
@@ -26,27 +26,31 @@ const StepIdentity = forwardRef(({
   resetLogo,
   logoError
 }, ref) => {
-  // Plus besoin de gérer restaurantTypes ni loading ici, tout est dans RestaurantTypeSelect
-  // Erreur de validation du numéro d'entreprise (affichée uniquement après validation globale)
 
-
-
-  // (chargement des types géré dans RestaurantTypeSelect)
-
-  // Expose la méthode validate au parent via la ref
-  // Refs pour les champs autonomes
   const nameRef = useRef();
   const companyRef = useRef();
   const typeRef = useRef();
 
-  // Expose la méthode validate et la récupération de data/erreurs via la ref
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // Met à jour la validité à chaque changement de champ
+  useEffect(() => {
+    const nameResult = nameRef.current?.validate();
+    const companyResult = companyRef.current?.validate();
+    const typeResult = typeRef.current?.validate();
+    setIsStepValid(!!(nameResult?.valid && companyResult?.valid && typeResult?.valid));
+  });
+
+  // Expose la méthode validate (API) et le booléen isStepValid
   useImperativeHandle(ref, () => ({
+    isStepValid,
     validate: async () => {
-      const nameValid = nameRef.current?.validate();
-      const companyValid = companyRef.current?.validate();
-      const typeValid = typeRef.current?.validate();
-      if (!nameValid || !companyValid || !typeValid) {
-        return false;
+      const nameResult = nameRef.current?.validate();
+      const companyResult = companyRef.current?.validate();
+      const typeResult = typeRef.current?.validate();
+      if (!nameResult?.valid || !companyResult?.valid || !typeResult?.valid) {
+        return { valid: false };
       }
       // Uniqueness check for company number (Belgium)
       const companyNumber = companyRef.current?.getValue() || '';
@@ -56,18 +60,18 @@ const StepIdentity = forwardRef(({
           const checkCompanyData = await checkCompany.json();
           if (!checkCompany.ok) {
             companyRef.current?.setError && companyRef.current.setError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");
-            return false;
+            return { valid: false, message: checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise." };
           }
           if (checkCompanyData.exists) {
             companyRef.current?.setError && companyRef.current.setError("Ce numéro d'entreprise existe déjà.");
-            return false;
+            return { valid: false, message: "Ce numéro d'entreprise existe déjà." };
           }
         } catch (err) {
           companyRef.current?.setError && companyRef.current.setError("Erreur réseau lors de la vérification du numéro d'entreprise.");
-          return false;
+          return { valid: false, message: "Erreur réseau lors de la vérification du numéro d'entreprise." };
         }
       }
-      return true;
+      return { valid: true };
     },
     getAllFieldErrors: () => {
       const errors = [];
@@ -90,7 +94,7 @@ const StepIdentity = forwardRef(({
       company_number: companyRef.current?.getValue() || '',
       restaurantTypeId: typeRef.current?.getValue() || ''
     })
-  }), []);
+  }), [isStepValid]);
 
   return (
     <Box>
@@ -121,6 +125,7 @@ const StepIdentity = forwardRef(({
         ref={companyRef}
         initialValue={identity.company_number}
         required
+        resetTrigger={identity}
       />
 
       {/* Sélecteur du type de restaurant */}

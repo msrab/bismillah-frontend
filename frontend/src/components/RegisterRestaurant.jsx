@@ -1,29 +1,17 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// =============================
+// Imports & Dependencies
+// =============================
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-// Utilitaire pour valider une étape via son ref
-async function validateStep(stepRef) {
-  if (stepRef && stepRef.current && typeof stepRef.current.validate === 'function') {
-    const result = await stepRef.current.validate();
-    return result && result.valid;
-  }
-  return false;
-}
 import { useMessage } from '../hooks/useMessage';
 import { useFileUpload } from '../hooks/useFileUpload';
-import { getPasswordStrength, getStrengthLabel } from '../utils/passwordUtils';
-import LinearProgress from '@mui/material/LinearProgress';
-import { 
-  Box, TextField, Button, Typography, Paper, Alert, 
-  Stepper, Step, StepLabel, FormControl, FormLabel, 
-  RadioGroup, FormControlLabel, Radio, Select, MenuItem, 
-  InputLabel, Checkbox, Link, Autocomplete, CircularProgress,
-  InputAdornment
-} from '@mui/material';
+import { Box, Button, Typography, Paper, Alert, Stepper, Step, StepLabel, Link } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../i18n';
-import StepHalal from './RegisterRestaurantSteps/StepHalal';
 import { useStepNavigation } from '../hooks/useStepNavigation';
+// Step components
+import StepHalal from './RegisterRestaurantSteps/StepHalal';
 import StepCertification from './RegisterRestaurantSteps/StepCertification';
 import StepConditions from './RegisterRestaurantSteps/StepConditions';
 import StepIdentity from './RegisterRestaurantSteps/StepIdentity';
@@ -31,29 +19,42 @@ import StepCoordinates from './RegisterRestaurantSteps/StepCoordinates';
 import StepConnexion from './RegisterRestaurantSteps/StepConnexion';
 
 
-// Centralisation des étapes dans un seul tableau d'objets
-const stepHalalRef = React.createRef();
-const stepConditionsRef = React.createRef();
-const stepCertificationRef = React.createRef();
-const stepIdentityRef = React.createRef();
-const stepCoordinatesRef = React.createRef();
-const stepConnexionRef = React.createRef();
-
+// =============================
+// Stepper Configuration
+// =============================
+// Centralise les steps et leurs refs dans un seul tableau
+const stepRefs = Array.from({ length: 6 }, () => React.createRef());
 const formSteps = [
-  //{ key: 'step.halal', ref: stepHalalRef, component: StepHalal },
-  //{ key: 'step.conditions', ref: stepConditionsRef, component: StepConditions },
-  //{ key: 'step.certification', ref: stepCertificationRef, component: StepCertification },
-  { key: 'step.identity', ref: stepIdentityRef, component: StepIdentity },
-  { key: 'step.coordinates', ref: stepCoordinatesRef, component: StepCoordinates },
-  { key: 'step.connexion', ref: stepConnexionRef, component: StepConnexion },
+  { key: 'step.halal', component: StepHalal },
+  { key: 'step.conditions', component: StepConditions },
+  { key: 'step.certification', component: StepCertification },
+  { key: 'step.identity', component: StepIdentity },
+  { key: 'step.coordinates', component: StepCoordinates },
+  { key: 'step.connexion', component: StepConnexion },
 ];
 
+// =============================
+// Validation utilitaire
+// =============================
+const validateStep = async (stepRef) => {
+  if (stepRef && stepRef.current && typeof stepRef.current.validate === 'function') {
+    const result = await stepRef.current.validate();
+    return result && result.valid;
+  }
+  return false;
+};
+
+
+// =============================
+// RegisterRestaurant Component
+// =============================
 function RegisterRestaurant() {
+  // ----------- Hooks & State -----------
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
-  const stepRefs = formSteps.map(step => step.ref);
+  const { t } = useLanguage();
   const { message, showMessage, hideMessage } = useMessage();
-  const { activeStep, handleNext, handleBack, setActiveStep } = useStepNavigation(stepRefs, showMessage, hideMessage);
+  const { activeStep, handleNext, handleBack } = useStepNavigation(stepRefs, showMessage, hideMessage);
+  // State pour chaque step (centralisé ici)
   const [loading, setLoading] = useState(false);
   const [halalQuestions, setHalalQuestions] = useState({ exclusivelyHalal: '', noAlcohol: '' });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -75,22 +76,41 @@ function RegisterRestaurant() {
   const [credentials, setCredentials] = useState({ email: '', password: '', confirmPassword: '' });
   const [isStepValid, setIsStepValid] = useState(false);
 
+
+  // ----------- Validation automatique à chaque changement -----------
   useEffect(() => {
+    // On lit le booléen isStepValid exposé par la step courante (si dispo)
     const ref = stepRefs[activeStep];
-    let mounted = true;
-    validateStep(ref).then(valid => { if (mounted) setIsStepValid(valid); });
-    return () => { mounted = false; };
+    if (ref && ref.current && typeof ref.current.isStepValid !== 'undefined') {
+      setIsStepValid(!!ref.current.isStepValid);
+    } else {
+      // fallback : on garde la validation async si la step ne l'expose pas
+      let mounted = true;
+      validateStep(ref).then(valid => { if (mounted) setIsStepValid(valid); });
+      return () => { mounted = false; };
+    }
     // eslint-disable-next-line
   }, [activeStep, halalQuestions, acceptedTerms, acceptedCharter, certification, identity, contact, credentials]);
 
-  const handleNextWithDebug = async () => {
-    const ref = stepRefs[activeStep];
-    const valid = await validateStep(ref);
-    setIsStepValid(valid);
-    if (!valid) return;
+
+  // ----------- Navigation : Suivant -----------
+  const handleNextStep = async () => {
+    // Appel la méthode validate du step courant (peut inclure une validation API)
+    const stepRef = stepRefs[activeStep];
+    if (!stepRef || !stepRef.current || typeof stepRef.current.validate !== 'function') return;
+    const result = await stepRef.current.validate();
+    setIsStepValid(result && result.valid);
+    // Si la validation échoue et qu'il y a un message d'erreur, l'afficher globalement
+    if (!result?.valid) {
+      if (result?.message) showMessage(result.message, 'error');
+      return;
+    }
+    // Si tout est ok, passer à la step suivante
     handleNext();
   };
 
+
+  // ----------- Soumission finale -----------
   const handleSubmit = async (e) => {
     e.preventDefault();
     hideMessage();
@@ -102,25 +122,29 @@ function RegisterRestaurant() {
     }
   };
 
+
+  // =============================
+  // Render
+  // =============================
   return (
     <>
+      {/* ----------- Layout ----------- */}
       <Navbar />
       <Box sx={{ maxWidth: 700, mx: 'auto', mt: 4, px: 2, pb: 4 }}>
         <Paper sx={{ p: 4 }}>
+          {/* ----------- Titre ----------- */}
           <Typography variant="h4" sx={{ mb: 3, fontWeight: 700, textAlign: 'center' }}>
             Inscription Restaurant
           </Typography>
 
+          {/* ----------- Stepper ----------- */}
           <Stepper activeStep={activeStep} sx={{ mb: 4 }} alternativeLabel>
-            {formSteps.map((step, index) => (
+            {formSteps.map((step, idx) => (
               <Step key={step.key}>
                 <StepLabel>
                   <Typography
                     variant="caption"
-                    sx={{
-                      display: { xs: 'none', sm: 'block' },
-                      fontSize: '0.7rem'
-                    }}
+                    sx={{ display: { xs: 'none', sm: 'block' }, fontSize: '0.7rem' }}
                   >
                     {t(step.key)}
                   </Typography>
@@ -129,6 +153,7 @@ function RegisterRestaurant() {
             ))}
           </Stepper>
 
+          {/* ----------- Message d'alerte ----------- */}
           {message.text && (
             <Alert severity={message.type} sx={{ mb: 2 }}>
               {message.showLink ? (
@@ -144,23 +169,24 @@ function RegisterRestaurant() {
             </Alert>
           )}
 
-          {/* Affiche dynamiquement la step courante */}
+          {/* ----------- Step dynamique ----------- */}
           {(() => {
             const step = formSteps[activeStep];
             if (!step) return null;
             const StepComponent = step.component;
+            // Props dynamiques selon la step
             if (step.key === 'step.halal') {
-              return <StepComponent ref={step.ref} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />;
+              return <StepComponent ref={stepRefs[0]} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />;
             }
             if (step.key === 'step.conditions') {
-              return <StepComponent ref={step.ref} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />;
+              return <StepComponent ref={stepRefs[1]} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />;
             }
             if (step.key === 'step.certification') {
-              return <StepComponent ref={step.ref} certification={certification} setCertification={setCertification} />;
+              return <StepComponent ref={stepRefs[2]} certification={certification} setCertification={setCertification} />;
             }
             if (step.key === 'step.identity') {
               return <StepComponent
-                ref={step.ref}
+                ref={stepRefs[3]}
                 identity={identity}
                 setIdentity={setIdentity}
                 logo={logoState.file}
@@ -171,41 +197,26 @@ function RegisterRestaurant() {
               />;
             }
             if (step.key === 'step.coordinates') {
-              return <StepComponent ref={step.ref} contact={contact} setContact={setContact} />;
+              return <StepComponent ref={stepRefs[4]} contact={contact} setContact={setContact} />;
             }
             if (step.key === 'step.connexion') {
-              return <StepComponent ref={step.ref} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />;
+              return <StepComponent ref={stepRefs[5]} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />;
             }
             return null;
           })()}
 
+          {/* ----------- Boutons navigation ----------- */}
           {activeStep < formSteps.length - 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-              <Button
-                disabled={activeStep === 0}
-                onClick={handleBack}
-              >
-                Retour
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleNextWithDebug}
-                disabled={!isStepValid}
-              >
-                Suivant
-              </Button>
+              <Button disabled={activeStep === 0} onClick={handleBack}>Retour</Button>
+              <Button variant="contained" onClick={handleNextStep} disabled={!isStepValid}>Suivant</Button>
             </Box>
           )}
-
           {activeStep === formSteps.length - 1 && (
-            <Button
-              onClick={handleBack}
-              sx={{ mt: 2 }}
-            >
-              Retour
-            </Button>
+            <Button onClick={handleBack} sx={{ mt: 2 }}>Retour</Button>
           )}
 
+          {/* ----------- Lien connexion ----------- */}
           <Typography sx={{ mt: 3, textAlign: 'center' }}>
             Déjà inscrit ?{' '}
             <Button onClick={() => navigate('/login-restaurant')} sx={{ textTransform: 'none' }}>
