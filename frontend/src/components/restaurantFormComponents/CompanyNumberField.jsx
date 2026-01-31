@@ -4,8 +4,7 @@ import { useCountry } from '../../context/CountryContext';
 import { formatBelgianCompanyNumber, validateBelgianCompanyNumber } from '../../utils/countries/belgiumValidation';
 
 // Ajout de la prop resetTrigger pour reset lors d'un changement de step
-const CompanyNumberField = forwardRef(({ initialValue = '', required = false, disabled = false, resetTrigger }, ref) => {
-  const [value, setValue] = useState(initialValue.replace(/^BE/, ''));
+const CompanyNumberField = forwardRef(({ value, onChange, required = false, disabled = false, resetTrigger }, ref) => {
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
   // Reset touched et error à chaque changement de step (resetTrigger)
@@ -30,8 +29,18 @@ const CompanyNumberField = forwardRef(({ initialValue = '', required = false, di
     return valid ? '' : message;
   };
 
+  // Validation automatique dès que le champ atteint 10 chiffres ou lors du blur
+  useEffect(() => {
+    if (value.length === 10) {
+      setTouched(true);
+      const err = localValidate(value);
+      setError(err);
+    }
+  }, [value]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
+      console.log('[DEBUG][CompanyNumberField] validate() called, value:', value);
       if (!touched) {
         setError("Le numéro d'entreprise est obligatoire.");
         return { valid: false };
@@ -45,15 +54,16 @@ const CompanyNumberField = forwardRef(({ initialValue = '', required = false, di
     getValue: () => formatBelgianCompanyNumber(value),
     setError: (msg) => { setError(msg); setTouched(true); },
     isValid: () => !localValidate(value)
-  }), [value, error, required]);
+  }), [value, error, required, touched]);
 
   const handleBlur = () => {
     setTouched(true);
-    setError(localValidate(value));
+    const err = localValidate(value);
+    setError(err);
   };
   const handleChange = (e) => {
     const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setValue(val);
+    onChange && onChange(val);
     if (touched) setError(localValidate(val));
     else if (error) setError('');
   };

@@ -7,10 +7,10 @@ import { FormControl, InputLabel, Select, MenuItem, CircularProgress, FormHelper
  * Gère sa propre valeur, validation, erreur
  * Expose via ref : validate(), getError(), getValue()
  */
-const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, disabled = false }, ref) => {
+const RestaurantTypeSelect = forwardRef(({ value, onChange, required = false, disabled = false }, ref) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [value, setValue] = useState(initialValue);
+  // value est contrôlé par le parent
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
   useEffect(() => {
@@ -21,8 +21,20 @@ const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, 
       .finally(() => setLoading(false));
   }, []);
 
+  // Validation automatique à chaque changement de valeur
+  useEffect(() => {
+    if (touched) {
+      if (required && (!value || value === '')) {
+        setError('Le type de restaurant est requis.');
+      } else {
+        setError('');
+      }
+    }
+  }, [value, required, touched]);
+
   useImperativeHandle(ref, () => ({
     validate: () => {
+      console.log('[DEBUG][RestaurantTypeSelect] validate() called, value:', value);
       if (!touched) {
         setError('Le type de restaurant est requis.');
         return { valid: false };
@@ -36,19 +48,22 @@ const RestaurantTypeSelect = forwardRef(({ initialValue = '', required = false, 
     },
     getError: () => error,
     getValue: () => value
-  }), [value, error, required]);
+  }), [value, error, required, touched]);
 
   return (
     <FormControl fullWidth sx={{ mb: 2 }} required={required} disabled={disabled} error={touched && !!error}>
-      <InputLabel>Type de restaurant</InputLabel>
+      <InputLabel id="restaurant-type-label">Type de restaurant</InputLabel>
       {loading ? (
         <CircularProgress size={24} sx={{ mt: 1, mb: 1 }} />
       ) : (
         <Select
+          id="restaurant-type-select"
+          name="restaurantTypeId"
+          labelId="restaurant-type-label"
           value={value}
           label="Type de restaurant"
           onChange={e => {
-            setValue(e.target.value);
+            onChange && onChange(e.target.value);
             setTouched(true);
             if (error) setError('');
           }}

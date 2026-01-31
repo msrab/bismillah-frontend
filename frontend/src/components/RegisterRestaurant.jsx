@@ -86,7 +86,11 @@ function RegisterRestaurant() {
     } else {
       // fallback : on garde la validation async si la step ne l'expose pas
       let mounted = true;
-      validateStep(ref).then(valid => { if (mounted) setIsStepValid(valid); });
+      validateStep(ref).then(valid => {
+        if (mounted) {
+          setIsStepValid(valid);
+        }
+      });
       return () => { mounted = false; };
     }
     // eslint-disable-next-line
@@ -194,6 +198,7 @@ function RegisterRestaurant() {
                 handleLogoChange={handleLogoChange}
                 resetLogo={resetLogo}
                 logoError={logoError}
+                onStepValidChange={setIsStepValid}
               />;
             }
             if (step.key === 'step.coordinates') {
