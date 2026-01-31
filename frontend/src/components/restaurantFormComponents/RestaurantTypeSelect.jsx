@@ -34,7 +34,7 @@ const RestaurantTypeSelect = forwardRef(({ value, onChange, required = false, di
 
   useImperativeHandle(ref, () => ({
     validate: () => {
-      console.log('[DEBUG][RestaurantTypeSelect] validate() called, value:', value);
+      // ...
       if (!touched) {
         setError('Le type de restaurant est requis.');
         return { valid: false };

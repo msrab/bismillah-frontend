@@ -25,7 +25,7 @@ const RestaurantNameField = forwardRef(({ value, onChange, required = false, dis
 
   useImperativeHandle(ref, () => ({
     validate: () => {
-      console.log('[DEBUG][RestaurantNameField] validate() called, value:', value);
+      // ...
       if (!touched) {
         setError('Le nom du restaurant est requis');
         return { valid: false };

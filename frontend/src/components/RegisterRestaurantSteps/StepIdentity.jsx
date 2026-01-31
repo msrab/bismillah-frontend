@@ -35,13 +35,8 @@ const StepIdentity = forwardRef(({
   // Etat local pour la validité live de la step
   const [isStepValid, setIsStepValid] = useState(false);
   // Debug : log chaque changement d'identity
-  useEffect(() => {
-    console.log('[DEBUG][StepIdentity] identity prop:', identity);
-  }, [identity]);
-  // Debug : log chaque changement de isStepValid
-  useEffect(() => {
-    console.log('[DEBUG][StepIdentity] isStepValid changed:', isStepValid);
-  }, [isStepValid]);
+  useEffect(() => {}, [identity]);
+  useEffect(() => {}, [isStepValid]);
 
   // Met à jour la validité à chaque changement de champ
   useEffect(() => {
@@ -51,27 +46,16 @@ const StepIdentity = forwardRef(({
     const valid = !!(nameResult?.valid && companyResult?.valid && typeResult?.valid);
     setIsStepValid(valid);
     if (onStepValidChange) onStepValidChange(valid);
-    console.log('[DEBUG][StepIdentity] useEffect validate results:', {
-      nameResult,
-      companyResult,
-      typeResult,
-      valid
-    });
+    // ...
   });
 
   // Expose la méthode validate (API) et le booléen isStepValid
   useImperativeHandle(ref, () => ({
     isStepValid,
     validate: async () => {
-      console.log('[DEBUG][StepIdentity] validate() called');
       const nameResult = nameRef.current?.validate && nameRef.current.validate();
       const companyResult = companyRef.current?.validate && companyRef.current.validate();
       const typeResult = typeRef.current?.validate && typeRef.current.validate();
-      console.log('[DEBUG][StepIdentity] validate() results:', {
-        nameResult,
-        companyResult,
-        typeResult
-      });
       if (!nameResult?.valid || !companyResult?.valid || !typeResult?.valid) {
         return { valid: false };
       }
@@ -83,21 +67,21 @@ const StepIdentity = forwardRef(({
           const checkCompanyData = await checkCompany.json();
           if (!checkCompany.ok) {
             companyRef.current?.setError && companyRef.current.setError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");
-            console.log('[DEBUG][StepIdentity] validate() API error:', checkCompanyData.error);
+            // ...
             return { valid: false, message: checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise." };
           }
           if (checkCompanyData.exists) {
             companyRef.current?.setError && companyRef.current.setError("Ce numéro d'entreprise existe déjà.");
-            console.log('[DEBUG][StepIdentity] validate() company exists');
+            // ...
             return { valid: false, message: "Ce numéro d'entreprise existe déjà." };
           }
         } catch (err) {
           companyRef.current?.setError && companyRef.current.setError("Erreur réseau lors de la vérification du numéro d'entreprise.");
-          console.log('[DEBUG][StepIdentity] validate() network error:', err);
+          // ...
           return { valid: false, message: "Erreur réseau lors de la vérification du numéro d'entreprise." };
         }
       }
-      console.log('[DEBUG][StepIdentity] validate() returns valid: true');
+      // ...
       return { valid: true };
     },
     getAllFieldErrors: () => {
