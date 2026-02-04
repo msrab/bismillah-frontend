@@ -122,29 +122,31 @@ function RegisterRestaurant() {
       }
     }
 
-    // Vérifie que le cityId a été stocké lors du passage à l'étape Connexion
-    if (!storedCityId) {
-      showMessage('Erreur: la ville n\'a pas été validée. Veuillez revenir à l\'étape Coordonnées.', 'error');
-      return;
-    }
-
     setLoading(true);
     try {
-      // Utilise le téléphone formaté et le cityId stockés lors du passage à l'étape suivante
+      // Utilise le téléphone formaté stocké lors du passage à l'étape suivante
       const phoneToSubmit = formattedPhone || contact.phone;
 
       // Récupère les données de connexion depuis StepConnexion
       const connexionData = stepConnexionRef.current?.getFormData ? stepConnexionRef.current.getFormData() : {};
 
-      // Construit l'objet pour l'API backend (format attendu par authRestaurantController.signup)
+      // Formate le company_number avec le préfixe BE (la valeur stockée ne contient que les 10 chiffres)
+      const formattedCompanyNumber = identity.company_number.startsWith('BE') 
+        ? identity.company_number 
+        : `BE${identity.company_number}`;
+
+      // Construit l'objet pour l'API backend
+      // Le backend va gérer: 1) créer/trouver ville 2) créer/trouver rue 3) créer restaurant 4) créer certification
       const submissionData = {
         // Identité du restaurant
         name: identity.name,
-        company_number: identity.company_number,
+        company_number: formattedCompanyNumber,
         restaurantTypeId: identity.restaurantTypeId ? Number(identity.restaurantTypeId) : null,
         
-        // Adresse (utilise le cityId stocké lors du passage à l'étape Connexion)
-        cityId: storedCityId,
+        // Adresse (le backend trouvera/créera la ville et la rue)
+        cityName: contact.cityName,
+        postalCode: contact.postalCode,
+        countryId: contact.countryId || 1,
         streetName: contact.streetName,
         address_number: contact.addressNumber,
         
@@ -161,9 +163,17 @@ function RegisterRestaurant() {
         
         // Langue par défaut
         defaultLanguage: 'fr',
+        
+        // Certification halal (si applicable)
+        hasCertification: certification.hasCertification === 'yes',
+        certifierId: certification.certifierId && certification.certifierId !== 'other' ? Number(certification.certifierId) : null,
+        customCertifierName: certification.certifierId === 'other' ? certification.customCertifierName : null,
+        certificationNumber: certification.certificationNumber || null,
       };
 
       console.log('[DEBUG] Données de soumission:', submissionData);
+      console.log('[DEBUG] Contact state:', contact);
+      console.log('[DEBUG] address_number envoyé:', submissionData.address_number);
 
       // Appel API pour créer le restaurant
       const response = await fetch('http://localhost:5000/api/auth/restaurant/signup', {
@@ -175,7 +185,9 @@ function RegisterRestaurant() {
       console.log('[DEBUG] Réponse API:', data);
       
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Erreur lors de l\'inscription');
+        // Affiche les erreurs de validation si présentes
+        const errorMsg = data.errors ? data.errors.join(', ') : (data.message || data.error || 'Erreur lors de l\'inscription');
+        throw new Error(errorMsg);
       }
       
       showMessage('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success');
