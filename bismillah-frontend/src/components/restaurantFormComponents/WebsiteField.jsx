@@ -23,6 +23,14 @@ const WebsiteField = forwardRef(({ value, onChange, required = false, disabled =
   const [helperText, setHelperText] = useState('');
 
   useImperativeHandle(ref, () => ({
+    /**
+     * Validation sans effet de bord (pour validation live)
+     */
+    isValid: () => {
+      if (required && value === undefined) return false;
+      if (value && !isValidWebsiteUrl(value)) return false;
+      return true;
+    },
     validate: () => {
       if (required && value === undefined) {
         setError(true);

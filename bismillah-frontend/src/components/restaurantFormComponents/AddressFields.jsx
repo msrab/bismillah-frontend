@@ -25,6 +25,15 @@ const AddressFields = forwardRef(({ addressNumber, streetName, cityId, onChange,
   // Validation locale + unicité
   useImperativeHandle(ref, () => ({
     /**
+     * Validation locale synchrone (sans appel API)
+     * @returns {{valid: boolean}}
+     */
+    validateLocal: () => {
+      const streetValid = isNonEmptyString(streetName);
+      const numberValid = isNonEmptyString(addressNumber);
+      return { valid: streetValid && numberValid };
+    },
+    /**
      * Valide les champs et vérifie l'unicité de l'adresse (cityId + numéro + rue)
      * @returns {Promise<{valid: boolean, message?: string}>}
      */
@@ -71,7 +80,7 @@ const AddressFields = forwardRef(({ addressNumber, streetName, cityId, onChange,
 
   return (
     <Grid container spacing={2}>
-      <Grid item xs={8}>
+      <Grid size={{ xs: 8 }}>
         <TextField
           label="Rue"
           value={streetName || ""}
@@ -88,7 +97,7 @@ const AddressFields = forwardRef(({ addressNumber, streetName, cityId, onChange,
           helperText={streetHelper}
         />
       </Grid>
-      <Grid item xs={4}>
+      <Grid size={{ xs: 4 }}>
         <TextField
           label="Numéro"
           value={addressNumber || ""}
@@ -107,7 +116,7 @@ const AddressFields = forwardRef(({ addressNumber, streetName, cityId, onChange,
       </Grid>
       {/* Affichage de l'erreur d'unicité */}
       {uniqueError && (
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <span style={{ color: 'red', fontSize: 13 }}>{uniqueError}</span>
         </Grid>
       )}

@@ -24,20 +24,40 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
   const [helperText, setHelperText] = useState('');
 
   useImperativeHandle(ref, () => ({
+    /**
+     * Validation sans effet de bord (pour validation live)
+     */
+    isValid: () => {
+      if (required && !value) return false;
+      if (!value) return true;
+      // Nettoie la valeur (enlève tout sauf chiffres)
+      let cleaned = value.replace(/\D/g, '');
+      // Retire le 0 initial si présent
+      if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
+      // Formate pour validation
+      const formatted = '+32' + cleaned;
+      return isValidBelgianPhoneNumber(formatted);
+    },
     validate: () => {
       if (required && !value) {
         setError(true);
         setHelperText('Le numéro de téléphone est requis');
         return false;
       }
-      // On formate le numéro pour la validation (ajoute +32 si besoin)
-      let formatted = value;
-      if (value && !value.startsWith('+32')) {
-        formatted = '+32' + value.replace(/^0/, '');
+      if (!value) {
+        setError(false);
+        setHelperText('');
+        return true;
       }
-      if (value && !isValidBelgianPhoneNumber(formatted)) {
+      // Nettoie la valeur (enlève tout sauf chiffres)
+      let cleaned = value.replace(/\D/g, '');
+      // Retire le 0 initial si présent
+      if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
+      // Formate pour validation
+      const formatted = '+32' + cleaned;
+      if (!isValidBelgianPhoneNumber(formatted)) {
         setError(true);
-        setHelperText('Numéro de téléphone belge invalide.');
+        setHelperText('Numéro de téléphone belge invalide (ex: 475123456 ou 21234567).');
         return false;
       }
       setError(false);
@@ -46,8 +66,11 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
     },
     getFormatted: () => {
       if (!value) return '';
-      if (value.startsWith('32') || value.startsWith('+32')) return value.replace(/^\+/, '');
-      return `32${value}`;
+      let cleaned = value.replace(/\D/g, '');
+      if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
+      // Retire le préfixe 32 si déjà présent pour éviter le doublon
+      if (cleaned.startsWith('32')) cleaned = cleaned.slice(2);
+      return '+32' + cleaned;
     },
     getError: () => helperText
   }));

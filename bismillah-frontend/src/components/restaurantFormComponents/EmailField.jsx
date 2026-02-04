@@ -18,6 +18,19 @@ const EmailField = forwardRef(({
   const [checking, setChecking] = useState(false);
 
   useImperativeHandle(ref, () => ({
+    /**
+     * Validation live (synchrone, sans side effects ni appel API)
+     * Utilisé pour activer/désactiver le bouton Suivant
+     */
+    isValid: () => {
+      if (required && !value.trim()) return false;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(value);
+    },
+    /**
+     * Validation complète (avec affichage d'erreur et appel API)
+     * Utilisé au clic sur le bouton Suivant
+     */
     validate: async () => {
       if (required && !value.trim()) {
         setError("L'email est requis");

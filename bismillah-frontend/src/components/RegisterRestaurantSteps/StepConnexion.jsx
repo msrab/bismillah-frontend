@@ -1,6 +1,6 @@
 
 
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState, useEffect } from 'react';
 import { Box, Typography, Alert, LinearProgress, Button } from '@mui/material';
 import EmailField from '../restaurantFormComponents/EmailField';
 import NewPasswordField from '../restaurantFormComponents/NewPasswordField';
@@ -19,31 +19,49 @@ import { getPasswordStrength, getStrengthLabel } from '../../utils/passwordUtils
  *   - setCredentials : setter credentials
  *   - loading : bool, indique si l'inscription est en cours
  *   - handleSubmit : fonction appelée à la soumission du formulaire
+ *   - onStepValidChange : callback pour notifier le parent de la validité
  */
 
 
 // Étape Connexion : création des identifiants
-const StepConnexion = forwardRef(({ loading, handleSubmit }, ref) => {
+const StepConnexion = forwardRef(({ loading, handleSubmit, onStepValidChange }, ref) => {
   // Refs pour les champs autonomes
   const emailRef = useRef();
   const passwordRef = useRef();
   const confirmRef = useRef();
-  const [submitted, setSubmitted] = useState(false);
+
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // State pour suivre la valeur du mot de passe (pour le baromètre)
+  const [passwordValue, setPasswordValue] = useState('');
 
   // Pour le baromètre de sécurité
-  const passwordValue = passwordRef.current?.getValue?.() || '';
   const passwordScore = getPasswordStrength(passwordValue);
   const passwordLabel = getStrengthLabel(passwordScore);
   const progressColors = ["error", "error", "warning", "info", "success", "success"];
 
+  // Validation live à chaque changement (sans side effects)
+  useEffect(() => {
+    const emailValid = emailRef.current?.isValid ? emailRef.current.isValid() : false;
+    const passwordValid = passwordRef.current?.isValid ? passwordRef.current.isValid() : false;
+    const confirmValid = confirmRef.current?.isValid ? confirmRef.current.isValid() : false;
+    const valid = !!(emailValid && passwordValid && confirmValid);
+    setIsStepValid(valid);
+    if (onStepValidChange) onStepValidChange(valid);
+  });
+
   useImperativeHandle(ref, () => ({
+    isStepValid,
     validate: async () => {
-      setSubmitted(true);
       const emailValid = await emailRef.current?.validate();
       const passwordValid = passwordRef.current?.validate();
       // Pour la confirmation, on passe la valeur du champ password comme confirmWith
       const confirmValid = confirmRef.current?.validate();
-      return emailValid && passwordValid && confirmValid;
+      if (emailValid && passwordValid && confirmValid) {
+        return { valid: true };
+      }
+      return { valid: false };
     },
     getAllFieldErrors: () => {
       const errors = [];
@@ -66,7 +84,7 @@ const StepConnexion = forwardRef(({ loading, handleSubmit }, ref) => {
       password: passwordRef.current?.getValue() || '',
       confirmPassword: confirmRef.current?.getValue() || ''
     })
-  }), []);
+  }), [isStepValid]);
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -74,11 +92,6 @@ const StepConnexion = forwardRef(({ loading, handleSubmit }, ref) => {
       <Typography variant="h6" sx={{ mb: 3 }}>
         Données de connexion
       </Typography>
-
-      {/* Affichage de l'erreur uniquement après soumission */}
-      {submitted && formError && (
-        <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>
-      )}
 
       {/* Message d'information */}
       <Alert severity="info" sx={{ mb: 3 }}>
@@ -96,6 +109,7 @@ const StepConnexion = forwardRef(({ loading, handleSubmit }, ref) => {
         ref={passwordRef}
         required
         helperText="Minimum 8 caractères, majuscule, minuscule, chiffre et caractère spécial recommandé."
+        onValueChange={setPasswordValue}
       />
 
       {/* Baromètre de sécurité du mot de passe */}

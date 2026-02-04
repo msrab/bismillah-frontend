@@ -8,11 +8,18 @@ const cityFiles = {
   BE: '/data/belgium-cities-2025.json',
 };
 
-const CityAutocomplete = ({ value = null, onChange, disabled = false, countryId = 1 }, ref) => {
-  const { countryIsoCode } = useCountry ? useCountry() : { countryIsoCode: 'BE' };
+const CityAutocomplete = forwardRef(({ value = null, onChange, disabled = false, countryId = 1 }, ref) => {
+  const countryContext = useCountry();
+  const countryIsoCode = countryContext?.countryIsoCode || 'BE';
     const [error, setError] = useState("");
     // Expose la méthode validateAndEnsureCity au parent
     useImperativeHandle(ref, () => ({
+      /**
+       * Validation sans effet de bord (pour validation live)
+       */
+      isValid: () => {
+        return !!(cityValue && cityValue.localityName && cityValue.postalCode);
+      },
       /**
        * Valide uniquement la saisie de la ville (pas d'appel API)
        * @returns {{valid: boolean, message?: string}}
@@ -118,6 +125,6 @@ const CityAutocomplete = ({ value = null, onChange, disabled = false, countryId 
       />
     </Grid>
   );
-};
+});
 
-export default React.forwardRef(CityAutocomplete);
+export default CityAutocomplete;

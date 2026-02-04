@@ -4,7 +4,6 @@ import PhoneField from '../restaurantFormComponents/PhoneField';
 import WebsiteField from '../restaurantFormComponents/WebsiteField';
 import AddressFields from '../restaurantFormComponents/AddressFields';
 import CityAutocomplete from '../restaurantFormComponents/CityAutocompleteField';
-import ErrorDisplay from '../restaurantFormComponents/ErrorDisplay';
 
 /**
  * Composant StepCoordinates
@@ -13,50 +12,60 @@ import ErrorDisplay from '../restaurantFormComponents/ErrorDisplay';
  * @param {object} contact - L'objet contenant les valeurs du formulaire
  * @param {function} setContact - Fonction pour mettre à jour l'objet contact
  */
-const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
+const StepCoordinates = forwardRef(({ contact, setContact, onStepValidChange }, ref) => {
   // Refs pour les champs autonomes
   const phoneRef = useRef();
   const websiteRef = useRef();
   const addressRef = useRef();
   const cityRef = useRef();
 
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // Met à jour la validité à chaque changement de champ (validation synchrone uniquement, sans affichage d'erreur)
+  useEffect(() => {
+    const phoneValid = phoneRef.current?.isValid ? phoneRef.current.isValid() : false;
+    const websiteValid = websiteRef.current?.isValid ? websiteRef.current.isValid() : true;
+    const cityValid = cityRef.current?.isValid ? cityRef.current.isValid() : false;
+    const addressValid = addressRef.current?.validateLocal ? addressRef.current.validateLocal()?.valid : false;
+    const valid = !!(phoneValid && websiteValid && cityValid && addressValid);
+    setIsStepValid(valid);
+    if (onStepValidChange) onStepValidChange(valid);
+  });
+
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
+    isStepValid,
     /**
      * Valide tous les champs du formulaire via les refs des Fields
      */
     validate: async () => {
-      // 1. ValidationS
+      // 1. Validations
       const phoneValid = phoneRef.current?.validate();
       const websiteValid = websiteRef.current?.validate();
       const cityResult = cityRef.current?.validateFields();
       const addressValid = await addressRef.current?.validateAndCheckUnique();
-      // 4. Récupération du numéro formaté via PhoneField autonome
-      setContact({ ...contact, phone: phoneRef.current.getFormatted() });
-      // La gestion des erreurs et leur affichage sont déléguées aux champs et à ErrorDisplay
-      // Cette fonction peut simplement retourner true si tout est valide
-      return phoneValid && websiteValid && cityResult?.valid && addressValid?.valid;
+      // Retourne un objet { valid, message }
+      if (phoneValid && websiteValid && cityResult?.valid && addressValid?.valid) {
+        return { valid: true };
+      }
+      return { valid: false };
+    },
+    /**
+     * Retourne le numéro de téléphone formaté (pour la soumission finale)
+     */
+    getFormattedPhone: () => {
+      return phoneRef.current?.getFormatted ? phoneRef.current.getFormatted() : '';
+    },
+    /**
+     * Recherche ou crée la ville et retourne son ID (pour la soumission finale)
+     */
+    ensureCityInDatabase: async () => {
+      return cityRef.current?.ensureCityInDatabase ? await cityRef.current.ensureCityInDatabase() : { valid: false, message: 'Erreur interne' };
     }
-  }), [contact, setContact]);
+  }), [contact, setContact, isStepValid]);
 
-  // Regroupe tous les messages d'erreur des champs autonomes
-  const getAllFieldErrors = () => {
-    const errors = [];
-    if (phoneRef.current?.getError) {
-      const err = phoneRef.current.getError();
-      if (err) errors.push(err);
-    }
-    if (websiteRef.current?.getError) {
-      const err = websiteRef.current.getError();
-      if (err) errors.push(err);
-    }
-    if (addressRef.current?.getError) {
-      const errs = addressRef.current.getError();
-      if (errs && Array.isArray(errs)) errors.push(...errs);
-      else if (errs) errors.push(errs);
-    }
-    return errors;
-  };
+
 
   // ...existing code...
   return (
@@ -65,10 +74,6 @@ const StepCoordinates = forwardRef(({ contact, setContact }, ref) => {
       <Typography variant="h6" sx={{ mb: 3 }}>
         Coordonnées
       </Typography>
-
-      {/* Affichage des erreurs de validation */}
-      {/* Affichage des erreurs uniquement après soumission (clic sur Suivant) */}
-      <ErrorDisplay errors={getAllFieldErrors()} />
 
       {/* Champ site web autonome */}
       <WebsiteField

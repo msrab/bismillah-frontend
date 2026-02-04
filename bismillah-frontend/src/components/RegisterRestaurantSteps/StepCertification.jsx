@@ -20,18 +20,21 @@ import CertifierSelector from '../restaurantFormComponents/CertifierSelector';
  *       certificationNumber: string|undefined
  *     }
  *   - setCertification : fonction pour mettre à jour certification
+ *   - onStepValidChange : callback pour notifier le parent de la validité
  */
 
 
 // Étape Certification Halal
-const StepCertification = forwardRef(({ certification, setCertification }, ref) => {
+const StepCertification = forwardRef(({ certification, setCertification, onStepValidChange }, ref) => {
   // Liste des certificateurs récupérée depuis l'API
   const [certifiers, setCertifiers] = useState([]);
   // Indique si la liste est en cours de chargement
   const [loading, setLoading] = useState(true);
   // Gestion de l'affichage des erreurs uniquement après soumission
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
 
   // Récupère la liste des certificateurs au montage
   useEffect(() => {
@@ -42,10 +45,25 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
       .finally(() => setLoading(false));
   }, []);
 
+  // Validation live à chaque changement
+  useEffect(() => {
+    let valid = false;
+    if (certification.hasCertification === 'no') {
+      valid = true;
+    } else if (certification.hasCertification === 'yes') {
+      const hasCertifier = !!certification.certifierId;
+      const hasCustomName = certification.certifierId !== 'other' || !!certification.customCertifierName;
+      const hasNumber = !!certification.certificationNumber && /^[a-zA-Z0-9]{1,15}$/.test(certification.certificationNumber);
+      valid = hasCertifier && hasCustomName && hasNumber;
+    }
+    setIsStepValid(valid);
+    if (onStepValidChange) onStepValidChange(valid);
+  }, [certification, onStepValidChange]);
+
   // Expose la méthode validate au parent via la ref
   useImperativeHandle(ref, () => ({
+    isStepValid,
     validate: async () => {
-      setSubmitted(true);
       // On ne valide que si la question principale est cochée
       if (!certification.hasCertification) {
         return { valid: false };
@@ -77,10 +95,10 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
           return { valid: false, message: 'Ce numéro de certification existe déjà.' };
         }
       }
-      setError('');
-      return { valid: true };
+setError('');
+    return { valid: true };
     }
-  }), [certification]);
+  }), [certification, isStepValid]);
 
   return (
     <Box>
@@ -88,13 +106,6 @@ const StepCertification = forwardRef(({ certification, setCertification }, ref) 
       <Typography variant="h6" sx={{ mb: 3 }}>
         Certification Halal
       </Typography>
-
-      {/* Affichage de l'erreur uniquement après soumission, sauf pour la question principale */}
-      {submitted && error && (
-        error !== 'Veuillez indiquer si vous avez une certification' && (
-          <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
-        )
-      )}
 
       {/* Question principale : avez-vous une certification ? */}
       <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>

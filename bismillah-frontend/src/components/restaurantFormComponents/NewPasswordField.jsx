@@ -1,6 +1,7 @@
 
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import { TextField } from '@mui/material';
+import { TextField, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 /**
  * NewPasswordField autonome
@@ -13,6 +14,7 @@ import { TextField } from '@mui/material';
  *   - label : string (optionnel, défaut "Mot de passe")
  *   - autoComplete : string (optionnel)
  *   - confirmWith : string (optionnel, valeur à comparer pour la confirmation)
+ *   - onValueChange : callback appelé à chaque changement de valeur
  */
 const NewPasswordField = forwardRef(({
   initialValue = '',
@@ -21,11 +23,31 @@ const NewPasswordField = forwardRef(({
   label = 'Mot de passe',
   autoComplete = 'new-password',
   confirmWith = null,
+  onValueChange = null,
 }, ref) => {
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleTogglePassword = () => {
+    setShowPassword(prev => !prev);
+  };
 
   useImperativeHandle(ref, () => ({
+    /**
+     * Validation live (synchrone, sans side effects)
+     * Utilisé pour activer/désactiver le bouton Suivant
+     */
+    isValid: () => {
+      if (required && !value) return false;
+      if (value.length < 8) return false;
+      if (confirmWith !== null && value !== confirmWith) return false;
+      return true;
+    },
+    /**
+     * Validation complète (avec affichage d'erreur)
+     * Utilisé au clic sur le bouton Suivant
+     */
     validate: () => {
       if (required && !value) {
         setError('Le mot de passe est requis');
@@ -49,19 +71,35 @@ const NewPasswordField = forwardRef(({
   return (
     <TextField
       label={label}
-      type="password"
+      type={showPassword ? 'text' : 'password'}
       fullWidth
       required={required}
       disabled={disabled}
       sx={{ mb: 1 }}
       value={value}
       onChange={e => {
-        setValue(e.target.value);
+        const newValue = e.target.value;
+        setValue(newValue);
         if (error) setError('');
+        if (onValueChange) onValueChange(newValue);
       }}
       error={!!error}
       helperText={error}
       autoComplete={autoComplete}
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              onClick={handleTogglePassword}
+              edge="end"
+              tabIndex={-1}
+            >
+              {showPassword ? <VisibilityOff /> : <Visibility />}
+            </IconButton>
+          </InputAdornment>
+        )
+      }}
     />
   );
 });

@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 import { Box, Typography, Paper, Link, Checkbox, FormControlLabel } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -14,23 +14,30 @@ import { Link as RouterLink } from 'react-router-dom';
  *   - setAcceptedTerms : fonction pour mettre à jour acceptedTerms
  *   - acceptedCharter : boolean, indique si l'utilisateur a accepté la charte halal
  *   - setAcceptedCharter : fonction pour mettre à jour acceptedCharter
+ *   - onStepValidChange : callback pour notifier le parent de la validité
  */
 
 
-const StepConditions = forwardRef(({ acceptedTerms, setAcceptedTerms, acceptedCharter, setAcceptedCharter }, ref) => {
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState('');
+const StepConditions = forwardRef(({ acceptedTerms, setAcceptedTerms, acceptedCharter, setAcceptedCharter, onStepValidChange }, ref) => {
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // Validation live à chaque changement
+  useEffect(() => {
+    const valid = !!(acceptedTerms && acceptedCharter);
+    setIsStepValid(valid);
+    if (onStepValidChange) onStepValidChange(valid);
+  }, [acceptedTerms, acceptedCharter, onStepValidChange]);
 
   useImperativeHandle(ref, () => ({
+    isStepValid,
     validate: () => {
-      setSubmitted(true);
       if (!acceptedTerms || !acceptedCharter) {
         return { valid: false };
       }
-      setError('');
       return { valid: true };
     }
-  }), [acceptedTerms, acceptedCharter]);
+  }), [acceptedTerms, acceptedCharter, isStepValid]);
 
   return (
     <Box>

@@ -1,5 +1,5 @@
 
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 /**
@@ -11,23 +11,31 @@ import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, 
  * Props :
  *   - halalQuestions : { exclusivelyHalal: 'yes'|'no'|undefined, noAlcohol: 'yes'|'no'|undefined }
  *   - setHalalQuestions : fonction pour mettre à jour halalQuestions
+ *   - onStepValidChange : callback pour notifier le parent de la validité
  */
 
 
 
-const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
-  const [submitted, setSubmitted] = useState(false);
+const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions, onStepValidChange }, ref) => {
   const [error, setError] = useState('');
 
-  // Réinitialise submitted et error à chaque arrivée sur la step ou changement de questions
-  React.useEffect(() => {
-    setSubmitted(false);
-    setError('');
-  }, [halalQuestions]);
+  // Etat local pour la validité live de la step
+  const [isStepValid, setIsStepValid] = useState(false);
+
+  // Validation live à chaque changement (sans side effects)
+  useEffect(() => {
+    // La step est valide si les deux questions sont répondues avec les bonnes valeurs
+    // Question 1: "exclusivement halal ?" → doit être "yes"
+    // Question 2: "propose de l'alcool ?" → doit être "no" (pas d'alcool)
+    const valid = halalQuestions.exclusivelyHalal === 'yes' && halalQuestions.noAlcohol === 'no';
+    //console.log('[DEBUG StepHalal] exclusivelyHalal:', halalQuestions.exclusivelyHalal, 'noAlcohol:', halalQuestions.noAlcohol, '→ valid:', valid);
+    setIsStepValid(valid);
+    if (onStepValidChange) onStepValidChange(valid);
+  }, [halalQuestions, onStepValidChange]);
 
   useImperativeHandle(ref, () => ({
+    isStepValid,
     validate: () => {
-      setSubmitted(true);
       // On ne valide que si les deux questions sont cochées
       if (!halalQuestions.exclusivelyHalal || !halalQuestions.noAlcohol) {
         return { valid: false };
@@ -45,7 +53,7 @@ const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
       setError('');
       return { valid: true };
     }
-  }), [halalQuestions]);
+  }), [halalQuestions, isStepValid]);
 
   return (
     <Box>
@@ -53,11 +61,6 @@ const StepHalal = forwardRef(({ halalQuestions, setHalalQuestions }, ref) => {
       <Typography variant="h6" sx={{ mb: 3 }}>
         Vérification des critères Halal
       </Typography>
-
-      {/* Affichage de l'erreur uniquement après soumission */}
-      {submitted && error && (
-        <Typography color="error" sx={{ mb: 2 }}>{error === 'charter_error' ? "Votre établissement ne respecte pas la charte halal." : error}</Typography>
-      )}
 
       {/* Question 1 : exclusivement halal */}
       <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>

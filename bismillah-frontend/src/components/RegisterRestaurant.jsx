@@ -72,29 +72,14 @@ function RegisterRestaurant() {
     'file',
     'preview'
   );
-  const [contact, setContact] = useState({ website: '', phone: '', streetName: '', address_number: '', cityName: '', postalCode: '', countryId: 1 });
+  const [contact, setContact] = useState({ website: '', phone: '', streetName: '', addressNumber: '', cityName: '', postalCode: '', countryId: 1 });
+  const [formattedPhone, setFormattedPhone] = useState(''); // Téléphone formaté (stocké au passage à l'étape suivante)
   const [credentials, setCredentials] = useState({ email: '', password: '', confirmPassword: '' });
   const [isStepValid, setIsStepValid] = useState(false);
 
 
-  // ----------- Validation automatique à chaque changement -----------
-  useEffect(() => {
-    // On lit le booléen isStepValid exposé par la step courante (si dispo)
-    const ref = stepRefs[activeStep];
-    if (ref && ref.current && typeof ref.current.isStepValid !== 'undefined') {
-      setIsStepValid(!!ref.current.isStepValid);
-    } else {
-      // fallback : on garde la validation async si la step ne l'expose pas
-      let mounted = true;
-      validateStep(ref).then(valid => {
-        if (mounted) {
-          setIsStepValid(valid);
-        }
-      });
-      return () => { mounted = false; };
-    }
-    // eslint-disable-next-line
-  }, [activeStep, halalQuestions, acceptedTerms, acceptedCharter, certification, identity, contact, credentials]);
+  // La validation est gérée par le callback onStepValidChange passé à chaque step
+  // Plus besoin du useEffect qui lisait ref.current.isStepValid
 
 
   // ----------- Navigation : Suivant -----------
@@ -109,6 +94,14 @@ function RegisterRestaurant() {
       if (result?.message) showMessage(result.message, 'error');
       return;
     }
+    // Si on quitte l'étape Coordonnées (index 4), on stocke le téléphone formaté
+    if (activeStep === 4) {
+      if (stepRef.current?.getFormattedPhone) {
+        const formatted = stepRef.current.getFormattedPhone();
+        setFormattedPhone(formatted);
+        console.log('[DEBUG] Téléphone formaté stocké:', formatted);
+      }
+    }
     // Si tout est ok, passer à la step suivante
     handleNext();
   };
@@ -118,9 +111,83 @@ function RegisterRestaurant() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     hideMessage();
+
+    // Valider d'abord les champs de StepConnexion
+    const stepConnexionRef = stepRefs[5]; // StepConnexion est à l'index 5
+    if (stepConnexionRef && stepConnexionRef.current && typeof stepConnexionRef.current.validate === 'function') {
+      const result = await stepConnexionRef.current.validate();
+      if (!result?.valid) {
+        // Les erreurs sont déjà affichées dans les champs
+        return;
+      }
+    }
+
+    // Vérifie que le cityId a été stocké lors du passage à l'étape Connexion
+    if (!storedCityId) {
+      showMessage('Erreur: la ville n\'a pas été validée. Veuillez revenir à l\'étape Coordonnées.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
-      // ... logique de soumission ...
+      // Utilise le téléphone formaté et le cityId stockés lors du passage à l'étape suivante
+      const phoneToSubmit = formattedPhone || contact.phone;
+
+      // Récupère les données de connexion depuis StepConnexion
+      const connexionData = stepConnexionRef.current?.getFormData ? stepConnexionRef.current.getFormData() : {};
+
+      // Construit l'objet pour l'API backend (format attendu par authRestaurantController.signup)
+      const submissionData = {
+        // Identité du restaurant
+        name: identity.name,
+        company_number: identity.company_number,
+        restaurantTypeId: identity.restaurantTypeId ? Number(identity.restaurantTypeId) : null,
+        
+        // Adresse (utilise le cityId stocké lors du passage à l'étape Connexion)
+        cityId: storedCityId,
+        streetName: contact.streetName,
+        address_number: contact.addressNumber,
+        
+        // Contact
+        phone: phoneToSubmit,
+        website: contact.website || null,
+        
+        // Connexion
+        email: connexionData.email,
+        password: connexionData.password,
+        
+        // Logo (si présent) - sera géré séparément si c'est un fichier
+        logo: logoState.file ? logoState.file.name : null,
+        
+        // Langue par défaut
+        defaultLanguage: 'fr',
+      };
+
+      console.log('[DEBUG] Données de soumission:', submissionData);
+
+      // Appel API pour créer le restaurant
+      const response = await fetch('http://localhost:5000/api/auth/restaurant/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submissionData),
+      });
+      const data = await response.json();
+      console.log('[DEBUG] Réponse API:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Erreur lors de l\'inscription');
+      }
+      
+      showMessage('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success');
+      
+      // Redirection vers la page de connexion après 2 secondes
+      setTimeout(() => {
+        navigate('/login-restaurant');
+      }, 2000);
+
+    } catch (err) {
+      console.error('[ERROR] Inscription:', err);
+      showMessage(err.message || 'Erreur lors de l\'inscription', 'error');
     } finally {
       setLoading(false);
     }
@@ -180,13 +247,13 @@ function RegisterRestaurant() {
             const StepComponent = step.component;
             // Props dynamiques selon la step
             if (step.key === 'step.halal') {
-              return <StepComponent ref={stepRefs[0]} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} />;
+              return <StepComponent ref={stepRefs[0]} halalQuestions={halalQuestions} setHalalQuestions={setHalalQuestions} onStepValidChange={setIsStepValid} />;
             }
             if (step.key === 'step.conditions') {
-              return <StepComponent ref={stepRefs[1]} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} />;
+              return <StepComponent ref={stepRefs[1]} acceptedTerms={acceptedTerms} setAcceptedTerms={setAcceptedTerms} acceptedCharter={acceptedCharter} setAcceptedCharter={setAcceptedCharter} onStepValidChange={setIsStepValid} />;
             }
             if (step.key === 'step.certification') {
-              return <StepComponent ref={stepRefs[2]} certification={certification} setCertification={setCertification} />;
+              return <StepComponent ref={stepRefs[2]} certification={certification} setCertification={setCertification} onStepValidChange={setIsStepValid} />;
             }
             if (step.key === 'step.identity') {
               return <StepComponent
@@ -202,10 +269,10 @@ function RegisterRestaurant() {
               />;
             }
             if (step.key === 'step.coordinates') {
-              return <StepComponent ref={stepRefs[4]} contact={contact} setContact={setContact} />;
+              return <StepComponent ref={stepRefs[4]} contact={contact} setContact={setContact} onStepValidChange={setIsStepValid} />;
             }
             if (step.key === 'step.connexion') {
-              return <StepComponent ref={stepRefs[5]} credentials={credentials} setCredentials={setCredentials} loading={loading} handleSubmit={handleSubmit} />;
+              return <StepComponent ref={stepRefs[5]} loading={loading} handleSubmit={handleSubmit} onStepValidChange={setIsStepValid} />;
             }
             return null;
           })()}
