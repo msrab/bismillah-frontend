@@ -135,51 +135,57 @@ function RegisterRestaurant() {
         ? identity.company_number 
         : `BE${identity.company_number}`;
 
-      // Construit l'objet pour l'API backend
-      // Le backend va gérer: 1) créer/trouver ville 2) créer/trouver rue 3) créer restaurant 4) créer certification
-      const submissionData = {
-        // Identité du restaurant
-        name: identity.name,
-        company_number: formattedCompanyNumber,
-        restaurantTypeId: identity.restaurantTypeId ? Number(identity.restaurantTypeId) : null,
-        
-        // Adresse (le backend trouvera/créera la ville et la rue)
-        cityName: contact.cityName,
-        postalCode: contact.postalCode,
-        countryId: contact.countryId || 1,
-        streetName: contact.streetName,
-        address_number: contact.addressNumber,
-        
-        // Contact
-        phone: phoneToSubmit,
-        website: contact.website || null,
-        
-        // Connexion
-        email: connexionData.email,
-        password: connexionData.password,
-        
-        // Logo (si présent) - sera géré séparément si c'est un fichier
-        logo: logoState.file ? logoState.file.name : null,
-        
-        // Langue par défaut
-        defaultLanguage: 'fr',
-        
-        // Certification halal (si applicable)
-        hasCertification: certification.hasCertification === 'yes',
-        certifierId: certification.certifierId && certification.certifierId !== 'other' ? Number(certification.certifierId) : null,
-        customCertifierName: certification.certifierId === 'other' ? certification.customCertifierName : null,
-        certificationNumber: certification.certificationNumber || null,
-      };
+      // Utilise FormData pour envoyer les données avec le fichier logo
+      const formData = new FormData();
+      
+      // Identité du restaurant
+      formData.append('name', identity.name);
+      formData.append('company_number', formattedCompanyNumber);
+      if (identity.restaurantTypeId) {
+        formData.append('restaurantTypeId', identity.restaurantTypeId);
+      }
+      
+      // Adresse (le backend trouvera/créera la ville et la rue)
+      formData.append('cityName', contact.cityName);
+      formData.append('postalCode', contact.postalCode);
+      formData.append('countryId', contact.countryId || 1);
+      formData.append('streetName', contact.streetName);
+      formData.append('address_number', contact.addressNumber);
+      
+      // Contact
+      if (phoneToSubmit) formData.append('phone', phoneToSubmit);
+      if (contact.website) formData.append('website', contact.website);
+      
+      // Connexion
+      formData.append('email', connexionData.email);
+      formData.append('password', connexionData.password);
+      
+      // Logo (fichier)
+      if (logoState.file) {
+        formData.append('logo', logoState.file);
+      }
+      
+      // Langue par défaut
+      formData.append('defaultLanguage', 'fr');
+      
+      // Certification halal (si applicable)
+      formData.append('hasCertification', certification.hasCertification === 'yes');
+      if (certification.certifierId && certification.certifierId !== 'other') {
+        formData.append('certifierId', certification.certifierId);
+      }
+      if (certification.certifierId === 'other' && certification.customCertifierName) {
+        formData.append('customCertifierName', certification.customCertifierName);
+      }
+      if (certification.certificationNumber) {
+        formData.append('certificationNumber', certification.certificationNumber);
+      }
 
-      console.log('[DEBUG] Données de soumission:', submissionData);
-      console.log('[DEBUG] Contact state:', contact);
-      console.log('[DEBUG] address_number envoyé:', submissionData.address_number);
+      console.log('[DEBUG] FormData envoyé (logo inclus):', logoState.file ? logoState.file.name : 'pas de logo');
 
-      // Appel API pour créer le restaurant
+      // Appel API pour créer le restaurant (pas de Content-Type, le navigateur l'ajoute automatiquement avec boundary)
       const response = await fetch('http://localhost:5000/api/auth/restaurant/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submissionData),
+        body: formData,
       });
       const data = await response.json();
       console.log('[DEBUG] Réponse API:', data);
