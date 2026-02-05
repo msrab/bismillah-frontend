@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, TextField, CircularProgress } from '@mui/material';
 
 /**
@@ -28,6 +28,29 @@ const CertifierSelector = ({
   certificationNumber,
   setCertificationNumber
 }) => {
+  const [certificationNumberError, setCertificationNumberError] = useState('');
+
+  // Validation du numéro de certification (alphanumérique uniquement, max 15 caractères)
+  const validateCertificationNumber = (value) => {
+    if (!value) {
+      setCertificationNumberError('');
+      return;
+    }
+    if (!/^[a-zA-Z0-9]*$/.test(value)) {
+      setCertificationNumberError('Le numéro doit être alphanumérique (lettres et chiffres uniquement)');
+    } else if (value.length > 15) {
+      setCertificationNumberError('Maximum 15 caractères');
+    } else {
+      setCertificationNumberError('');
+    }
+  };
+
+  const handleCertificationNumberChange = (e) => {
+    const value = e.target.value;
+    setCertificationNumber(value);
+    validateCertificationNumber(value);
+  };
+
   return (
     <>
       {/* Sélection du certificateur */}
@@ -69,7 +92,10 @@ const CertifierSelector = ({
         fullWidth
         sx={{ mb: 2 }}
         value={certificationNumber || ''}
-        onChange={e => setCertificationNumber(e.target.value)}
+        onChange={handleCertificationNumberChange}
+        error={!!certificationNumberError}
+        helperText={certificationNumberError || 'Alphanumérique, max 15 caractères'}
+        inputProps={{ maxLength: 15 }}
       />
     </>
   );

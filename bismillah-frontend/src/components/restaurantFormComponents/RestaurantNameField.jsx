@@ -5,41 +5,63 @@ import { TextField } from '@mui/material';
 /**
  * RestaurantNameField autonome
  * Gère sa propre valeur, validation et erreur
- * Expose via ref : validate(), getError(), getValue()
+ * Transforme automatiquement en MAJUSCULES
+ * Expose via ref : validate(), getError(), getValue(), isValid()
  */
 const RestaurantNameField = forwardRef(({ value, onChange, required = false, disabled = false }, ref) => {
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
 
-  // Validation automatique dès que le champ atteint 3 caractères
+  // Validation : min 2 caractères, max 15, pas de 2 caractères spéciaux consécutifs
+  const validateName = (val) => {
+    const trimmed = val ? val.trim() : '';
+    if (required && !trimmed) {
+      return 'Le nom du restaurant est requis';
+    }
+    if (trimmed.length > 0 && trimmed.length < 2) {
+      return 'Le nom doit contenir au moins 2 caractères';
+    }
+    if (trimmed.length > 15) {
+      return 'Le nom ne peut pas dépasser 15 caractères';
+    }
+    // Interdit 2 caractères spéciaux consécutifs
+    const specialCharsRegex = /[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇœŒæÆ\s]{2,}/;
+    if (specialCharsRegex.test(trimmed)) {
+      return 'Le nom ne peut pas contenir deux caractères spéciaux consécutifs';
+    }
+    return '';
+  };
+
+  // Validation automatique dès que le champ atteint 2 caractères
   useEffect(() => {
-    if (value && value.trim().length >= 3) {
+    if (value && value.trim().length >= 2) {
       setTouched(true);
-      if (required && !value.trim()) {
-        setError('Le nom du restaurant est requis');
-      } else {
-        setError('');
-      }
+      setError(validateName(value));
     }
   }, [value, required]);
 
   useImperativeHandle(ref, () => ({
+    isValid: () => !validateName(value),
     validate: () => {
-      // ...
-      if (!touched) {
-        setError('Le nom du restaurant est requis');
-        return { valid: false };
-      }
-      if (required && (!value.trim() || value.trim().length < 3)) {
-        setError('Le nom du restaurant doit faire au moins 3 caractères');
-        return { valid: false };
-      }
-      setError('');
-      return { valid: true };
+      setTouched(true);
+      const err = validateName(value);
+      setError(err);
+      return { valid: !err };
     },
     getError: () => error,
-    getValue: () => value
+    getValue: () => value ? value.trim().toUpperCase() : ''
   }), [value, error, required, touched]);
+
+  const handleChange = (e) => {
+    // Transforme en majuscules en temps réel
+    const upperValue = e.target.value.toUpperCase();
+    onChange && onChange(upperValue);
+    setTouched(true);
+    if (error) {
+      const newError = validateName(upperValue);
+      setError(newError);
+    }
+  };
 
   return (
     <TextField
@@ -48,24 +70,16 @@ const RestaurantNameField = forwardRef(({ value, onChange, required = false, dis
       required={required}
       sx={{ mb: 2 }}
       value={value}
-      onChange={e => {
-        onChange && onChange(e.target.value);
+      onChange={handleChange}
+      onBlur={() => {
         setTouched(true);
-        if (error) setError('');
-        // Validation live dès 3 caractères
-        if (e.target.value.trim().length >= 3) {
-          // Appel de validate pour retour immédiat
-          const valid = required ? e.target.value.trim().length >= 3 : true;
-          if (valid) {
-            setError('');
-          }
-        }
+        setError(validateName(value));
       }}
-      onBlur={() => setTouched(true)}
-      placeholder="Ex: Restaurant Le Délice"
+      placeholder="Ex: O'TACOS"
       error={touched && !!error}
-      helperText={touched ? error : ''}
+      helperText={touched && error ? error : 'Max 15 caractères'}
       disabled={disabled}
+      inputProps={{ maxLength: 15 }}
     />
   );
 });

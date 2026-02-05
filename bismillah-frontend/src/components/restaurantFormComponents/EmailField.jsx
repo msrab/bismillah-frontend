@@ -5,7 +5,8 @@ import { TextField, CircularProgress, InputAdornment } from '@mui/material';
 /**
  * EmailField autonome
  * Gère sa propre valeur, validation (format + unicité asynchrone), erreur
- * Expose via ref : validate(), getError(), getValue()
+ * Transforme automatiquement en minuscules
+ * Expose via ref : validate(), getError(), getValue(), isValid()
  */
 const EmailField = forwardRef(({
   initialValue = '',
@@ -32,19 +33,20 @@ const EmailField = forwardRef(({
      * Utilisé au clic sur le bouton Suivant
      */
     validate: async () => {
-      if (required && !value.trim()) {
+      const normalizedEmail = value.trim().toLowerCase();
+      if (required && !normalizedEmail) {
         setError("L'email est requis");
         return false;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
+      if (!emailRegex.test(normalizedEmail)) {
         setError("Format d'email invalide");
         return false;
       }
       setError('');
       setChecking(true);
       try {
-        const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(value)}`);
+        const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(normalizedEmail)}`);
         const checkEmailData = await checkEmail.json();
         if (checkEmailData.exists) {
           setError("Cet email est déjà utilisé.");
@@ -61,8 +63,15 @@ const EmailField = forwardRef(({
       }
     },
     getError: () => error,
-    getValue: () => value
+    getValue: () => value.trim().toLowerCase()
   }), [value, error, required]);
+
+  const handleChange = (e) => {
+    // Transforme en minuscules en temps réel
+    const lowerValue = e.target.value.toLowerCase();
+    setValue(lowerValue);
+    if (error) setError('');
+  };
 
   return (
     <TextField
@@ -73,10 +82,7 @@ const EmailField = forwardRef(({
       disabled={disabled || checking}
       sx={{ mb: 2 }}
       value={value}
-      onChange={e => {
-        setValue(e.target.value);
-        if (error) setError('');
-      }}
+      onChange={handleChange}
       placeholder={placeholder}
       error={!!error}
       helperText={error}
