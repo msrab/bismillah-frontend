@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
-const { Restaurant, Street, City, RestaurantType, RestaurantTypeDescription, RestaurantLanguage, Language, PasswordResetToken } = require('../models');
+const { Restaurant, Street, City, Country, RestaurantType, RestaurantTypeDescription, RestaurantLanguage, Language, PasswordResetToken, RestaurantCertification, Certifier } = require('../models');
 const { createError } = require('../utils/createError');
 const { generateRestaurantSlug } = require('../utils/restaurantSlugHelper');
 
@@ -15,16 +15,38 @@ module.exports = {
         phone,
         email,
         password,
-        logo,
         website,
-        // Nouvelle méthode: cityId + streetName au lieu de streetId
-        cityId,
+        // Nouvelle méthode: cityName + postalCode
+        cityName,
+        postalCode,
+        countryId,
         streetName,
-        streetId,           // Ancienne méthode (rétrocompatibilité)
+        // Ancienne méthode (rétrocompatibilité)
+        cityId,
+        streetId,
+        // Type de restaurant
         restaurantTypeId,   // id d'un type existant
-        restaurantType,     // objet pour créer un nouveau type
-        defaultLanguage     // langue par défaut (fr, en, nl, de)
+        newTypeName,        // nom d'un nouveau type à créer (non validé)
+        restaurantType,     // objet pour créer un nouveau type (rétrocompatibilité)
+        defaultLanguage,    // langue par défaut (fr, en, nl, de)
+        // Certification halal
+        hasCertification,
+        certifierId,
+        customCertifierName,
+        certificationNumber
       } = req.body;
+
+      // Récupération du logo uploadé (si présent)
+      // Stocke le chemin relatif (ex: "uploads/restaurant/nom-resto/logo-xxx.png")
+      let logoPath = null;
+      if (req.file) {
+        // Convertit le chemin absolu en chemin relatif depuis le dossier backend
+        logoPath = req.file.path
+          .replace(/\\/g, '/')
+          .split('/uploads/')
+          .pop();
+        logoPath = 'uploads/' + logoPath;
+      }
 
       const existEmail = await Restaurant.findOne({ where: { email } });
       if (existEmail) {
@@ -50,8 +72,34 @@ module.exports = {
           return next(createError('Type de restaurant non trouvé.', 400));
         }
         typeIdToUse = restaurantTypeId;
+      } else if (newTypeName && typeof newTypeName === 'string' && newTypeName.trim()) {
+        // Créer un nouveau type simple (non validé) avec le nom fourni
+        const trimmedTypeName = newTypeName.trim();
+        
+        // Vérifier si un type avec ce nom existe déjà
+        const existingDesc = await RestaurantTypeDescription.findOne({
+          where: { languageId: 1, name: trimmedTypeName }
+        });
+        
+        if (existingDesc) {
+          // Utiliser le type existant
+          typeIdToUse = existingDesc.restaurantTypeId;
+        } else {
+          // Créer le nouveau type avec isValidated = false
+          const newType = await RestaurantType.create({
+            icon: '🍽️',
+            isValidated: false
+          });
+          await RestaurantTypeDescription.create({
+            restaurantTypeId: newType.id,
+            languageId: 1, // Français par défaut
+            name: trimmedTypeName,
+            description: `Type de restaurant : ${trimmedTypeName}`
+          });
+          typeIdToUse = newType.id;
+        }
       } else if (restaurantType) {
-        // Crée un nouveau type non validé
+        // Crée un nouveau type non validé (ancienne méthode - rétrocompatibilité)
         const { icon, descriptions } = restaurantType;
         const newType = await RestaurantType.create({ icon, isValidated: false });
         for (const desc of descriptions) {
@@ -62,24 +110,40 @@ module.exports = {
 
       // Gestion de l'adresse (rue)
       let streetIdToUse = streetId; // Rétrocompatibilité
+      let cityIdToUse = cityId; // Rétrocompatibilité
 
-      // Nouvelle méthode: créer/trouver la rue à partir de cityId et streetName
-      if (cityId && streetName) {
-        // Vérifier que la ville existe
-        const city = await City.findByPk(cityId);
+      // ========== Gestion de la ville (créer si n'existe pas) ==========
+      if (cityName && postalCode) {
+        // Chercher la ville par nom et code postal
+        let city = await City.findOne({
+          where: { 
+            name: cityName.trim(),
+            postal_code: postalCode.trim()
+          }
+        });
+
         if (!city) {
-          return next(createError('Ville non trouvée.', 400));
+          // Créer la ville
+          city = await City.create({
+            name: cityName.trim(),
+            postal_code: postalCode.trim(),
+            countryId: countryId || 1 // Par défaut Belgique
+          });
         }
 
-        // Chercher ou créer la rue
+        cityIdToUse = city.id;
+      }
+
+      // ========== Gestion de la rue (créer si n'existe pas) ==========
+      if (streetName && cityIdToUse) {
         let street = await Street.findOne({ 
-          where: { name: streetName.trim(), cityId: cityId } 
+          where: { name: streetName.trim(), cityId: cityIdToUse } 
         });
         
         if (!street) {
           street = await Street.create({ 
             name: streetName.trim(), 
-            cityId: cityId 
+            cityId: cityIdToUse 
           });
         }
         
@@ -90,30 +154,44 @@ module.exports = {
         return next(createError('L\'adresse est requise.', 400));
       }
 
+      if (!cityIdToUse) {
+        return next(createError('La ville est requise.', 400));
+      }
+
       const hash = await bcrypt.hash(password, 10);
 
-
+      // ========== Transformations ==========
+      const normalizedName = name ? name.trim().toUpperCase() : '';
+      const normalizedEmail = email ? email.trim().toLowerCase() : '';
 
       // Slug généré automatiquement à partir du nom et de la ville (unique)
-      let cityName = '';
-      if (cityId) {
-        const city = await City.findByPk(cityId);
-        cityName = city ? city.name : '';
-      }
-      const slug = await generateRestaurantSlug(name, cityName, Restaurant);
+      const cityForSlug = await City.findByPk(cityIdToUse);
+      const slug = await generateRestaurantSlug(normalizedName, cityForSlug ? cityForSlug.name : '', Restaurant);
 
       const newRestaurant = await Restaurant.create({
-        name,
+        name: normalizedName,
         slug,
         company_number,
         address_number,
         phone: phone || null,
-        email,
+        email: normalizedEmail,
         password: hash,
-        logo: logo || null,
+        logo: logoPath,
+        website: website || null,
         streetId: streetIdToUse,
         restaurantTypeId: typeIdToUse
       });
+
+      // ========== Création de la certification (si applicable) ==========
+      if (hasCertification && certificationNumber) {
+        await RestaurantCertification.create({
+          restaurantId: newRestaurant.id,
+          certifierId: certifierId || null,
+          custom_certifier_name: customCertifierName || null,
+          certification_number: certificationNumber,
+          is_verified: false
+        });
+      }
 
       // Ajouter la langue par défaut si spécifiée
       if (defaultLanguage) {
@@ -134,6 +212,11 @@ module.exports = {
             model: Street, 
             as: 'street',
             include: [{ model: City, as: 'city' }]
+          },
+          {
+            model: RestaurantCertification,
+            as: 'certifications',
+            include: [{ model: Certifier, as: 'certifier' }]
           }
         ]
       });

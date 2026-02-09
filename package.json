@@ -9,19 +9,26 @@
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm run preview",
-    
     "db:migrate": "cd backend && npx sequelize-cli db:migrate",
     "db:seed": "cd backend && npx sequelize-cli db:seed:all",
     "db:reset": "cd backend && npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
     "db:refresh": "cd backend && npx sequelize-cli db:migrate:undo:all && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
-    
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "test": "cd backend && npm test"
   },
-  "keywords": ["halal", "restaurant", "nodejs", "react", "express"],
+  "keywords": [
+    "halal",
+    "restaurant",
+    "nodejs",
+    "react",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "lodash": "^4.17.23"
   }
 }

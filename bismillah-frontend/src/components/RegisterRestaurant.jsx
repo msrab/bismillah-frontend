@@ -60,7 +60,7 @@ function RegisterRestaurant() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedCharter, setAcceptedCharter] = useState(false);
   const [certification, setCertification] = useState({ hasCertification: '', certifierId: '', customCertifierName: '', certificationNumber: '' });
-  const [identity, setIdentity] = useState({ name: '', company_number: '', restaurantTypeId: '' });
+  const [identity, setIdentity] = useState({ name: '', company_number: '', restaurantType: null });
   const {
     fileState: logoState,
     handleFileChange: handleLogoChange,
@@ -141,8 +141,16 @@ function RegisterRestaurant() {
       // Identité du restaurant
       formData.append('name', identity.name);
       formData.append('company_number', formattedCompanyNumber);
-      if (identity.restaurantTypeId) {
-        formData.append('restaurantTypeId', identity.restaurantTypeId);
+      
+      // Type de restaurant: soit un ID existant, soit un nouveau nom à créer
+      // Récupère les données du type depuis StepIdentity
+      const identityRef = stepRefs[3]; // StepIdentity est à l'index 3
+      const identityData = identityRef.current?.getFormData ? identityRef.current.getFormData() : {};
+      
+      if (identityData.restaurantTypeId) {
+        formData.append('restaurantTypeId', identityData.restaurantTypeId);
+      } else if (identityData.newTypeName) {
+        formData.append('newTypeName', identityData.newTypeName);
       }
       
       // Adresse (le backend trouvera/créera la ville et la rue)

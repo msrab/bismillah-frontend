@@ -100,11 +100,15 @@ const StepIdentity = forwardRef(({
       }
       return errors;
     },
-    getFormData: () => ({
-      name: nameRef.current?.getValue() || '',
-      company_number: companyRef.current?.getValue() || '',
-      restaurantTypeId: typeRef.current?.getValue() || ''
-    })
+    getFormData: () => {
+      const typeValue = typeRef.current?.getValue() || {};
+      return {
+        name: nameRef.current?.getValue() || '',
+        company_number: companyRef.current?.getValue() || '',
+        restaurantTypeId: typeValue.restaurantTypeId || null,
+        newTypeName: typeValue.newTypeName || null
+      };
+    }
   }), [isStepValid]);
 
   return (
@@ -141,11 +145,11 @@ const StepIdentity = forwardRef(({
         resetTrigger={identity}
       />
 
-      {/* Sélecteur du type de restaurant */}
-      <RestaurantTypeSelect
+      {/* Sélecteur du type de restaurant (autocomplete) */}
+      <RestaurantTypeAutocomplete
         ref={typeRef}
-        value={identity.restaurantTypeId}
-        onChange={val => setIdentity(prev => ({ ...prev, restaurantTypeId: val }))}
+        value={identity.restaurantType}
+        onChange={val => setIdentity(prev => ({ ...prev, restaurantType: val }))}
         required
       />
     </Box>

@@ -1,4 +1,5 @@
 const { RestaurantType, RestaurantTypeDescription, Language } = require('../models');
+const { Op } = require('sequelize');
 
 // Fonction de validation pour descriptions
 function validateDescriptions(descriptions) {
@@ -17,6 +18,111 @@ function validateDescriptions(descriptions) {
 }
 
 module.exports = {
+  // Rechercher les types de restaurant validés par nom (autocomplete)
+  async search(req, res, next) {
+    try {
+      const { q, languageId = 1 } = req.query;
+      if (!q || q.trim().length < 1) {
+        return res.json([]);
+      }
+      const searchTerm = q.trim();
+      
+      // Recherche les types validés dont le nom contient le terme
+      const types = await RestaurantType.findAll({
+        where: { isValidated: true },
+        include: [{
+          model: RestaurantTypeDescription,
+          as: 'RestaurantTypeDescriptions',
+          where: {
+            languageId: parseInt(languageId),
+            name: { [Op.like]: `%${searchTerm}%` }
+          },
+          include: [{ model: Language, as: 'language' }]
+        }],
+        limit: 10
+      });
+      
+      // Formater la réponse
+      const results = types.map(type => {
+        const desc = type.RestaurantTypeDescriptions[0];
+        return {
+          id: type.id,
+          icon: type.icon,
+          name: desc ? desc.name : `Type ${type.id}`,
+          description: desc ? desc.description : ''
+        };
+      });
+      
+      res.json(results);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  // Créer un nouveau type de restaurant (non validé par défaut lors de l'inscription)
+  async createSimple(req, res, next) {
+    try {
+      const { name, languageId = 1 } = req.body;
+      
+      if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ error: 'Le nom est requis.' });
+      }
+      
+      const trimmedName = name.trim();
+      
+      // Vérifier si un type avec ce nom existe déjà (validé ou non)
+      const existingDesc = await RestaurantTypeDescription.findOne({
+        where: {
+          languageId: parseInt(languageId),
+          name: { [Op.like]: trimmedName }
+        }
+      });
+      
+      if (existingDesc) {
+        // Retourner le type existant
+        const existingType = await RestaurantType.findByPk(existingDesc.restaurantTypeId, {
+          include: [{
+            model: RestaurantTypeDescription,
+            as: 'RestaurantTypeDescriptions',
+            where: { languageId: parseInt(languageId) }
+          }]
+        });
+        return res.json({
+          id: existingType.id,
+          icon: existingType.icon,
+          name: trimmedName,
+          isValidated: existingType.isValidated,
+          isNew: false
+        });
+      }
+      
+      // Créer le nouveau type avec isValidated = false
+      const newType = await RestaurantType.create({
+        icon: '🍽️', // Icône par défaut
+        isValidated: false
+      });
+      
+      // Créer la description
+      await RestaurantTypeDescription.create({
+        restaurantTypeId: newType.id,
+        languageId: parseInt(languageId),
+        name: trimmedName,
+        description: `Type de restaurant : ${trimmedName}`
+      });
+      
+      res.status(201).json({
+        id: newType.id,
+        icon: newType.icon,
+        name: trimmedName,
+        isValidated: false,
+        isNew: true,
+        message: 'Type créé, en attente de validation par l\'administration.'
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   // Créer un type de restaurant avec ses traductions
   async create(req, res, next) {
     try {

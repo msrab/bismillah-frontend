@@ -25,7 +25,8 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
 
   useImperativeHandle(ref, () => ({
     /**
-     * Validation sans effet de bord (pour validation live)
+     * Validation sans effet de bord (pour validation live du bouton)
+     * Retourne true si le champ est valide OU si la saisie est en cours (8-9 chiffres min)
      */
     isValid: () => {
       if (required && !value) return false;
@@ -34,9 +35,13 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
       let cleaned = value.replace(/\D/g, '');
       // Retire le 0 initial si présent
       if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
-      // Formate pour validation
-      const formatted = '+32' + cleaned;
-      return isValidBelgianPhoneNumber(formatted);
+      // Pour la validation live: accepte si longueur suffisante (8-9 chiffres)
+      if (cleaned.length >= 8 && cleaned.length <= 9) {
+        // Formate pour validation complète
+        const formatted = '+32' + cleaned;
+        return isValidBelgianPhoneNumber(formatted);
+      }
+      return false;
     },
     validate: () => {
       if (required && !value) {
@@ -85,6 +90,8 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
       onChange={e => {
         let val = e.target.value.replace(/\D/g, '');
         if (val.startsWith('0')) val = val.slice(1);
+        // Limiter à 9 chiffres (format belge sans le 0)
+        val = val.slice(0, 9);
         onChange({ target: { value: val } });
         setError(false);
         setHelperText('');
@@ -93,6 +100,9 @@ const PhoneField = forwardRef(({ value, onChange, required = false, disabled = f
       error={error}
       helperText={helperText}
       disabled={disabled}
+      inputProps={{
+        maxLength: 9
+      }}
       InputProps={{
         startAdornment: <InputAdornment position="start">+32</InputAdornment>
       }}

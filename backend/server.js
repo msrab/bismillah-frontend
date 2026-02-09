@@ -1,11 +1,12 @@
 // server.js
 /**
- * Point d’entrée de l’API Bismillah (module “core” qui exporte juste `app` et `sequelize`)
+ * Point d'entrée de l'API Bismillah (module "core" qui exporte juste `app` et `sequelize`)
  */
 require('dotenv').config();
 const express = require('express');
 const cors    = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 
 /* ------------------------------------------------------------------
  * Sequelize : instance + chargement des modèles
@@ -24,6 +25,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(helmet());
+
+// Servir les fichiers statiques (uploads de logos, images, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* -------------------------- Routes --------------------------------*/
 const authUserRoutes       = require('./routes/authUserRoutes');
