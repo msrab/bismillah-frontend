@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import RestaurantNameField from '../restaurantFormComponents/RestaurantNameField';
 import LogoUploadField from '../restaurantFormComponents/LogoUploadField';
 import CompanyNumberField from '../restaurantFormComponents/CompanyNumberField';
-import RestaurantTypeSelect from '../restaurantFormComponents/RestaurantTypeSelect';
+import RestaurantTypeAutocomplete from '../restaurantFormComponents/RestaurantTypeAutocomplete';
 
 /**
  * Composant StepIdentity
