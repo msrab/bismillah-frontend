@@ -88,15 +88,21 @@ const StepCertification = forwardRef(({ certification, setCertification, onStepV
           return { valid: false, message: 'Le numéro de certification doit être alphanumérique (max 15 caractères)'};
         }
         // Vérification unicité numéro de certification (appel API)
-        const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
-        const checkCertifData = await checkCertif.json();
-        if (checkCertifData.exists) {
-          setError('Ce numéro de certification existe déjà.');
-          return { valid: false, message: 'Ce numéro de certification existe déjà.' };
+        try {
+          const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
+          const checkCertifData = await checkCertif.json();
+          if (checkCertifData.exists) {
+            setError('Ce numéro de certification existe déjà.');
+            return { valid: false, message: 'Ce numéro de certification existe déjà.' };
+          }
+        } catch (err) {
+          console.error('Erreur vérification certification:', err);
+          setError('Erreur lors de la vérification du numéro de certification.');
+          return { valid: false, message: 'Erreur lors de la vérification du numéro de certification.' };
         }
       }
-setError('');
-    return { valid: true };
+      setError('');
+      return { valid: true };
     }
   }), [certification, isStepValid]);
 
