@@ -8,15 +8,8 @@ import { useState } from 'react';
 export function useStepNavigation(stepRefs, setMessage, hideMessage) {
   const [activeStep, setActiveStep] = useState(0);
 
-  const handleNext = async () => {
-    const ref = stepRefs[activeStep];
-    if (ref && ref.current && typeof ref.current.validate === 'function') {
-      const result = await ref.current.validate();
-      if (!result.valid) {
-        setMessage({ type: 'error', text: result.message, showLink: result.showLink });
-        return;
-      }
-    }
+  // handleNext ne fait plus de validation - elle est gérée par handleNextStep dans RegisterRestaurant
+  const handleNext = () => {
     hideMessage && hideMessage();
     setActiveStep(prev => prev + 1);
   };
