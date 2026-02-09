@@ -38,15 +38,14 @@ const StepIdentity = forwardRef(({
   useEffect(() => {}, [identity]);
   useEffect(() => {}, [isStepValid]);
 
-  // Met à jour la validité à chaque changement de champ
+  // Met à jour la validité à chaque changement de champ (utilise isValid, pas validate)
   useEffect(() => {
-    const nameResult = nameRef.current?.validate();
-    const companyResult = companyRef.current?.validate();
-    const typeResult = typeRef.current?.validate();
-    const valid = !!(nameResult?.valid && companyResult?.valid && typeResult?.valid);
+    const nameValid = nameRef.current?.isValid?.() ?? false;
+    const companyValid = companyRef.current?.isValid?.() ?? false;
+    const typeValid = typeRef.current?.isValid?.() ?? false;
+    const valid = nameValid && companyValid && typeValid;
     setIsStepValid(valid);
     if (onStepValidChange) onStepValidChange(valid);
-    // ...
   });
 
   // Expose la méthode validate (API) et le booléen isStepValid
