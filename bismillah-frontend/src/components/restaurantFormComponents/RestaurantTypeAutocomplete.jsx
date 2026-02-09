@@ -130,6 +130,12 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
     if (selectedValue && limited !== selectedValue.name) {
       setSelectedValue(null);
       if (onChange) onChange(null);
+    } else if (!selectedValue && limited) {
+      // Nouveau type en cours de saisie - notifier le parent pour déclencher une re-validation
+      if (onChange) onChange({ isNewType: true, name: limited });
+    } else if (!selectedValue && !limited) {
+      // Champ vidé
+      if (onChange) onChange(null);
     }
   };
 
