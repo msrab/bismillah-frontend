@@ -5,7 +5,7 @@ import { Autocomplete, TextField, Typography, Box, Chip } from '@mui/material';
  * RestaurantTypeAutocomplete
  * - Recherche les types de restaurant validés par nom
  * - Permet de créer un nouveau type si aucun résultat
- * - Validation: alphabétique uniquement, max 15 caractères
+ * - Validation: alphabétique uniquement, max 30 caractères
  */
 const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, required = false, disabled = false }, ref) => {
   const [options, setOptions] = useState([]);
@@ -83,8 +83,8 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
           setError('Le type doit contenir au moins 2 caractères.');
           return { valid: false };
         }
-        if (inputValue.trim().length > 15) {
-          setError('Le type ne peut pas dépasser 15 caractères.');
+        if (inputValue.trim().length > 30) {
+          setError('Le type ne peut pas dépasser 30 caractères.');
           return { valid: false };
         }
         setError('');
@@ -113,7 +113,7 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
     },
     isValid: () => {
       if (selectedValue && selectedValue.id) return true;
-      if (inputValue.trim() && isValidInput(inputValue) && inputValue.trim().length >= 2 && inputValue.trim().length <= 15) return true;
+      if (inputValue.trim() && isValidInput(inputValue) && inputValue.trim().length >= 2 && inputValue.trim().length <= 30) return true;
       return !required;
     }
   }), [selectedValue, inputValue, error, required]);
@@ -122,8 +122,8 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
   const handleInputChange = (_, newInputValue) => {
     // Filtrer les caractères non autorisés
     const filtered = newInputValue.replace(/[^a-zA-ZàâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇœŒæÆ\s]/g, '');
-    // Limiter à 15 caractères
-    const limited = filtered.slice(0, 15);
+    // Limiter à 30 caractères
+    const limited = filtered.slice(0, 30);
     setInputValue(limited);
     
     // Si l'input change, on réinitialise la sélection (sauf si c'est le nom du type sélectionné)
@@ -185,7 +185,7 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
             placeholder="Ex: Pizzeria, Kebab, Snack..."
             inputProps={{
               ...params.inputProps,
-              maxLength: 15
+              maxLength: 30
             }}
           />
         )}

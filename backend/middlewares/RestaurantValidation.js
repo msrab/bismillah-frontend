@@ -4,7 +4,7 @@ const signupRestaurantValidation = [
   body('name')
     .trim()
     .notEmpty().withMessage('Le nom est requis.')
-    .isLength({ min: 2, max: 15 }).withMessage('Le nom doit contenir entre 2 et 15 caractères.')
+    .isLength({ min: 2, max: 30 }).withMessage('Le nom doit contenir entre 2 et 30 caractères.')
     // Interdit deux caractères spéciaux consécutifs (tout sauf lettres, chiffres, accents, espaces)
     .not().matches(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇœŒæÆ\s]{2,}/).withMessage('Le nom ne peut pas contenir deux caractères spéciaux consécutifs.')
     // Interdit les balises script et événements JS

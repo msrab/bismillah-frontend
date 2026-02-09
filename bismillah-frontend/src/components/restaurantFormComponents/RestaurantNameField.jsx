@@ -12,7 +12,7 @@ const RestaurantNameField = forwardRef(({ value, onChange, required = false, dis
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
 
-  // Validation : min 2 caractères, max 15, pas de 2 caractères spéciaux consécutifs
+  // Validation : min 2 caractères, max 30, pas de 2 caractères spéciaux consécutifs
   const validateName = (val) => {
     const trimmed = val ? val.trim() : '';
     if (required && !trimmed) {
@@ -21,8 +21,8 @@ const RestaurantNameField = forwardRef(({ value, onChange, required = false, dis
     if (trimmed.length > 0 && trimmed.length < 2) {
       return 'Le nom doit contenir au moins 2 caractères';
     }
-    if (trimmed.length > 15) {
-      return 'Le nom ne peut pas dépasser 15 caractères';
+    if (trimmed.length > 30) {
+      return 'Le nom ne peut pas dépasser 30 caractères';
     }
     // Interdit 2 caractères spéciaux consécutifs
     const specialCharsRegex = /[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇœŒæÆ\s]{2,}/;
@@ -77,9 +77,9 @@ const RestaurantNameField = forwardRef(({ value, onChange, required = false, dis
       }}
       placeholder="Ex: O'TACOS"
       error={touched && !!error}
-      helperText={touched && error ? error : 'Max 15 caractères'}
+      helperText={touched && error ? error : 'Max 30 caractères'}
       disabled={disabled}
-      inputProps={{ maxLength: 15 }}
+      inputProps={{ maxLength: 30 }}
     />
   );
 });
