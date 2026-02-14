@@ -55,6 +55,7 @@ const StepIdentity = forwardRef(({
       const nameResult = nameRef.current?.validate && nameRef.current.validate();
       const companyResult = companyRef.current?.validate && companyRef.current.validate();
       const typeResult = typeRef.current?.validate && typeRef.current.validate();
+      console.log('[DEBUG StepIdentity validate] nameResult:', nameResult, 'companyResult:', companyResult, 'typeResult:', typeResult);
       if (!nameResult?.valid || !companyResult?.valid || !typeResult?.valid) {
         return { valid: false };
       }

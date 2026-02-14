@@ -86,11 +86,17 @@ function RegisterRestaurant() {
   const handleNextStep = async () => {
     // Appel la méthode validate du step courant (peut inclure une validation API)
     const stepRef = stepRefs[activeStep];
-    if (!stepRef || !stepRef.current || typeof stepRef.current.validate !== 'function') return;
+    console.log('[DEBUG handleNextStep] activeStep:', activeStep, 'stepRef:', stepRef);
+    if (!stepRef || !stepRef.current || typeof stepRef.current.validate !== 'function') {
+      console.log('[DEBUG handleNextStep] No valid stepRef or validate method');
+      return;
+    }
     const result = await stepRef.current.validate();
+    console.log('[DEBUG handleNextStep] validate result:', result);
     setIsStepValid(result && result.valid);
     // Si la validation échoue et qu'il y a un message d'erreur, l'afficher globalement
     if (!result?.valid) {
+      console.log('[DEBUG handleNextStep] Validation failed:', result);
       if (result?.message) showMessage(result.message, 'error');
       return;
     }
@@ -103,6 +109,7 @@ function RegisterRestaurant() {
       }
     }
     // Si tout est ok, passer à la step suivante
+    console.log('[DEBUG handleNextStep] Calling handleNext()');
     handleNext();
   };
 

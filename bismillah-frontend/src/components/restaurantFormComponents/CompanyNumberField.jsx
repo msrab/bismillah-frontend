@@ -40,11 +40,6 @@ const CompanyNumberField = forwardRef(({ value, onChange, required = false, disa
 
   useImperativeHandle(ref, () => ({
     validate: () => {
-      // ...
-      if (!touched) {
-        setError("Le numéro d'entreprise est obligatoire.");
-        return { valid: false };
-      }
       setTouched(true);
       const err = localValidate(value);
       setError(err);

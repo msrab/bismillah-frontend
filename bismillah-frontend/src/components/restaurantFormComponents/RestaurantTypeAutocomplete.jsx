@@ -67,14 +67,14 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
     validate: () => {
       setTouched(true);
       
-      // Cas 1: Un type existant est sélectionné
+      // Cas 1: Un type existant est sélectionné (a un id)
       if (selectedValue && selectedValue.id) {
         setError('');
         return { valid: true };
       }
       
-      // Cas 2: Nouveau type à créer (texte saisi mais pas de sélection)
-      if (inputValue.trim() && !selectedValue) {
+      // Cas 2: Nouveau type à créer (texte saisi, pas de sélection avec id)
+      if (inputValue.trim()) {
         if (!isValidInput(inputValue)) {
           setError('Uniquement des lettres sont autorisées.');
           return { valid: false };
