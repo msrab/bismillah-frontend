@@ -1,5 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { TextField, Grid } from "@mui/material";
+import { apiUrl } from '../../config/api';
 import { isNonEmptyString } from '../../utils/validationUtils';
 
 /**
@@ -58,7 +59,7 @@ const AddressFields = forwardRef(({ addressNumber, streetName, cityId, onChange,
       }
       // Vérification unicité si cityId fourni et champs valides
       if (valid && cityId && isNonEmptyString(streetName) && isNonEmptyString(addressNumber)) {
-        const checkAddress = await fetch(`http://localhost:5000/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(addressNumber)}&streetName=${encodeURIComponent(streetName)}`);
+        const checkAddress = await fetch(apiUrl(`/api/restaurants/check-address?cityId=${encodeURIComponent(cityId)}&addressNumber=${encodeURIComponent(addressNumber)}&streetName=${encodeURIComponent(streetName)}`));
         const checkAddressData = await checkAddress.json();
         if (checkAddressData.exists) {
           setUniqueError('Un restaurant existe déjà à cette adresse.');

@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
+import { apiUrl } from '../../config/api';
 
 /**
  * RestaurantTypeSelect autonome
@@ -14,7 +15,7 @@ const RestaurantTypeSelect = forwardRef(({ value, onChange, required = false, di
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
   useEffect(() => {
-    fetch('http://localhost:5000/api/restaurant-types')
+    fetch(apiUrl('/api/restaurant-types'))
       .then(res => res.json())
       .then(data => setOptions(Array.isArray(data) ? data : []))
       .catch(() => setOptions([]))

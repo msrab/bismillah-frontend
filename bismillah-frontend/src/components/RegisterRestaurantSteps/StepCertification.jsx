@@ -2,6 +2,7 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 
 import { Box, Typography, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, Alert } from '@mui/material';
+import { apiUrl } from '../../config/api';
 import CertifierSelector from '../restaurantFormComponents/CertifierSelector';
 
 /**
@@ -38,7 +39,7 @@ const StepCertification = forwardRef(({ certification, setCertification, onStepV
 
   // Récupère la liste des certificateurs au montage
   useEffect(() => {
-    fetch('http://localhost:5000/api/certifiers')
+    fetch(apiUrl('/api/certifiers'))
       .then(res => res.json())
       .then(data => setCertifiers(Array.isArray(data) ? data : []))
       .catch(() => setCertifiers([]))
@@ -89,7 +90,7 @@ const StepCertification = forwardRef(({ certification, setCertification, onStepV
         }
         // Vérification unicité numéro de certification (appel API)
         try {
-          const checkCertif = await fetch(`http://localhost:5000/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`);
+          const checkCertif = await fetch(apiUrl(`/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`));
           const checkCertifData = await checkCertif.json();
           if (checkCertifData.exists) {
             setError('Ce numéro de certification existe déjà.');

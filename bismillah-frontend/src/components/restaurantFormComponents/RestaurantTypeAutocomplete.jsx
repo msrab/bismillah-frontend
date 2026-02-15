@@ -1,5 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Autocomplete, TextField, Typography, Box, Chip } from '@mui/material';
+import { apiUrl } from '../../config/api';
 
 /**
  * RestaurantTypeAutocomplete
@@ -33,7 +34,7 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
     }
 
     setLoading(true);
-    fetch(`http://localhost:5000/api/restaurant-types/search?q=${encodeURIComponent(inputValue)}&languageId=1`)
+    fetch(apiUrl(`/api/restaurant-types/search?q=${encodeURIComponent(inputValue)}&languageId=1`))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

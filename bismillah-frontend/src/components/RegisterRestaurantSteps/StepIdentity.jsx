@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography } from '@mui/material';
+import { apiUrl } from '../../config/api';
 import RestaurantNameField from '../restaurantFormComponents/RestaurantNameField';
 import LogoUploadField from '../restaurantFormComponents/LogoUploadField';
 import CompanyNumberField from '../restaurantFormComponents/CompanyNumberField';
@@ -63,7 +64,7 @@ const StepIdentity = forwardRef(({
       const companyNumber = companyRef.current?.getValue() || '';
       if (companyNumber.startsWith('BE') && companyNumber.length === 12) {
         try {
-          const checkCompany = await fetch(`http://localhost:5000/api/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumber)}`);
+          const checkCompany = await fetch(apiUrl(`/api/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumber)}`));
           const checkCompanyData = await checkCompany.json();
           if (!checkCompany.ok) {
             companyRef.current?.setError && companyRef.current.setError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");

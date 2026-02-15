@@ -1,6 +1,7 @@
 
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { TextField, CircularProgress, InputAdornment } from '@mui/material';
+import { apiUrl } from '../../config/api';
 
 /**
  * EmailField autonome
@@ -46,7 +47,7 @@ const EmailField = forwardRef(({
       setError('');
       setChecking(true);
       try {
-        const checkEmail = await fetch(`http://localhost:5000/api/restaurants/check-email?email=${encodeURIComponent(normalizedEmail)}`);
+        const checkEmail = await fetch(apiUrl(`/api/restaurants/check-email?email=${encodeURIComponent(normalizedEmail)}`));
         const checkEmailData = await checkEmail.json();
         if (checkEmailData.exists) {
           setError("Cet email est déjà utilisé.");
