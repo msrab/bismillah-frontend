@@ -33,6 +33,10 @@ module.exports = (sequelize) => {
       logo:           { type: DataTypes.STRING },
       nb_followers:   { type: DataTypes.INTEGER, defaultValue: 0 },
       is_active:      { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+      // Champs pour la vérification email
+      is_email_verified:          { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+      verification_token:         { type: DataTypes.STRING, allowNull: true },
+      verification_token_expires: { type: DataTypes.DATE, allowNull: true },
       streetId: {
         type: DataTypes.INTEGER,
         allowNull: true,

@@ -52,6 +52,20 @@ module.exports = {
         allowNull: false,
         defaultValue: true
       },
+      // Champs pour la vérification email
+      is_email_verified: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+      },
+      verification_token: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      verification_token_expires: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
       streetId: {
         type: Sequelize.INTEGER,
         allowNull: true,
