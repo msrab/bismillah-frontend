@@ -39,7 +39,7 @@ const StepCertification = forwardRef(({ certification, setCertification, onStepV
 
   // Récupère la liste des certificateurs au montage
   useEffect(() => {
-    fetch(apiUrl('/api/certifiers'))
+    fetch(apiUrl('/certifiers'))
       .then(res => res.json())
       .then(data => setCertifiers(Array.isArray(data) ? data : []))
       .catch(() => setCertifiers([]))
@@ -90,7 +90,7 @@ const StepCertification = forwardRef(({ certification, setCertification, onStepV
         }
         // Vérification unicité numéro de certification (appel API)
         try {
-          const checkCertif = await fetch(apiUrl(`/api/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`));
+          const checkCertif = await fetch(apiUrl(`/restaurants/check-certification-number?certificationNumber=${encodeURIComponent(certification.certificationNumber)}`));
           const checkCertifData = await checkCertif.json();
           if (checkCertifData.exists) {
             setError('Ce numéro de certification existe déjà.');

@@ -15,7 +15,7 @@ const RestaurantTypeSelect = forwardRef(({ value, onChange, required = false, di
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
   useEffect(() => {
-    fetch(apiUrl('/api/restaurant-types'))
+    fetch(apiUrl('/restaurant-types'))
       .then(res => res.json())
       .then(data => setOptions(Array.isArray(data) ? data : []))
       .catch(() => setOptions([]))

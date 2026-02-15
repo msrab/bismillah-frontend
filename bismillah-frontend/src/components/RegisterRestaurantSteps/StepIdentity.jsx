@@ -64,7 +64,7 @@ const StepIdentity = forwardRef(({
       const companyNumber = companyRef.current?.getValue() || '';
       if (companyNumber.startsWith('BE') && companyNumber.length === 12) {
         try {
-          const checkCompany = await fetch(apiUrl(`/api/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumber)}`));
+          const checkCompany = await fetch(apiUrl(`/restaurants/check-company-number?company_number=${encodeURIComponent(companyNumber)}`));
           const checkCompanyData = await checkCompany.json();
           if (!checkCompany.ok) {
             companyRef.current?.setError && companyRef.current.setError(checkCompanyData.error || "Erreur lors de la vérification du numéro d'entreprise.");

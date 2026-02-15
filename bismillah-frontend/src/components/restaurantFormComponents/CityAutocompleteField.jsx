@@ -44,7 +44,7 @@ const CityAutocomplete = forwardRef(({ value = null, onChange, disabled = false,
         }
         setError("");
         // Recherche la ville exacte
-        const searchRes = await fetch(apiUrl(`/api/cities/search?name=${encodeURIComponent(cityValue.localityName)}&postalCode=${encodeURIComponent(cityValue.postalCode)}&countryId=${encodeURIComponent(countryId)}`));
+        const searchRes = await fetch(apiUrl(`/cities/search?name=${encodeURIComponent(cityValue.localityName)}&postalCode=${encodeURIComponent(cityValue.postalCode)}&countryId=${encodeURIComponent(countryId)}`));
         const searchData = await searchRes.json();
         if (Array.isArray(searchData) && searchData.length > 0 && searchData[0].id && !isNaN(Number(searchData[0].id))) {
           return { valid: true, cityId: searchData[0].id };
@@ -55,7 +55,7 @@ const CityAutocomplete = forwardRef(({ value = null, onChange, disabled = false,
             postalCode: cityValue.postalCode,
             countryId: countryId
           };
-          const cityRes = await fetch(apiUrl('/api/cities'), {
+          const cityRes = await fetch(apiUrl('/cities'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(cityPayload)
@@ -83,7 +83,7 @@ const CityAutocomplete = forwardRef(({ value = null, onChange, disabled = false,
     }
     setCityLoading(true);
     // Appel à l'API backend pour l'autocomplétion
-    fetch(apiUrl(`/api/cities/autocomplete?q=${encodeURIComponent(cityInput)}&countryIsoCode=${encodeURIComponent(countryIsoCode)}`))
+    fetch(apiUrl(`/cities/autocomplete?q=${encodeURIComponent(cityInput)}&countryIsoCode=${encodeURIComponent(countryIsoCode)}`))
       .then(res => res.json())
       .then(data => {
         // Le backend doit retourner [{ postalCode, name, id }]

@@ -47,7 +47,7 @@ const EmailField = forwardRef(({
       setError('');
       setChecking(true);
       try {
-        const checkEmail = await fetch(apiUrl(`/api/restaurants/check-email?email=${encodeURIComponent(normalizedEmail)}`));
+        const checkEmail = await fetch(apiUrl(`/restaurants/check-email?email=${encodeURIComponent(normalizedEmail)}`));
         const checkEmailData = await checkEmail.json();
         if (checkEmailData.exists) {
           setError("Cet email est déjà utilisé.");

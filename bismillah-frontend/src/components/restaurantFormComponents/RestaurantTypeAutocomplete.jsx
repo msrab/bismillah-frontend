@@ -34,7 +34,7 @@ const RestaurantTypeAutocomplete = forwardRef(({ value = null, onChange, require
     }
 
     setLoading(true);
-    fetch(apiUrl(`/api/restaurant-types/search?q=${encodeURIComponent(inputValue)}&languageId=1`))
+    fetch(apiUrl(`/restaurant-types/search?q=${encodeURIComponent(inputValue)}&languageId=1`))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
