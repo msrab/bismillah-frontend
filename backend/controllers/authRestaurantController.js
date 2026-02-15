@@ -1,8 +1,18 @@
 const bcrypt = require('bcrypt');
 const jwt    = require('jsonwebtoken');
+const crypto = require('crypto');
 const { Restaurant, Street, City, Country, RestaurantType, RestaurantTypeDescription, RestaurantLanguage, Language, PasswordResetToken, RestaurantCertification, Certifier } = require('../models');
 const { createError } = require('../utils/createError');
 const { generateRestaurantSlug } = require('../utils/restaurantSlugHelper');
+const { sendVerificationEmail } = require('../utils/emailService');
+
+/**
+ * Génère un token de vérification sécurisé
+ * @returns {string} Token hexadécimal de 32 caractères
+ */
+const generateVerificationToken = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
 
 module.exports = {
 
@@ -168,6 +178,10 @@ module.exports = {
       const cityForSlug = await City.findByPk(cityIdToUse);
       const slug = await generateRestaurantSlug(normalizedName, cityForSlug ? cityForSlug.name : '', Restaurant);
 
+      // ========== Génération du token de vérification email ==========
+      const verificationToken = generateVerificationToken();
+      const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+
       const newRestaurant = await Restaurant.create({
         name: normalizedName,
         slug,
@@ -179,7 +193,11 @@ module.exports = {
         logo: logoPath,
         website: website || null,
         streetId: streetIdToUse,
-        restaurantTypeId: typeIdToUse
+        restaurantTypeId: typeIdToUse,
+        // Vérification email
+        is_email_verified: false,
+        verification_token: verificationToken,
+        verification_token_expires: verificationTokenExpires
       });
 
       // ========== Création de la certification (si applicable) ==========
@@ -205,8 +223,22 @@ module.exports = {
         }
       }
 
-      // On récupère le restaurant avec les associations
+      // ========== Envoi de l'email de vérification ==========
+      try {
+        const emailResult = await sendVerificationEmail(
+          normalizedEmail,
+          normalizedName,
+          verificationToken
+        );
+        console.log('📧 Email de vérification envoyé:', emailResult.previewUrl || 'envoyé');
+      } catch (emailError) {
+        console.error('❌ Erreur envoi email:', emailError);
+        // On continue même si l'email échoue, l'utilisateur pourra demander un renvoi
+      }
+
+      // On récupère le restaurant avec les associations (sans les champs sensibles)
       const restaurantWithAssociations = await Restaurant.findByPk(newRestaurant.id, {
+        attributes: { exclude: ['password', 'verification_token', 'verification_token_expires'] },
         include: [
           { 
             model: Street, 
@@ -222,7 +254,8 @@ module.exports = {
       });
 
       return res.status(201).json({
-        message: 'Restaurant créé avec succès.',
+        message: 'Inscription réussie ! Un email de vérification a été envoyé à votre adresse. Veuillez cliquer sur le lien pour activer votre compte.',
+        requiresVerification: true,
         restaurant: restaurantWithAssociations
       });
     } catch (error) {
@@ -263,6 +296,15 @@ module.exports = {
       const match = await bcrypt.compare(password, restaurant.password);
       if (!match) {
         return next(createError('Mot de passe incorrect.', 401));
+      }
+
+      // ========== Vérification du compte email ==========
+      if (!restaurant.is_email_verified) {
+        return res.status(403).json({
+          message: 'Votre compte n\'est pas encore vérifié. Veuillez cliquer sur le lien envoyé par email pour activer votre compte.',
+          requiresVerification: true,
+          email: restaurant.email
+        });
       }
 
       const token = jwt.sign(
@@ -374,6 +416,115 @@ module.exports = {
       await rest.save();
 
       return res.status(200).json({ message: 'Mot de passe changé avec succès.' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Vérifie l'email d'un restaurant via le token envoyé par email
+   * GET /api/auth/restaurant/verify-email?token=xxx
+   */
+  async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.query;
+
+      if (!token) {
+        return next(createError('Token de vérification manquant.', 400));
+      }
+
+      // Recherche le restaurant avec ce token
+      const restaurant = await Restaurant.findOne({
+        where: { verification_token: token }
+      });
+
+      if (!restaurant) {
+        return next(createError('Token de vérification invalide ou expiré.', 400));
+      }
+
+      // Vérifie si le token n'a pas expiré
+      if (restaurant.verification_token_expires && new Date() > restaurant.verification_token_expires) {
+        return next(createError('Le lien de vérification a expiré. Veuillez demander un nouveau lien.', 400));
+      }
+
+      // Vérifie si le compte n'est pas déjà vérifié
+      if (restaurant.is_email_verified) {
+        return res.status(200).json({
+          message: 'Votre compte est déjà vérifié. Vous pouvez vous connecter.',
+          alreadyVerified: true
+        });
+      }
+
+      // Active le compte
+      restaurant.is_email_verified = true;
+      restaurant.verification_token = null;
+      restaurant.verification_token_expires = null;
+      await restaurant.save();
+
+      return res.status(200).json({
+        message: 'Votre compte a été vérifié avec succès ! Vous pouvez maintenant vous connecter.',
+        verified: true
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Renvoie l'email de vérification
+   * POST /api/auth/restaurant/resend-verification
+   */
+  async resendVerificationEmail(req, res, next) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return next(createError('L\'email est requis.', 400));
+      }
+
+      const restaurant = await Restaurant.findOne({
+        where: { email: email.toLowerCase().trim() }
+      });
+
+      if (!restaurant) {
+        // Pour la sécurité, on renvoie un message générique
+        return res.status(200).json({
+          message: 'Si cet email est enregistré, un nouveau lien de vérification sera envoyé.'
+        });
+      }
+
+      // Vérifie si le compte n'est pas déjà vérifié
+      if (restaurant.is_email_verified) {
+        return res.status(200).json({
+          message: 'Votre compte est déjà vérifié. Vous pouvez vous connecter.',
+          alreadyVerified: true
+        });
+      }
+
+      // Génère un nouveau token
+      const verificationToken = generateVerificationToken();
+      const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+
+      restaurant.verification_token = verificationToken;
+      restaurant.verification_token_expires = verificationTokenExpires;
+      await restaurant.save();
+
+      // Envoie l'email
+      try {
+        const emailResult = await sendVerificationEmail(
+          restaurant.email,
+          restaurant.name,
+          verificationToken
+        );
+        console.log('📧 Email de vérification renvoyé:', emailResult.previewUrl || 'envoyé');
+      } catch (emailError) {
+        console.error('❌ Erreur envoi email:', emailError);
+        return next(createError('Erreur lors de l\'envoi de l\'email. Veuillez réessayer plus tard.', 500));
+      }
+
+      return res.status(200).json({
+        message: 'Un nouveau lien de vérification a été envoyé à votre adresse email.'
+      });
     } catch (error) {
       next(error);
     }

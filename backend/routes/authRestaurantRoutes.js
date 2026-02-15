@@ -23,6 +23,10 @@ router.post('/login', loginRestaurantValidation, authRestaurantController.login)
 router.post('/forgot-password', forgotPasswordValidation, authRestaurantController.forgotPassword);
 router.post('/reset-password', resetPasswordValidation, authRestaurantController.resetPassword);
 
+// Routes de vérification email (publiques)
+router.get('/verify-email', authRestaurantController.verifyEmail);
+router.post('/resend-verification', authRestaurantController.resendVerificationEmail);
+
 // Routes protégées (restaurant connecté uniquement)
 router.post('/logout', verifyToken, requireRole('restaurant'), authRestaurantController.logout);
 router.post('/change-password', verifyToken, requireRole('restaurant'), changePasswordValidation, authRestaurantController.changePassword);
