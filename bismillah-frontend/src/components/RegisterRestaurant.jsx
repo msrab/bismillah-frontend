@@ -211,12 +211,13 @@ function RegisterRestaurant() {
         throw new Error(errorMsg);
       }
       
-      showMessage('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'success');
-      
-      // Redirection vers la page de connexion après 2 secondes
-      setTimeout(() => {
-        navigate('/login-restaurant');
-      }, 2000);
+      // Redirection vers la page de vérification email
+      navigate('/verify-email-pending', {
+        state: {
+          email: connexionData.email,
+          restaurantName: identity.name
+        }
+      });
 
     } catch (err) {
       console.error('[ERROR] Inscription:', err);
