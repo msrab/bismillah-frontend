@@ -10,6 +10,7 @@ import { Box, Button, Typography, Paper, Alert, Stepper, Step, StepLabel, Link }
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useLanguage } from '../i18n';
 import { useStepNavigation } from '../hooks/useStepNavigation';
+import { apiUrl } from '../config/api';
 // Step components
 import StepHalal from './RegisterRestaurantSteps/StepHalal';
 import StepCertification from './RegisterRestaurantSteps/StepCertification';
@@ -198,7 +199,7 @@ function RegisterRestaurant() {
       console.log('[DEBUG] FormData envoyé (logo inclus):', logoState.file ? logoState.file.name : 'pas de logo');
 
       // Appel API pour créer le restaurant (pas de Content-Type, le navigateur l'ajoute automatiquement avec boundary)
-      const response = await fetch('http://localhost:5000/api/auth/restaurant/signup', {
+      const response = await fetch(apiUrl('/auth/restaurant/signup'), {
         method: 'POST',
         body: formData,
       });

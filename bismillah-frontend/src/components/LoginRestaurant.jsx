@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, TextField, Button, Typography, Paper, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../config/api';
 
 function LoginRestaurant() {
   const navigate = useNavigate();
@@ -16,9 +17,8 @@ function LoginRestaurant() {
     setRequiresVerification(false);
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/restaurant/login', {
+      const res = await apiFetch('/auth/restaurant/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
       const data = await res.json();

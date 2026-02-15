@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { apiUrl } from '../config/api';
 
 function RestaurantDetail() {
   const { id } = useParams();
@@ -7,7 +8,7 @@ function RestaurantDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/restaurants/${id}`)
+    fetch(apiUrl(`/restaurants/${id}`))
       .then(res => res.json())
       .then(data => {
         setRestaurant(data.restaurant || data); // selon ta structure de réponse

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Email, CheckCircle, Refresh } from '@mui/icons-material';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { apiFetch } from '../config/api';
 
 /**
  * Page affichée après l'inscription d'un restaurant
@@ -29,9 +30,8 @@ function VerifyEmailPending() {
     setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/restaurant/resend-verification', {
+      const response = await apiFetch('/auth/restaurant/resend-verification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
 

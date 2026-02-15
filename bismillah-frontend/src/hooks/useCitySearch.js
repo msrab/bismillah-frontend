@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { apiUrl } from '../config/api';
 
 /**
  * Hook personnalisé pour la recherche de villes avec debounce
@@ -16,7 +17,7 @@ export default function useCitySearch() {
     }
     setCityLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/cities/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(apiUrl(`/cities/search?q=${encodeURIComponent(query)}`));
       const data = await res.json();
       setCityOptions(data);
     } catch (error) {

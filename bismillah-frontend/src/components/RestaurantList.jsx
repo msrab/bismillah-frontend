@@ -5,6 +5,7 @@ import { Typography, Box, Paper, Button, ToggleButton, ToggleButtonGroup } from 
 import { motion } from 'framer-motion';
 import { FaArrowLeft, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { apiUrl } from '../config/api';
 
 function RestaurantList() {
   const [restaurants, setRestaurants] = useState([]);
@@ -12,7 +13,7 @@ function RestaurantList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/restaurants')
+    fetch(apiUrl('/restaurants'))
       .then(res => res.json())
       .then(data => setRestaurants(data.restaurants));
   }, []);

@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Error, Email } from '@mui/icons-material';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { apiUrl } from '../config/api';
 
 /**
  * Page de callback pour la vérification de l'email
@@ -26,7 +27,7 @@ function VerifyEmailCallback() {
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/auth/restaurant/verify-email?token=${token}`);
+        const response = await fetch(apiUrl(`/auth/restaurant/verify-email?token=${token}`));
         const data = await response.json();
 
         if (!response.ok) {
