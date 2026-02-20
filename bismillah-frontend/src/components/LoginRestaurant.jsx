@@ -30,9 +30,9 @@ function LoginRestaurant() {
           localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
         }
         setMessage({ type: 'success', text: 'Connexion réussie !' });
-        // Rediriger vers la page du restaurant
+        // Rediriger vers le dashboard
         setTimeout(() => {
-          navigate(`/restaurants/${data.restaurant.id}`);
+          navigate('/restaurant-dashboard');
         }, 1000);
       } else if (data.requiresVerification) {
         // Compte non vérifié

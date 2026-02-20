@@ -221,10 +221,10 @@ function RegisterRestaurant() {
         }
       }
       
-      // Redirection vers la page du restaurant (connexion automatique)
+      // Redirection vers le dashboard (connexion automatique)
       showMessage('Inscription réussie !', 'success');
       setTimeout(() => {
-        navigate(`/restaurants/${data.restaurant.id}`);
+        navigate('/restaurant-dashboard');
       }, 1000);
 
     } catch (err) {

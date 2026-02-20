@@ -7,6 +7,7 @@ import RestaurantList from './components/RestaurantList';
 import RestaurantDetails from './components/RestaurantDetails';
 import RegisterRestaurant from './components/RegisterRestaurant';
 import LoginRestaurant from './components/LoginRestaurant';
+import RestaurantDashboard from './components/RestaurantDashboard';
 import CharterPage from './components/CharterPage';
 import TermsPage from './components/TermsPage';
 import VerifyEmailPending from './components/VerifyEmailPending';
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/restaurants/:id" element={<RestaurantDetails />} />
           <Route path="/register-restaurant" element={<RegisterRestaurant />} />
           <Route path="/login-restaurant" element={<LoginRestaurant />} />
+          <Route path="/restaurant-dashboard" element={<RestaurantDashboard />} />
           <Route path="/charte-halal" element={<CharterPage />} />
           <Route path="/conditions-utilisation" element={<TermsPage />} />
           {/* Routes de vérification email */}
