@@ -18,8 +18,16 @@ require('./models');  // cette ligne charge automatiquement tous les modèles pr
  * Express
  * -----------------------------------------------------------------*/
 const app = express();
+
+// Configuration CORS - accepter localhost en dev et Railway en prod
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://bismillah-frontend-production.up.railway.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigins,
   methods: ['GET','POST','PUT','DELETE'],
   allowedHeaders: ['Content-Type','Authorization']
 }));

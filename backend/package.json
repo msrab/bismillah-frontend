@@ -1,10 +1,10 @@
 {
   "name": "backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development node start.js",
-    "start": "cross-env NODE_ENV=production node start.js",
+    "start": "node start.js",
     "test": "jest",
     "mytest": "npx sequelize-cli db:migrate:undo:all --env test && npx sequelize-cli db:migrate --env test && cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --runInBand",
     "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all"

@@ -194,10 +194,10 @@ module.exports = {
         website: website || null,
         streetId: streetIdToUse,
         restaurantTypeId: typeIdToUse,
-        // Vérification email
-        is_email_verified: false,
-        verification_token: verificationToken,
-        verification_token_expires: verificationTokenExpires
+        // Vérification email désactivée - compte vérifié automatiquement
+        is_email_verified: true,
+        verification_token: null,
+        verification_token_expires: null
       });
 
       // ========== Création de la certification (si applicable) ==========
@@ -223,18 +223,18 @@ module.exports = {
         }
       }
 
-      // ========== Envoi de l'email de vérification ==========
-      try {
-        const emailResult = await sendVerificationEmail(
-          normalizedEmail,
-          normalizedName,
-          verificationToken
-        );
-        console.log('📧 Email de vérification envoyé:', emailResult.previewUrl || 'envoyé');
-      } catch (emailError) {
-        console.error('❌ Erreur envoi email:', emailError);
-        // On continue même si l'email échoue, l'utilisateur pourra demander un renvoi
-      }
+      // ========== Envoi de l'email de vérification (DÉSACTIVÉ) ==========
+      // La vérification email est désactivée pour le moment
+      // try {
+      //   const emailResult = await sendVerificationEmail(
+      //     normalizedEmail,
+      //     normalizedName,
+      //     verificationToken
+      //   );
+      //   console.log('📧 Email de vérification envoyé:', emailResult.previewUrl || 'envoyé');
+      // } catch (emailError) {
+      //   console.error('❌ Erreur envoi email:', emailError);
+      // }
 
       // On récupère le restaurant avec les associations (sans les champs sensibles)
       const restaurantWithAssociations = await Restaurant.findByPk(newRestaurant.id, {
@@ -253,9 +253,16 @@ module.exports = {
         ]
       });
 
+      // Générer le token JWT pour connexion automatique
+      const token = jwt.sign(
+        { id: newRestaurant.id, type: 'restaurant' },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
       return res.status(201).json({
-        message: 'Inscription réussie ! Un email de vérification a été envoyé à votre adresse. Veuillez cliquer sur le lien pour activer votre compte.',
-        requiresVerification: true,
+        message: 'Inscription réussie !',
+        token,
         restaurant: restaurantWithAssociations
       });
     } catch (error) {

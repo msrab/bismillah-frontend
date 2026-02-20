@@ -33,10 +33,12 @@ module.exports = {
     // NB : en test, on synchronisera plutôt avec `sequelize.sync({ force: true })`
   },
   production: {
-    username: process.env.DB_USER     || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME     || 'bismillah_prod',
-    host:     process.env.DB_HOST     || '127.0.0.1',
+    // Railway utilise MYSQLUSER, MYSQLPASSWORD, etc. - on accepte les deux formats
+    username: process.env.MYSQLUSER     || process.env.DB_USER     || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME     || 'bismillah_prod',
+    host:     process.env.MYSQLHOST     || process.env.DB_HOST     || '127.0.0.1',
+    port:     process.env.MYSQLPORT     || process.env.DB_PORT     || 3306,
     dialect:  'mysql',
     dialectOptions: {
       charset: 'utf8mb4'

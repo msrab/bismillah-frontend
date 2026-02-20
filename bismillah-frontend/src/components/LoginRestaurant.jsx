@@ -25,8 +25,15 @@ function LoginRestaurant() {
 
       if (data.token) {
         localStorage.setItem('token', data.token);
+        // Stocker les infos du restaurant
+        if (data.restaurant) {
+          localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
+        }
         setMessage({ type: 'success', text: 'Connexion réussie !' });
-        // TODO: Rediriger vers le dashboard
+        // Rediriger vers la page du restaurant
+        setTimeout(() => {
+          navigate(`/restaurants/${data.restaurant.id}`);
+        }, 1000);
       } else if (data.requiresVerification) {
         // Compte non vérifié
         setRequiresVerification(true);

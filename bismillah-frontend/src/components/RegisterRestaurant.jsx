@@ -212,13 +212,20 @@ function RegisterRestaurant() {
         throw new Error(errorMsg);
       }
       
-      // Redirection vers la page de vérification email
-      navigate('/verify-email-pending', {
-        state: {
-          email: connexionData.email,
-          restaurantName: identity.name
+      // Stocker le token pour connexion automatique
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        // Stocker aussi les infos du restaurant si nécessaire
+        if (data.restaurant) {
+          localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
         }
-      });
+      }
+      
+      // Redirection vers la page du restaurant (connexion automatique)
+      showMessage('Inscription réussie !', 'success');
+      setTimeout(() => {
+        navigate(`/restaurants/${data.restaurant.id}`);
+      }, 1000);
 
     } catch (err) {
       console.error('[ERROR] Inscription:', err);

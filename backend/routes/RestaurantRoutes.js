@@ -48,7 +48,7 @@ router.get('/check-slug', async (req, res) => {
 });
 
 const { verifyToken } = require('../middlewares/authMiddleware');
-const restaurantController = require('../controllers/restaurantController');
+const restaurantController = require('../controllers/RestaurantController');
 const { requireRole }  = require('../middlewares/roleMiddleware');
 
 // Routes protégées (restaurant connecté uniquement)
