@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper, Alert, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../config/api';
+import LoginEmailField from './restaurantformcomponents/LoginEmailField';
 import PasswordField from './restaurantformcomponents/PasswordField';
 
 function LoginRestaurant() {
@@ -21,7 +22,7 @@ function LoginRestaurant() {
     try {
       const res = await apiFetch('/auth/restaurant/login', {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password })
+        body: JSON.stringify({ email: email.trim(), password })
       });
       const data = await res.json();
 
@@ -65,18 +66,10 @@ function LoginRestaurant() {
         </Typography>
         
         <form onSubmit={handleSubmit}>
-          <TextField 
-            label="Email" 
-            name="email" 
-            type="email" 
-            fullWidth 
-            required 
-            sx={{ mb: 2 }} 
+          <LoginEmailField
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
-            autoComplete="email"
-            placeholder="restaurant@exemple.be"
           />
           
           <PasswordField
