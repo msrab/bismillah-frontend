@@ -1,39 +1,40 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper, Alert } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../config/api';
+import PasswordField from './restaurantformcomponents/PasswordField';
 
 function LoginRestaurant() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [message, setMessage] = useState(null); // { type: 'success' | 'error' | 'warning', text: '' }
   const [requiresVerification, setRequiresVerification] = useState(false);
-
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async e => {
     e.preventDefault();
     setMessage(null);
     setRequiresVerification(false);
+    setLoading(true);
 
     try {
       const res = await apiFetch('/auth/restaurant/login', {
         method: 'POST',
-        body: JSON.stringify(form)
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password })
       });
       const data = await res.json();
 
-      if (data.token) {
+      // Vérifier d'abord si la requête a réussi
+      if (res.ok && data.token) {
         localStorage.setItem('token', data.token);
         // Stocker les infos du restaurant
         if (data.restaurant) {
           localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
         }
-        setMessage({ type: 'success', text: 'Connexion réussie !' });
-        // Rediriger vers le dashboard
-        setTimeout(() => {
-          navigate('/restaurant-dashboard');
-        }, 1000);
+        setMessage({ type: 'success', text: 'Connexion réussie ! Redirection...' });
+        // Rediriger immédiatement vers le dashboard
+        navigate('/restaurant-dashboard');
       } else if (data.requiresVerification) {
         // Compte non vérifié
         setRequiresVerification(true);
@@ -45,22 +46,56 @@ function LoginRestaurant() {
         setMessage({ type: 'error', text: data.message || 'Erreur de connexion' });
       }
     } catch (error) {
+      console.error('Erreur de connexion:', error);
       setMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResendVerification = () => {
-    navigate('/verify-email-pending', { state: { email: form.email } });
+    navigate('/verify-email-pending', { state: { email } });
   };
 
   return (
-    <Box sx={{ maxWidth: 420, mx: 'auto', mt: 8 }}>
+    <Box sx={{ maxWidth: 420, mx: 'auto', mt: 8, px: 2 }}>
       <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: 700 }}>Connexion Restaurant</Typography>
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, textAlign: 'center' }}>
+          Connexion Restaurant
+        </Typography>
+        
         <form onSubmit={handleSubmit}>
-          <TextField label="Email" name="email" type="email" fullWidth required sx={{ mb: 2 }} onChange={handleChange} />
-          <TextField label="Mot de passe" name="password" type="password" fullWidth required sx={{ mb: 2 }} onChange={handleChange} />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>Se connecter</Button>
+          <TextField 
+            label="Email" 
+            name="email" 
+            type="email" 
+            fullWidth 
+            required 
+            sx={{ mb: 2 }} 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            autoComplete="email"
+            placeholder="restaurant@exemple.be"
+          />
+          
+          <PasswordField
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            autoComplete="current-password"
+          />
+          
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            sx={{ mt: 2, py: 1.5 }}
+            disabled={loading || !email || !password}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Se connecter'}
+          </Button>
         </form>
 
         {message && (
@@ -75,6 +110,7 @@ function LoginRestaurant() {
             fullWidth 
             sx={{ mt: 2 }}
             onClick={handleResendVerification}
+            disabled={loading}
           >
             Renvoyer l'email de vérification
           </Button>
@@ -82,7 +118,11 @@ function LoginRestaurant() {
 
         <Typography sx={{ mt: 3, textAlign: 'center' }}>
           Pas encore inscrit ?{' '}
-          <Button onClick={() => navigate('/register-restaurant')} sx={{ textTransform: 'none' }}>
+          <Button 
+            onClick={() => navigate('/register-restaurant')} 
+            sx={{ textTransform: 'none' }}
+            disabled={loading}
+          >
             Inscrire mon restaurant
           </Button>
         </Typography>
