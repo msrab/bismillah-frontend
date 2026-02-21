@@ -59,10 +59,14 @@ function RestaurantDashboard() {
 
   // Vérifier l'authentification et charger les données
   useEffect(() => {
+    console.log('=== DEBUG DASHBOARD ===');
     const token = localStorage.getItem('token');
     const storedRestaurant = localStorage.getItem('restaurant');
+    console.log('token:', token ? 'présent' : 'absent');
+    console.log('storedRestaurant:', storedRestaurant);
 
     if (!token) {
+      console.log('Pas de token, redirection vers login');
       navigate('/login-restaurant');
       return;
     }

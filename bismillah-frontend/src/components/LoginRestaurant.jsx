@@ -25,17 +25,28 @@ function LoginRestaurant() {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const data = await res.json();
+      
+      console.log('=== DEBUG LOGIN ===');
+      console.log('res.ok:', res.ok);
+      console.log('res.status:', res.status);
+      console.log('data:', data);
+      console.log('data.token:', data.token);
+      console.log('data.restaurant:', data.restaurant);
 
       // Vérifier d'abord si la requête a réussi
       if (res.ok && data.token) {
+        console.log('Condition réussie, stockage du token...');
         localStorage.setItem('token', data.token);
         // Stocker les infos du restaurant
         if (data.restaurant) {
           localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
+          console.log('Restaurant stocké dans localStorage');
         }
+        console.log('Avant redirection vers /restaurant-dashboard');
         setMessage({ type: 'success', text: 'Connexion réussie ! Redirection...' });
-        // Rediriger immédiatement vers le dashboard
-        navigate('/restaurant-dashboard');
+        // Rediriger vers le dashboard - utiliser window.location pour forcer le rechargement complet
+        window.location.href = '/restaurant-dashboard';
+        return; // Arrêter l'exécution ici
       } else if (data.requiresVerification) {
         // Compte non vérifié
         setRequiresVerification(true);
