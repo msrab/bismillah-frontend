@@ -19,9 +19,17 @@ const PORT = process.env.PORT || 5000;
     const db = require('./models');
     console.log('📦 Modèles chargés:', Object.keys(db).filter(k => k !== 'sequelize' && k !== 'Sequelize'));
 
-    // 3) Synchroniser les modèles (créer les tables - force: true pour première création)
-    console.log('🔄 Synchronisation des tables avec force: true...');
-    await sequelize.sync({ force: true });
+    // 3) Synchroniser les modèles
+    // En production: alter:true préserve les données existantes
+    // En dev: utiliser force:true UNIQUEMENT pour réinitialiser la BD
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      console.log('🔄 Synchronisation des tables (production - alter: true)...');
+      await sequelize.sync({ alter: true });
+    } else {
+      console.log('🔄 Synchronisation des tables (dev - alter: true)...');
+      await sequelize.sync({ alter: true });
+    }
     console.log('✅ Tables synchronisées !');
     
     // Vérifier les tables créées
