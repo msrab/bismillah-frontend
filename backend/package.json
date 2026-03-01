@@ -7,7 +7,9 @@
     "start": "node start.js",
     "test": "jest",
     "mytest": "npx sequelize-cli db:migrate:undo:all --env test && npx sequelize-cli db:migrate --env test && cross-env NODE_ENV=test jest --detectOpenHandles --forceExit --runInBand",
-    "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all"
+    "db:reset": "npx sequelize-cli db:drop && npx sequelize-cli db:create && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
+    "db:init": "node scripts/init-db.js",
+    "db:seed": "node scripts/seed-db.js"
   },
   "jest": {
     "testEnvironment": "node",
