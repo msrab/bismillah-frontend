@@ -3,6 +3,8 @@
  * Utilise les variables d'environnement Vite (VITE_*)
  */
 
+import logger from '../utils/logger';
+
 // URL de base de l'API
 // En développement: http://localhost:5000
 // En production: URL du backend Railway
@@ -52,7 +54,14 @@ export const apiFetch = async (endpoint, options = {}) => {
     delete config.headers['Content-Type'];
   }
   
-  return fetch(url, config);
+  try {
+    const response = await fetch(url, config);
+    logger.api(options.method || 'GET', endpoint, { status: response.status });
+    return response;
+  } catch (error) {
+    logger.error(`[apiFetch] Erreur réseau pour ${options.method || 'GET'} ${endpoint}:`, error);
+    throw error;
+  }
 };
 
 export default {

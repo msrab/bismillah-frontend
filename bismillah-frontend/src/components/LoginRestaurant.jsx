@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box, Button, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../config/api';
+import logger from '../utils/logger';
 import LoginEmailField from './restaurantformcomponents/LoginEmailField';
 import PasswordField from './restaurantformcomponents/PasswordField';
 
@@ -25,28 +26,26 @@ function LoginRestaurant() {
         body: JSON.stringify({ email: email.trim(), password })
       });
       const data = await res.json();
-      
-      console.log('=== DEBUG LOGIN ===');
-      console.log('res.ok:', res.ok);
-      console.log('res.status:', res.status);
-      console.log('data:', data);
-      console.log('data.token:', data.token);
-      console.log('data.restaurant:', data.restaurant);
+
+      // Log détaillé via le logger dev
+      logger.api('POST', '/auth/restaurant/login', {
+        status: res.status,
+        data,
+      });
 
       // Vérifier d'abord si la requête a réussi
       if (res.ok && data.token) {
-        console.log('Condition réussie, stockage du token...');
+        logger.log('Connexion réussie, stockage du token...');
         localStorage.setItem('token', data.token);
         // Stocker les infos du restaurant
         if (data.restaurant) {
           localStorage.setItem('restaurant', JSON.stringify(data.restaurant));
-          console.log('Restaurant stocké dans localStorage');
+          logger.log('Restaurant stocké dans localStorage');
         }
-        console.log('Avant redirection vers /restaurant-dashboard');
+        logger.log('Redirection vers /restaurant-dashboard');
         setMessage({ type: 'success', text: 'Connexion réussie ! Redirection...' });
-        // Rediriger vers le dashboard - utiliser window.location pour forcer le rechargement complet
         window.location.href = '/restaurant-dashboard';
-        return; // Arrêter l'exécution ici
+        return;
       } else if (data.requiresVerification) {
         // Compte non vérifié
         setRequiresVerification(true);
@@ -55,10 +54,13 @@ function LoginRestaurant() {
           text: data.message || 'Votre compte n\'est pas encore vérifié.' 
         });
       } else {
-        setMessage({ type: 'error', text: data.message || 'Erreur de connexion' });
+        // Le backend peut renvoyer { error: "..." } ou { message: "..." }
+        const errorMsg = data.message || data.error || 'Erreur de connexion';
+        logger.warn('Échec de connexion:', { status: res.status, errorMsg, data });
+        setMessage({ type: 'error', text: errorMsg });
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
+      logger.error('Erreur réseau / connexion au serveur:', error);
       setMessage({ type: 'error', text: 'Erreur de connexion au serveur' });
     } finally {
       setLoading(false);
